@@ -7,9 +7,39 @@ namespace JottaShift.Core.FileStorage;
 
 public sealed class FileStorageService(ILogger<FileStorageService> _logger) : IFileStorage
 {
-    public async Task CopyAsync(string sourcePath, string targetPath, CancellationToken ct = default)
+    public async Task CopyAsync(string sourcePath, string targetPath, bool deleteSource, CancellationToken ct = default)
     {
         _logger.LogInformation("Hello from FileStorageService");
+
+        if (File.Exists(sourcePath))
+        {
+            return;
+        }
+
+        if (File.Exists(targetPath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Copy(sourcePath, targetPath, false);
+        }
+        catch(Exception ex)
+        {
+
+        }
+
+        if (deleteSource)
+        {
+            try
+            {
+                File.Delete(sourcePath);
+            }
+            catch (Exception ex)
+            {
+            }
+
         await Task.FromResult(true);
     }
 

@@ -33,14 +33,14 @@ public sealed class TimelineExportService(
         foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
         {
             var timestamp = _fileStorage.GetFileTimestamp(file);
-            var folderName = GetFolderName(options.DestinationRoot, timestamp);
-            await _fileStorage.CopyAsync(file, folderName, ct);
+            var folderName = GetFullFileName(options.DestinationRoot, file, timestamp);
+            await _fileStorage.CopyAsync(file, folderName, false, ct);
         }
         
         await Task.FromResult(true);
     }
 
-    public string GetFolderName(string destinationRootPath, DateTime fileCreationTime)
+    public string GetFullFileName(string destinationRootPath, string fileName, DateTime fileCreationTime)
     {
         var year = fileCreationTime.Year.ToString();
         var month = fileCreationTime.Month;
@@ -49,6 +49,6 @@ public sealed class TimelineExportService(
 
         var folderName = $"{month}-{monthName}";
 
-        return Path.Combine(destinationRootPath, year, folderName);
+        return Path.Combine(destinationRootPath, year, folderName, fileName);
     }
 }
