@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="JottaShift.Console/JottaShift.Console.csproj" />
+  <Project Path="JottaShift.Core/JottaShift.Core.csproj" />
+  <Project Path="JottaShift.Tests/JottaShift.Tests.csproj" />
+</Solution>
