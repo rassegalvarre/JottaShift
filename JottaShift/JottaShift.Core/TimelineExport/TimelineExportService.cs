@@ -32,9 +32,23 @@ public sealed class TimelineExportService(
 
         foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
         {
-            await _fileStorage.CopyAsync(file, options.DestinationRoot, ct);
+            var timestamp = _fileStorage.GetFileTimestamp(file);
+            var folderName = GetFolderName(options.DestinationRoot, timestamp);
+            await _fileStorage.CopyAsync(file, folderName, ct);
         }
         
         await Task.FromResult(true);
+    }
+
+    public string GetFolderName(string destinationRootPath, DateTime fileCreationTime)
+    {
+        var year = fileCreationTime.Year.ToString();
+        var month = fileCreationTime.Month;
+
+        var monthName = ""; // TODO: Get;
+
+        var folderName = $"{month}-{monthName}";
+
+        return Path.Combine(destinationRootPath, year, folderName);
     }
 }

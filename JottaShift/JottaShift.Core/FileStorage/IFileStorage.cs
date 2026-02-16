@@ -11,4 +11,6 @@ public interface IFileStorage
     bool ValidateFolder(FolderOptions options);
 
     IEnumerable<string> EnumerateFiles(string folderFullPath);
+
+    DateTime GetFileTimestamp(string fileFullPath);
 }
