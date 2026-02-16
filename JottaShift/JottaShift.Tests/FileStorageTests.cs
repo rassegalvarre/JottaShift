@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace JottaShift.Core.TimelineExport
+namespace JottaShift.Tests
 {
-    internal interface ITimelineExportService
+    internal class FileStorageTests
     {
     }
 }
