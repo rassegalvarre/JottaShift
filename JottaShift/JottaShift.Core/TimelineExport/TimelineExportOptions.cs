@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace JottaShift.Core.TimelineExport
-{
-    internal record TimelineExportOptions
-    {
-        public required string SourceRoot { get; init; }
-        public required string DestinationRoot { get; init; }
-    }
-}
+namespace JottaShift.Core.TimelineExport;
+
+public record TimelineExportOptions(string SourceRoot, string DestinationRoot);
+
