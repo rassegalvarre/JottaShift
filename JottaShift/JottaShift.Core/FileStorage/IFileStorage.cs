@@ -9,4 +9,6 @@ public interface IFileStorage
     Task CopyAsync(string sourcePath, string targetPath, CancellationToken ct = default);
 
     bool ValidateFolder(FolderOptions options);
+
+    IEnumerable<string> EnumerateFiles(string folderFullPath);
 }

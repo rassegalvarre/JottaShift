@@ -13,6 +13,16 @@ public sealed class FileStorageService(ILogger<FileStorageService> _logger) : IF
         await Task.FromResult(true);
     }
 
+    public IEnumerable<string> EnumerateFiles(string folderFullPath)
+    {
+        if (!Directory.Exists(folderFullPath))
+        {
+            return [];
+        }
+
+        return Directory.EnumerateFiles(folderFullPath, "*", SearchOption.AllDirectories);
+    }
+
     public bool ValidateFolder(FolderOptions options)
     {
         bool validated = false;

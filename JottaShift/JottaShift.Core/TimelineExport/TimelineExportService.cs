@@ -30,6 +30,11 @@ public sealed class TimelineExportService(
             return;
         }
 
+        foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
+        {
+            await _fileStorage.CopyAsync(file, options.DestinationRoot, ct);
+        }
+        
         await Task.FromResult(true);
     }
 }
