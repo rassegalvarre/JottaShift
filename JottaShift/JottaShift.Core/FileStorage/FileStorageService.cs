@@ -39,6 +39,7 @@ public sealed class FileStorageService(ILogger<FileStorageService> _logger) : IF
             catch (Exception ex)
             {
             }
+        }
 
         await Task.FromResult(true);
     }
