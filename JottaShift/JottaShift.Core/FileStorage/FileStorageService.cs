@@ -12,4 +12,33 @@ public sealed class FileStorageService(ILogger<FileStorageService> _logger) : IF
         _logger.LogInformation("Hello from FileStorageService");
         await Task.FromResult(true);
     }
+
+    public bool ValidateFolder(FolderOptions options)
+    {
+        bool validated = false;
+        if (Directory.Exists(options.folderFullPath))
+        {
+            validated = true;
+        }
+        else if (options.createIfNotExists)
+        {
+            try
+            {
+                var directory = Directory.CreateDirectory(options.folderFullPath);
+                validated = directory.Exists;
+                _logger.LogInformation(
+                    "Created folder @{FolerFullPath}", options.folderFullPath);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(
+                    "An exception occured when creating folder @{FolderFullPath}. Exception: @{ExceptionMessage}",
+                    options.folderFullPath,
+                    ex.Message);
+                validated = false;
+            }
+        }
+
+        return validated;
+    }
 }
