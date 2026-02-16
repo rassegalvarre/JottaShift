@@ -13,6 +13,18 @@ public sealed class FileStorageService(ILogger<FileStorageService> _logger) : IF
         await Task.FromResult(true);
     }
 
+    public DateTime GetFileTimestamp(string fileFullPath)
+    {
+        if (!File.Exists(fileFullPath))
+        {
+            return default;
+        }
+
+        var file = new FileInfo(fileFullPath);
+
+        return file.CreationTime;
+    }
+
     public IEnumerable<string> EnumerateFiles(string folderFullPath)
     {
         if (!Directory.Exists(folderFullPath))
