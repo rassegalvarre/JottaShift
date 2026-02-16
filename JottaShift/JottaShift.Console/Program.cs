@@ -34,6 +34,10 @@ var options = new TimelineExportOptions(
     SourceRoot: @"C:\Photos\Timeline",
     DestinationRoot: @"D:\Exports\Sorted");
 
+Console.WriteLine("Starting timeline export...");
+
 await exporter.ExportAsync(options, new CancellationToken());
+
+Console.WriteLine("Timeline export finished");
 
 await host.StopAsync();
