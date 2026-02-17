@@ -5,7 +5,7 @@ using JottaShift.Core.FileStorage;
 using JottaShift.Core.TimelineExport;
 using System.IO.Abstractions;
 
-Console.WriteLine("Hello, World!");
+Console.WriteLine("JottaShift initiating..");
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
@@ -26,7 +26,6 @@ var host = Host.CreateDefaultBuilder(args)
     })
     .Build();
 
-
 await host.StartAsync();
 
 using var scope = host.Services.CreateScope();
@@ -35,6 +34,9 @@ var exporter = scope.ServiceProvider.GetRequiredService<ITimelineExport>();
 var options = new TimelineExportOptions(
     SourceRoot: @"C:\Photos\Timeline",
     DestinationRoot: @"D:\Exports\Sorted");
+
+Console.WriteLine($"Source directory to copy from:      {options.SourceRoot}");
+Console.WriteLine($"Destination directory to copy to:   {options.DestinationRoot}");
 
 Console.WriteLine("Starting timeline export...");
 

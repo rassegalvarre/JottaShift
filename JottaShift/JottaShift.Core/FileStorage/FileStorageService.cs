@@ -13,11 +13,13 @@ public sealed class FileStorageService(
 
         if (!_fileSystem.File.Exists(sourceFileFullPath))
         {
+            _logger.LogWarning("Source file not found: {FilePath}", sourceFileFullPath);
             return;
         }
 
         if (!ValidateDirectory(new DirectoryOptions(targetDirectory, true)))
         {
+            _logger.LogWarning("Could not find or create target directory: {TargeDirectory}", targetDirectory);
             return;
         }
 
@@ -29,7 +31,7 @@ public sealed class FileStorageService(
         }
         catch(Exception ex)
         {
-
+            _logger.LogError("Exception when copying file: {ExceptionMessage}", ex.Message);
         }
 
         if (deleteSource)
@@ -37,9 +39,11 @@ public sealed class FileStorageService(
             try
             {
                 _fileSystem.File.Delete(sourceFileFullPath);
+                _logger.LogInformation("Deleted source file: {SourceFile}", sourceFileFullPath);
             }
             catch (Exception ex)
             {
+                _logger.LogError("Exception when deleting source file: {ExceptionMessage}", ex.Message);
             }
         }
 

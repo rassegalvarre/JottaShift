@@ -45,11 +45,15 @@ public sealed class TimelineExportService(
 
         foreach (var directory in _fileStorage.EnumerateDirectories(options.SourceRoot))
         {
+            _logger.LogInformation("Copying files from directory: {Directory}" , directory);
+
             foreach (var file in _fileStorage.EnumerateFiles(directory))
             {
                 var timestamp = _fileStorage.GetFileTimestamp(file);
-                var folderName = GetFullFileName(options.DestinationRoot, file, timestamp);
-                await _fileStorage.CopyAsync(file, folderName, false, ct);
+                var fileFullPath = GetFullFileName(options.DestinationRoot, file, timestamp);
+                await _fileStorage.CopyAsync(file, fileFullPath, false, ct);
+
+                _logger.LogInformation("Copied file: {FilePath}", fileFullPath);
             }
         }
         
