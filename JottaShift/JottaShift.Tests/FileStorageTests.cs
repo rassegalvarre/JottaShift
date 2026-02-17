@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.IO.Abstractions.TestingHelpers;
-using System.Security.Cryptography;
 
 namespace JottaShift.Tests;
 
