@@ -49,12 +49,12 @@ public sealed class FileStorageService(
 
     public DateTime GetFileTimestamp(string fileFullPath)
     {
-        if (!File.Exists(fileFullPath))
+        if (!_fileSystem.File.Exists(fileFullPath))
         {
             return default;
         }
 
-        var file = new FileInfo(fileFullPath);
+        var file = _fileSystem.FileInfo.New(fileFullPath);
 
         return file.CreationTime;
     }
