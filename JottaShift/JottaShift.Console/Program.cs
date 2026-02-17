@@ -32,8 +32,8 @@ using var scope = host.Services.CreateScope();
 var exporter = scope.ServiceProvider.GetRequiredService<ITimelineExport>();
 
 var options = new TimelineExportOptions(
-    SourceRoot: @"C:\Photos\Timeline",
-    DestinationRoot: @"D:\Exports\Sorted");
+    SourceRoot: @"C:\Users\krist\OneDrive\Bilder\JottaShift\Source",
+    DestinationRoot: @"C:\Users\krist\OneDrive\Bilder\JottaShift\Target");
 
 Console.WriteLine($"Source directory to copy from:      {options.SourceRoot}");
 Console.WriteLine($"Destination directory to copy to:   {options.DestinationRoot}");

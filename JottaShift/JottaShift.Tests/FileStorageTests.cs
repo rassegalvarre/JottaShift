@@ -239,7 +239,7 @@ public class FileStorageTests
         var directory = AppContext.BaseDirectory;
         var filePath = Path.Combine(directory, Path.GetRandomFileName());
 
-        var creationTime = DateTime.Now;
+        var creationTime = new DateTime(2025, 6, 15);
         var fileData = new MockFileData([])
         {
             CreationTime = creationTime,

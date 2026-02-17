@@ -9,8 +9,6 @@ public sealed class FileStorageService(
 {
     public async Task CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default)
     {
-        _logger.LogInformation("Hello from FileStorageService");
-
         if (!_fileSystem.File.Exists(sourceFileFullPath))
         {
             _logger.LogWarning("Source file not found: {FilePath}", sourceFileFullPath);
@@ -57,9 +55,7 @@ public sealed class FileStorageService(
             return default;
         }
 
-        var file = _fileSystem.FileInfo.New(fileFullPath);
-
-        return file.CreationTime;
+        return  _fileSystem.File.GetLastWriteTime(fileFullPath);
     }
 
     public IEnumerable<string> EnumerateDirectories(string directoryFullPath)
