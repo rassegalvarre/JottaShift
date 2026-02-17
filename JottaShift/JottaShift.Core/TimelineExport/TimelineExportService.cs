@@ -46,7 +46,7 @@ public sealed class TimelineExportService(
         foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
         {
             var timestamp = _fileStorage.GetFileTimestamp(file);
-            var structuredDestinationDirectory = GetStructuredDirectoryNameFromFileTimestamp(options.DestinationRoot, file, timestamp);
+            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(options.DestinationRoot, file, timestamp);
             await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
 
             _logger.LogInformation("Copied file: {FilePath}", structuredDestinationDirectory);
@@ -55,12 +55,11 @@ public sealed class TimelineExportService(
         await Task.FromResult(true);
     }
 
-    public string GetStructuredDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)
+    public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)
     {
         string year = fileCreationTime.Year.ToString();
         int monthIndex = fileCreationTime.Month-1;
         string monthDirectoryName = MonthDirectoryNames[monthIndex];
-        string fileName = Path.GetFileName(fileFullPath);
 
         return Path.Combine(destinationRootPath, year, monthDirectoryName);
     }

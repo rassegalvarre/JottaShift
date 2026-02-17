@@ -9,7 +9,7 @@ namespace JottaShift.Tests;
 public class TimelineExportTests
 {
     [Fact]
-    public void GetStructuredDirectoryNameFromFileTimestamp_CreatesPathBasedOnFileCreationTime()
+    public void GetTargetDirectoryNameFromFileTimestamp_CreatesPathBasedOnFileCreationTime()
     {
         var creationDate = new DateTime(2026, 5, 31);
         string destinationDirectory = AppContext.BaseDirectory;
@@ -19,7 +19,7 @@ public class TimelineExportTests
             new Mock<ILogger<TimelineExportService>>().Object,
             new Mock<IFileStorage>().Object);
 
-        var fullFileName = timelineExportService.GetStructuredDirectoryNameFromFileTimestamp(destinationDirectory, fileName, creationDate);
+        var fullFileName = timelineExportService.GetTargetDirectoryNameFromFileTimestamp(destinationDirectory, fileName, creationDate);
         var expectedDirectoryName = Path.Combine(destinationDirectory, "2026", "05 Mai");
         Assert.Equal(expectedDirectoryName, fullFileName);
     }
