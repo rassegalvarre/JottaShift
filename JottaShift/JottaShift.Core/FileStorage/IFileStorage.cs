@@ -10,6 +10,8 @@ public interface IFileStorage
 
     bool ValidateDirectory(DirectoryOptions options);
 
+    IEnumerable<string> EnumerateDirectories(string directoryFullPath);
+
     IEnumerable<string> EnumerateFiles(string directoryFullPath);
 
     DateTime GetFileTimestamp(string fileFullPath);

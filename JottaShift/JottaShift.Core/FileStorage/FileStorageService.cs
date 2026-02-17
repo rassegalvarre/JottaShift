@@ -61,6 +61,17 @@ public sealed class FileStorageService(
         return file.CreationTime;
     }
 
+    public IEnumerable<string> EnumerateDirectories(string directoryFullPath)
+    {
+        if (!_fileSystem.Directory.Exists(directoryFullPath))
+        {
+            return [];
+        }
+
+        return _fileSystem.Directory.EnumerateDirectories(directoryFullPath);
+    }
+
+
     public IEnumerable<string> EnumerateFiles(string directoryFullPath)
     {
         if (!_fileSystem.Directory.Exists(directoryFullPath))
