@@ -1,13 +1,18 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using JottaShift.Core.FileStorage;
+using JottaShift.Core.TimelineExport;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using JottaShift.Core.FileStorage;
-using JottaShift.Core.TimelineExport;
 using System.IO.Abstractions;
 
 Console.WriteLine("JottaShift initiating..");
 
 var host = Host.CreateDefaultBuilder(args)
+    .ConfigureAppConfiguration((hostingContext, config) =>
+    {
+        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+    })
     .ConfigureServices((hostContext, services) =>
     {
         services.AddScoped<IFileSystem, FileSystem>();
@@ -31,9 +36,14 @@ await host.StartAsync();
 using var scope = host.Services.CreateScope();
 var exporter = scope.ServiceProvider.GetRequiredService<ITimelineExport>();
 
+var config = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory()) 
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
 var options = new TimelineExportOptions(
-    SourceRoot: @"C:\Users\krist\OneDrive\Bilder\JottaShift\Source",
-    DestinationRoot: @"C:\Users\krist\OneDrive\Bilder\JottaShift\Target");
+    SourceRoot: config.GetValue<string>("SourceRoot")!,
+    DestinationRoot: config.GetValue<string>("DestinationRoot")!);
 
 Console.WriteLine($"Source directory to copy from:      {options.SourceRoot}");
 Console.WriteLine($"Destination directory to copy to:   {options.DestinationRoot}");
