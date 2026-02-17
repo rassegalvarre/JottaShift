@@ -10,6 +10,22 @@ public sealed class TimelineExportService(
     ILogger<TimelineExportService> _logger,
     IFileStorage _fileStorage) : ITimelineExport
 {
+    // TODO: Replace hardcoded list
+    private readonly string[] MonthDirectoryNames =
+    [
+        "01 Januar",
+        "02 Februar",
+        "03 Mars",
+        "04 April",
+        "05 Mai",
+        "06 Juni",
+        "07 Juli",
+        "08 August",
+        "09 September",
+        "10 Oktober",
+        "11 November",
+        "12 Desember"
+    ];
 
     public async Task ExportAsync(TimelineExportOptions options, CancellationToken ct)
     {
@@ -46,12 +62,9 @@ public sealed class TimelineExportService(
     public string GetFullFileName(string destinationRootPath, string fileName, DateTime fileCreationTime)
     {
         var year = fileCreationTime.Year.ToString();
-        var month = fileCreationTime.Month;
+        var monthIndex = fileCreationTime.Month-1;
+        var monthDirectoryName = MonthDirectoryNames[monthIndex];
 
-        var monthName = ""; // TODO: Get;
-
-        var folderName = $"{month}-{monthName}";
-
-        return Path.Combine(destinationRootPath, year, folderName, fileName);
+        return Path.Combine(destinationRootPath, year, monthDirectoryName, fileName);
     }
 }
