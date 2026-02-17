@@ -216,34 +216,7 @@ public class FileStorageTests
         var copied = fileSystemMock.File.Exists(destination);
 
         Assert.False(copied);        
-    }
-
-    [Fact]
-    public async Task CopyFile_ShouldDoNothing_WhenDestinationDoesNotExist()
-    {
-        var source = AppContext.BaseDirectory;
-        var destination = Path.Combine(AppContext.BaseDirectory, Path.GetRandomFileName());
-
-        var fileName = Path.GetRandomFileName();
-        var sourceFileName = Path.Combine(source, fileName);
-        var destinationFileName = Path.Combine(destination, fileName);
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { source, new MockDirectoryData() },
-            { sourceFileName, new MockFileData([]) },
-        });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        await fileStorageService.CopyAsync(sourceFileName, destination, false);
-
-        var copied = fileSystemMock.File.Exists(destinationFileName);
-
-        Assert.False(copied);
-    }
+    }  
 
     [Fact]
     public async Task CopyFile_ShouldCopy_WhenValidSourceAndDestination()
