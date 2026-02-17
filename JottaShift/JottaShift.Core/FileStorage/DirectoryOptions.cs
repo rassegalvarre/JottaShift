@@ -4,4 +4,4 @@ using System.Text;
 
 namespace JottaShift.Core.FileStorage;
 
-public record FolderOptions(string folderFullPath, bool createIfNotExists);
+public record DirectoryOptions(string directoryFullPath, bool createIfNotExists);

@@ -13,7 +13,7 @@ public sealed class TimelineExportService(
 
     public async Task ExportAsync(TimelineExportOptions options, CancellationToken ct)
     {
-        if (!_fileStorage.ValidateFolder(new FolderOptions(options.SourceRoot, false)))
+        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.SourceRoot, false)))
         {
             _logger.LogError(
                 "Source folder with name @{FolderName} does not exist",
@@ -21,7 +21,7 @@ public sealed class TimelineExportService(
 
             return;
         }
-        else if (!_fileStorage.ValidateFolder(new FolderOptions(options.DestinationRoot, true)))
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.DestinationRoot, true)))
         {
             _logger.LogError(
                 "Could not create destination folder with name @{FolderName}",

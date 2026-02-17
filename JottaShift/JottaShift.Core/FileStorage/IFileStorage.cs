@@ -6,9 +6,9 @@ namespace JottaShift.Core.FileStorage;
 
 public interface IFileStorage
 {
-    Task CopyAsync(string sourcePath, string targetPath, bool deleteSource, CancellationToken ct = default);
+    Task CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default);
 
-    bool ValidateFolder(FolderOptions options);
+    bool ValidateDirectory(DirectoryOptions options);
 
     IEnumerable<string> EnumerateFiles(string folderFullPath);
 

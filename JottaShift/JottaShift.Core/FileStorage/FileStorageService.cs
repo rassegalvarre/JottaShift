@@ -10,25 +10,25 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorage
 {
-    public async Task CopyAsync(string sourcePath, string targetPath, bool deleteSource, CancellationToken ct = default)
+    public async Task CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default)
     {
         _logger.LogInformation("Hello from FileStorageService");
 
-        if (!_fileSystem.File.Exists(sourcePath))
+        if (!_fileSystem.File.Exists(sourceFileFullPath))
         {
             return;
         }
 
-        if (!ValidateFolder(new FolderOptions(targetPath, true)))
+        if (!ValidateDirectory(new DirectoryOptions(targetDirectory, true)))
         {
             return;
         }
 
         try
         {
-            string fileName = Path.GetFileName(sourcePath);
-            string newFileName = Path.Combine(targetPath, fileName);
-            _fileSystem.File.Copy(sourcePath, newFileName, false);
+            string fileName = Path.GetFileName(sourceFileFullPath);
+            string newFileName = Path.Combine(targetDirectory, fileName);
+            _fileSystem.File.Copy(sourceFileFullPath, newFileName, false);
         }
         catch(Exception ex)
         {
@@ -39,7 +39,7 @@ public sealed class FileStorageService(
         {
             try
             {
-                _fileSystem.File.Delete(sourcePath);
+                _fileSystem.File.Delete(sourceFileFullPath);
             }
             catch (Exception ex)
             {
@@ -71,10 +71,10 @@ public sealed class FileStorageService(
         return _fileSystem.Directory.EnumerateFiles(folderFullPath, "*", SearchOption.AllDirectories);
     }
 
-    public bool ValidateFolder(FolderOptions options)
+    public bool ValidateDirectory(DirectoryOptions options)
     {
         bool validated = false;
-        if (_fileSystem.Directory.Exists(options.folderFullPath))
+        if (_fileSystem.Directory.Exists(options.directoryFullPath))
         {
             validated = true;
         }
@@ -82,16 +82,16 @@ public sealed class FileStorageService(
         {
             try
             {
-                var directory = _fileSystem.Directory.CreateDirectory(options.folderFullPath);
+                var directory = _fileSystem.Directory.CreateDirectory(options.directoryFullPath);
                 validated = directory.Exists;
                 _logger.LogInformation(
-                    "Created folder @{FolerFullPath}", options.folderFullPath);
+                    "Created directory @{DirectoryFullPath}", options.directoryFullPath);
             }
             catch(Exception ex)
             {
                 _logger.LogError(
-                    "An exception occured when creating folder @{FolderFullPath}. Exception: @{ExceptionMessage}",
-                    options.folderFullPath,
+                    "An exception occured when creating directory @{DirectoryFullPath}. Exception: @{ExceptionMessage}",
+                    options.directoryFullPath,
                     ex.Message);
                 validated = false;
             }
