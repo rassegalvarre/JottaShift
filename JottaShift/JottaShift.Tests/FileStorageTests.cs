@@ -78,4 +78,75 @@ public class FileStorageTests
 
         Assert.False(result);
     }
+
+    [Fact]
+    public void EnumerateFiles_ShouldEnumerate_EmptyCollectionOnInvalidPath()
+    {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var collection = fileStorageService.EnumerateFiles(string.Empty);
+
+        Assert.Empty(collection);
+    }
+
+    [Fact]
+    public void EnumerateFiles_ShouldEnumerate_FlatStructure()
+    {
+        var directory = @"C:\temp\myfolder";
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { directory, new MockDirectoryData() },
+            { Path.Combine(directory, "readme.txt"), new MockFileData("demo") },
+            { Path.Combine(directory, "demo.txt"), new MockFileData("demo") }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var collection = fileStorageService.EnumerateFiles(directory);
+
+        Assert.Equal(2, collection.Count());
+    }
+
+    [Fact]
+    public void EnumerateFiles_ShouldEnumerate_Recursive()
+    {
+        var baseDirectory = @"C:\temp\myfolder";
+        var firstSubLevelDirectory = Path.Combine(baseDirectory, Path.GetRandomFileName());
+        var secondSubLevelDirectory = Path.Combine(firstSubLevelDirectory, Path.GetRandomFileName());
+        var thirdSubLevelDirectory = Path.Combine(secondSubLevelDirectory, Path.GetRandomFileName());
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { baseDirectory, new MockDirectoryData() },
+            { Path.Combine(baseDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(baseDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+
+            { secondSubLevelDirectory, new MockDirectoryData() },
+            { Path.Combine(secondSubLevelDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(secondSubLevelDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+
+            { thirdSubLevelDirectory, new MockDirectoryData() },
+            { Path.Combine(thirdSubLevelDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(thirdSubLevelDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+
+            { Path.Combine(baseDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(secondSubLevelDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(secondSubLevelDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(thirdSubLevelDirectory, Path.GetRandomFileName()), new MockFileData([]) }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var collection = fileStorageService.EnumerateFiles(baseDirectory);
+
+        Assert.Equal(10, collection.Count());
+    }
 }

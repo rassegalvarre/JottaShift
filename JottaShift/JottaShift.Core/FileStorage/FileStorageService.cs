@@ -61,12 +61,12 @@ public sealed class FileStorageService(
 
     public IEnumerable<string> EnumerateFiles(string folderFullPath)
     {
-        if (!Directory.Exists(folderFullPath))
+        if (!_fileSystem.Directory.Exists(folderFullPath))
         {
             return [];
         }
 
-        return Directory.EnumerateFiles(folderFullPath, "*", SearchOption.AllDirectories);
+        return _fileSystem.Directory.EnumerateFiles(folderFullPath, "*", SearchOption.AllDirectories);
     }
 
     public bool ValidateFolder(FolderOptions options)
