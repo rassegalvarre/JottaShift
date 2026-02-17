@@ -14,19 +14,21 @@ public sealed class FileStorageService(
     {
         _logger.LogInformation("Hello from FileStorageService");
 
-        if (File.Exists(sourcePath))
+        if (!_fileSystem.File.Exists(sourcePath))
         {
             return;
         }
 
-        if (File.Exists(targetPath))
+        if (!ValidateFolder(new FolderOptions(targetPath, true)))
         {
             return;
         }
 
         try
         {
-            File.Copy(sourcePath, targetPath, false);
+            string fileName = Path.GetFileName(sourcePath);
+            string newFileName = Path.Combine(targetPath, fileName);
+            _fileSystem.File.Copy(sourcePath, newFileName, false);
         }
         catch(Exception ex)
         {
@@ -37,7 +39,7 @@ public sealed class FileStorageService(
         {
             try
             {
-                File.Delete(sourcePath);
+                _fileSystem.File.Delete(sourcePath);
             }
             catch (Exception ex)
             {
