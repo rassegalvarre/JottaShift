@@ -1,18 +1,26 @@
 ﻿using JottaShift.Core.FileStorage;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests;
 
 public class FileStorageTests
 {
-    private readonly FileStorageService fileStorageService = new(
-        new Mock<ILogger<FileStorageService>>().Object);
-
     [Fact]
     public void ValidateFolder_ShouldBeValidated_WhenFolderExists()
     {
-        var options = new FolderOptions(AppContext.BaseDirectory, false);
+        var directory = AppContext.BaseDirectory;
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { directory, new MockDirectoryData() }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var options = new FolderOptions(directory, false);
 
         var result = fileStorageService.ValidateFolder(options);
 
@@ -22,6 +30,12 @@ public class FileStorageTests
     [Fact]
     public void ValidateFolder_ShouldBeValidated_WhenFolderIsCreated()
     {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
         var options = new FolderOptions(
             Path.Combine(AppContext.BaseDirectory, Path.GetRandomFileName()),
             true);
@@ -29,13 +43,17 @@ public class FileStorageTests
         var result = fileStorageService.ValidateFolder(options);
 
         Assert.True(result);
-
-        Directory.Delete(options.folderFullPath);
     }
 
     [Fact]
     public void ValidateFolder_ShouldNotBeValidated_WhenFolderDoesNotExist()
     {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
         var options = new FolderOptions(
             Path.Combine(AppContext.BaseDirectory, Path.GetRandomFileName()),
             false);
@@ -48,6 +66,12 @@ public class FileStorageTests
     [Fact]
     public void ValidateFolder_ShouldNotBeValidated_WhenFolderCannotBeCreated()
     {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
         var options = new FolderOptions(string.Empty, true);
 
         var result = fileStorageService.ValidateFolder(options);

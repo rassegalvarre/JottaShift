@@ -2,10 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO.Abstractions;
 
 namespace JottaShift.Core.FileStorage;
 
-public sealed class FileStorageService(ILogger<FileStorageService> _logger) : IFileStorage
+public sealed class FileStorageService(
+    IFileSystem _fileSystem,
+    ILogger<FileStorageService> _logger) : IFileStorage
 {
     public async Task CopyAsync(string sourcePath, string targetPath, bool deleteSource, CancellationToken ct = default)
     {
@@ -69,7 +72,7 @@ public sealed class FileStorageService(ILogger<FileStorageService> _logger) : IF
     public bool ValidateFolder(FolderOptions options)
     {
         bool validated = false;
-        if (Directory.Exists(options.folderFullPath))
+        if (_fileSystem.Directory.Exists(options.folderFullPath))
         {
             validated = true;
         }
@@ -77,7 +80,7 @@ public sealed class FileStorageService(ILogger<FileStorageService> _logger) : IF
         {
             try
             {
-                var directory = Directory.CreateDirectory(options.folderFullPath);
+                var directory = _fileSystem.Directory.CreateDirectory(options.folderFullPath);
                 validated = directory.Exists;
                 _logger.LogInformation(
                     "Created folder @{FolerFullPath}", options.folderFullPath);

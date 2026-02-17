@@ -3,12 +3,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.TimelineExport;
+using System.IO.Abstractions;
 
 Console.WriteLine("Hello, World!");
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
     {
+        services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<ITimelineExport, TimelineExportService>();
     })
