@@ -30,11 +30,14 @@ public sealed class TimelineExportService(
             return;
         }
 
-        foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
+        foreach (var directory in _fileStorage.EnumerateDirectories(options.SourceRoot))
         {
-            var timestamp = _fileStorage.GetFileTimestamp(file);
-            var folderName = GetFullFileName(options.DestinationRoot, file, timestamp);
-            await _fileStorage.CopyAsync(file, folderName, false, ct);
+            foreach (var file in _fileStorage.EnumerateFiles(directory))
+            {
+                var timestamp = _fileStorage.GetFileTimestamp(file);
+                var folderName = GetFullFileName(options.DestinationRoot, file, timestamp);
+                await _fileStorage.CopyAsync(file, folderName, false, ct);
+            }
         }
         
         await Task.FromResult(true);
