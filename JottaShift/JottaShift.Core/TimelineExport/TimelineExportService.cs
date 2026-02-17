@@ -43,29 +43,25 @@ public sealed class TimelineExportService(
             return;
         }
 
-        foreach (var directory in _fileStorage.EnumerateDirectories(options.SourceRoot))
+        foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
         {
-            _logger.LogInformation("Copying files from directory: {Directory}" , directory);
+            var timestamp = _fileStorage.GetFileTimestamp(file);
+            var structuredDestinationDirectory = GetStructuredDirectoryNameFromFileTimestamp(options.DestinationRoot, file, timestamp);
+            await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
 
-            foreach (var file in _fileStorage.EnumerateFiles(directory))
-            {
-                var timestamp = _fileStorage.GetFileTimestamp(file);
-                var fileFullPath = GetFullFileName(options.DestinationRoot, file, timestamp);
-                await _fileStorage.CopyAsync(file, fileFullPath, false, ct);
-
-                _logger.LogInformation("Copied file: {FilePath}", fileFullPath);
-            }
+            _logger.LogInformation("Copied file: {FilePath}", structuredDestinationDirectory);
         }
-        
+
         await Task.FromResult(true);
     }
 
-    public string GetFullFileName(string destinationRootPath, string fileName, DateTime fileCreationTime)
+    public string GetStructuredDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)
     {
-        var year = fileCreationTime.Year.ToString();
-        var monthIndex = fileCreationTime.Month-1;
-        var monthDirectoryName = MonthDirectoryNames[monthIndex];
+        string year = fileCreationTime.Year.ToString();
+        int monthIndex = fileCreationTime.Month-1;
+        string monthDirectoryName = MonthDirectoryNames[monthIndex];
+        string fileName = Path.GetFileName(fileFullPath);
 
-        return Path.Combine(destinationRootPath, year, monthDirectoryName, fileName);
+        return Path.Combine(destinationRootPath, year, monthDirectoryName);
     }
 }
