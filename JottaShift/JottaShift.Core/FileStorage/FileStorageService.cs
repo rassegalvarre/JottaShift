@@ -140,4 +140,22 @@ public sealed class FileStorageService(
         // All chunks matched.
         return true;
     }
+
+    public bool DoesFileMetadataMatch(string pathA, string pathB)
+    {
+        try
+        {
+            bool metadataMatches =
+                _fileSystem.File.GetCreationTime(pathA) == _fileSystem.File.GetCreationTime(pathB) &&
+                _fileSystem.File.GetLastWriteTime(pathA) == _fileSystem.File.GetLastWriteTime(pathB) &&
+                _fileSystem.File.GetAttributes(pathA) == _fileSystem.File.GetAttributes(pathB);
+
+            return metadataMatches;
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError("An exception occured when comparing file metadata: {ExceptionMessage}", ex.Message);
+            return false;
+        }
+    }
 }
