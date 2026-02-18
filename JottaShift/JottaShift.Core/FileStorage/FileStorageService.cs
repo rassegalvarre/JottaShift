@@ -107,4 +107,37 @@ public sealed class FileStorageService(
 
         return validated;
     }
+
+    public bool FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024) // 1 MiB default
+    {
+        // Quick size check – if lengths differ they can’t be identical.
+        var infoA = _fileSystem.FileInfo.New(pathA);
+        var infoB = _fileSystem.FileInfo.New(pathB);
+        if (infoA.Length != infoB.Length)
+            return false;
+
+        // Open both streams for sequential reading.
+        using var fsA = _fileSystem.FileStream.New(pathA, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var fsB = _fileSystem.FileStream.New(pathB, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var bufferA = new byte[bufferSize];
+        var bufferB = new byte[bufferSize];
+
+        int readA, readB;
+        while ((readA = fsA.Read(bufferA, 0, bufferA.Length)) > 0)
+        {
+            readB = fsB.Read(bufferB, 0, bufferB.Length);
+            if (readA != readB)               // should never happen because sizes match
+                return false;
+
+            // Compare the two buffers byte‑by‑byte.
+            for (int i = 0; i < readA; i++)
+            {
+                if (bufferA[i] != bufferB[i])
+                    return false;
+            }
+        }
+
+        // All chunks matched.
+        return true;
+    }
 }
