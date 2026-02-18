@@ -7,24 +7,26 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorage
 {
-    public async Task CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default)
+    public async Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default)
     {
+        string fileName = Path.GetFileName(sourceFileFullPath);
+        string newFileName = Path.Combine(targetDirectory, fileName);
+
         if (!_fileSystem.File.Exists(sourceFileFullPath))
         {
             _logger.LogWarning("Source file not found: {FilePath}", sourceFileFullPath);
-            return;
+            return new CopyAsyncResult(false, newFileName);
         }
 
         if (!ValidateDirectory(new DirectoryOptions(targetDirectory, true)))
         {
             _logger.LogWarning("Could not find or create target directory: {TargeDirectory}", targetDirectory);
-            return;
+            return new CopyAsyncResult(false, newFileName);
         }
 
         try
         {
-            string fileName = Path.GetFileName(sourceFileFullPath);
-            string newFileName = Path.Combine(targetDirectory, fileName);
+            
             _fileSystem.File.Copy(sourceFileFullPath, newFileName, false);
         }
         catch(Exception ex)
@@ -42,10 +44,12 @@ public sealed class FileStorageService(
             catch (Exception ex)
             {
                 _logger.LogError("Exception when deleting source file: {ExceptionMessage}", ex.Message);
+                return new CopyAsyncResult(false, newFileName);
             }
         }
 
         await Task.FromResult(true);
+        return new CopyAsyncResult(true, newFileName);
     }
 
     public DateTime GetFileTimestamp(string fileFullPath)

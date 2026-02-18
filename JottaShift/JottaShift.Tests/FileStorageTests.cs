@@ -234,15 +234,15 @@ public class FileStorageTests
     }
 
     [Fact]
-    public void GetFileTimestamp_ReturnsLocalCreationDate_WhenFileFound()
+    public void GetFileTimestamp_ReturnsLocalLastWriteDate_WhenFileFound()
     {
         var directory = AppContext.BaseDirectory;
         var filePath = Path.Combine(directory, Path.GetRandomFileName());
 
-        var creationTime = new DateTime(2025, 6, 15);
+        var lastWriteTime = new DateTime(2025, 6, 15);
         var fileData = new MockFileData([])
         {
-            CreationTime = creationTime,
+            LastWriteTime = lastWriteTime,
         };
 
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
@@ -257,11 +257,11 @@ public class FileStorageTests
 
         var timestamp = fileStorageService.GetFileTimestamp(filePath);
 
-        Assert.Equal(creationTime, timestamp);
+        Assert.Equal(lastWriteTime, timestamp);
     }
 
     [Fact]
-    public async Task CopyFile_ShouldDoNothing_WhenSourceDoesNotExist()
+    public async Task CopyFile_ShouldFail_WhenSourceDoesNotExist()
     {
         var source = AppContext.BaseDirectory;
         var destination = Path.Combine(AppContext.BaseDirectory, Path.GetRandomFileName());
@@ -279,10 +279,11 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        await fileStorageService.CopyAsync(sourceFileName, destinationFileName, false);
+        var result = await fileStorageService.CopyAsync(sourceFileName, destinationFileName, false);
 
         var copied = fileSystemMock.File.Exists(destination);
 
+        Assert.False(result.Success);        
         Assert.False(copied);        
     }  
 
@@ -307,11 +308,12 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        await fileStorageService.CopyAsync(sourceFileName, destination, false);
+        var result = await fileStorageService.CopyAsync(sourceFileName, destination, false);
         
         var sourceExists = fileSystemMock.File.Exists(sourceFileName);
         var copied = fileSystemMock.File.Exists(destinationFileName);
 
+        Assert.True(result.Success);
         Assert.True(sourceExists);
         Assert.True(copied);
     }
@@ -337,11 +339,12 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        await fileStorageService.CopyAsync(sourceFileName, destination, true);
+        var result = await fileStorageService.CopyAsync(sourceFileName, destination, true);
 
         var sourceExists = fileSystemMock.File.Exists(sourceFileName);
         var copied = fileSystemMock.File.Exists(destinationFileName);
 
+        Assert.True(result.Success);
         Assert.False(sourceExists);
         Assert.True(copied);
     }
@@ -366,11 +369,12 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        await fileStorageService.CopyAsync(sourceFileName, destination, false);
+        var result = await fileStorageService.CopyAsync(sourceFileName, destination, false);
 
         var sourceExists = fileSystemMock.File.Exists(sourceFileName);
         var copied = fileSystemMock.File.Exists(destinationFileName);
 
+        Assert.True(result.Success);
         Assert.True(sourceExists);
         Assert.True(copied);
     }

@@ -47,9 +47,31 @@ public sealed class TimelineExportService(
         {
             var timestamp = _fileStorage.GetFileTimestamp(file);
             var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(options.DestinationRoot, file, timestamp);
-            await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
+            var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
 
-            _logger.LogInformation("Copied file: {FilePath}", structuredDestinationDirectory);
+            if (!copyResult.Success)
+            {
+                _logger.LogError("Failed to copy file: {FilePath}", file);
+                break;
+            }
+
+            if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
+            {
+                _logger.LogError(
+                    "File was copied, but file content does not match: {FilePath}",
+                    copyResult.targetFileFullPath);
+                break;
+            }
+
+            if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
+            {
+                _logger.LogError(
+                    "File was copied, but metadata does not match: {FilePath}",
+                    copyResult.targetFileFullPath);
+                break;
+            }
+
+            _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
 
         await Task.FromResult(true);

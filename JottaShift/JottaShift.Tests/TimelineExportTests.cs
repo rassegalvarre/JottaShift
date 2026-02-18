@@ -34,21 +34,21 @@ public class TimelineExportTests
         string img2025_12_31_destination = @"C:\backup\2025\12 Desember\img20251231.jpg";
         var img2025_12_31_data = new MockFileData([])
         {
-            CreationTime = new DateTime(2025, 12, 31, 23, 0, 0)
+            LastWriteTime = new DateTime(2025, 12, 31, 23, 0, 0)
         };
 
         string img2026_01_01_source = Path.Combine(sourceDirectory, "2026", "1", "2", "img20260101.jpg");
         string img2026_01_01_destination = @"C:\backup\2026\01 Januar\img20260101.jpg";
         var img2026_01_01_data = new MockFileData([])
         {
-            CreationTime = new DateTime(2026, 1, 1, 1, 0, 0)
+            LastWriteTime = new DateTime(2026, 1, 1, 1, 0, 0)
         };
 
         string img2026_01_31_source = Path.Combine(sourceDirectory, "2026", "2", "3", "img20260131.jpg");
         string img2026_01_31_destination = @"C:\backup\2026\01 Januar\img20260131.jpg";
         var img2026_01_31_data = new MockFileData([])
         {
-            CreationTime = new DateTime(2026, 1, 31, 12, 0, 0)
+            LastWriteTime = new DateTime(2026, 1, 31, 12, 0, 0)
         };
 
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>

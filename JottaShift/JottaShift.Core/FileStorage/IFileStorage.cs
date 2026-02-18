@@ -2,7 +2,7 @@
 
 public interface IFileStorage
 {
-    Task CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default);
+    Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default);
 
     bool ValidateDirectory(DirectoryOptions options);
 
