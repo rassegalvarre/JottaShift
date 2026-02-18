@@ -69,8 +69,9 @@ public class TimelineExportTests
             fileStorageService);
 
         var options = new TimelineExportOptions(sourceDirectory, destinationDirectory);
-        await timelineExportService.ExportAsync(options, new CancellationToken());
+        var result = await timelineExportService.ExportAsync(options, new CancellationToken());
 
+        Assert.True(result.Success);
         Assert.True(fileSystemMock.File.Exists(img2025_12_31_destination));
         Assert.True(fileSystemMock.File.Exists(img2026_01_01_destination));
         Assert.True(fileSystemMock.File.Exists(img2026_01_31_destination));

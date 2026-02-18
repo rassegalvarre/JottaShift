@@ -2,5 +2,5 @@
 
 public interface ITimelineExport
 {
-    Task ExportAsync(TimelineExportOptions options, CancellationToken ct = default);
+    Task<TimelineExportResult> ExportAsync(TimelineExportOptions options, CancellationToken ct = default);
 }

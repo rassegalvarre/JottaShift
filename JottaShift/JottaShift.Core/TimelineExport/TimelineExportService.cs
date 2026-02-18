@@ -24,7 +24,7 @@ public sealed class TimelineExportService(
         "12 Desember"
     ];
 
-    public async Task ExportAsync(TimelineExportOptions options, CancellationToken ct)
+    public async Task<TimelineExportResult> ExportAsync(TimelineExportOptions options, CancellationToken ct)
     {
         if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.SourceRoot, false)))
         {
@@ -32,7 +32,7 @@ public sealed class TimelineExportService(
                 "Source folder with name @{FolderName} does not exist",
                 options.SourceRoot);
 
-            return;
+            return new TimelineExportResult(false);
         }
         else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.DestinationRoot, true)))
         {
@@ -40,7 +40,7 @@ public sealed class TimelineExportService(
                 "Could not create destination folder with name @{FolderName}",
                 options.DestinationRoot);
 
-            return;
+            return new TimelineExportResult(false);
         }
 
         foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
@@ -52,7 +52,7 @@ public sealed class TimelineExportService(
             if (!copyResult.Success)
             {
                 _logger.LogError("Failed to copy file: {FilePath}", file);
-                break;
+                return new TimelineExportResult(false);
             }
 
             if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
@@ -60,7 +60,7 @@ public sealed class TimelineExportService(
                 _logger.LogError(
                     "File was copied, but file content does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                break;
+                return new TimelineExportResult(false);
             }
 
             if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
@@ -68,13 +68,13 @@ public sealed class TimelineExportService(
                 _logger.LogError(
                     "File was copied, but metadata does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                break;
+                return new TimelineExportResult(false);
             }
 
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
 
-        await Task.FromResult(true);
+        return new TimelineExportResult(true);
     }
 
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)
