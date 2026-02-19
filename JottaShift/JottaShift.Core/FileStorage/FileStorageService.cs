@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.IO.Abstractions;
 using MetadataExtractor;
+using System.Collections.Immutable;
 
 namespace JottaShift.Core.FileStorage;
 
@@ -144,27 +145,7 @@ public sealed class FileStorageService(
 
         // All chunks matched.
         return true;
-    }
-
-    public IReadOnlyDictionary<string, string> GetFileMetadata(string fileFullPath)
-    {
-        using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
-
-        var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
-        var map = new SortedDictionary<string, string>(); // sorted for deterministic output
-        
-        foreach (var dir in directories)
-        {
-            foreach (var tag in dir.Tags)
-            {
-                // Key format: "DirectoryName:TagName"
-                string key = $"{dir.Name}:{tag.Name}";
-                map[key] = tag.Description ?? string.Empty;
-            }
-        }
-
-        return map;
-    }
+    }   
 
     public bool DoesFileMetadataMatch(string originalFileFullPath, string copiedFileFullPath)
     {
@@ -207,5 +188,25 @@ public sealed class FileStorageService(
         }
 
         return !hasMismatch;
+    }
+
+    private SortedDictionary<string, string> GetFileMetadata(string fileFullPath)
+    {
+        using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
+
+        var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
+        var map = new SortedDictionary<string, string>(); // sorted for deterministic output
+
+        foreach (var dir in directories)
+        {
+            foreach (var tag in dir.Tags)
+            {
+                // Key format: "DirectoryName:TagName"
+                string key = $"{dir.Name}:{tag.Name}";
+                map[key] = tag.Description ?? string.Empty;
+            }
+        }
+
+        return map;
     }
 }
