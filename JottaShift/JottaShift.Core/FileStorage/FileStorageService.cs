@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.IO.Abstractions;
+using MetadataExtractor;
 
 namespace JottaShift.Core.FileStorage;
 
@@ -145,21 +146,66 @@ public sealed class FileStorageService(
         return true;
     }
 
-    public bool DoesFileMetadataMatch(string pathA, string pathB)
+    public IReadOnlyDictionary<string, string> GetFileMetadata(string fileFullPath)
     {
-        try
-        {
-            bool metadataMatches =
-                _fileSystem.File.GetCreationTime(pathA) == _fileSystem.File.GetCreationTime(pathB) &&
-                _fileSystem.File.GetLastWriteTime(pathA) == _fileSystem.File.GetLastWriteTime(pathB) &&
-                _fileSystem.File.GetAttributes(pathA) == _fileSystem.File.GetAttributes(pathB);
+        using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
 
-            return metadataMatches;
-        }
-        catch(Exception ex)
+        var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
+        var map = new SortedDictionary<string, string>(); // sorted for deterministic output
+        
+        foreach (var dir in directories)
         {
-            _logger.LogError("An exception occured when comparing file metadata: {ExceptionMessage}", ex.Message);
-            return false;
+            foreach (var tag in dir.Tags)
+            {
+                // Key format: "DirectoryName:TagName"
+                string key = $"{dir.Name}:{tag.Name}";
+                map[key] = tag.Description ?? string.Empty;
+            }
         }
+
+        return map;
+    }
+
+    public bool DoesFileMetadataMatch(string originalFileFullPath, string copiedFileFullPath)
+    {
+        var originalFileMetadata = GetFileMetadata(originalFileFullPath);
+        var copedFileMetadata = GetFileMetadata(copiedFileFullPath);
+        var allKeys = new SortedSet<string>(originalFileMetadata.Keys.Concat(copedFileMetadata.Keys));
+
+        bool hasMismatch = false;
+
+        foreach (var key in allKeys)
+        {
+            originalFileMetadata.TryGetValue(key, out var valA);
+            copedFileMetadata.TryGetValue(key, out var valB);
+
+            if (valA == null)
+            {
+                _logger.LogError(
+                    "Tile original file {FileName} is missing metadata field with key {Key}",
+                    Path.GetFileName(originalFileFullPath),
+                    key);
+                hasMismatch = true;
+
+            }
+            else if (valB == null)
+            {
+                _logger.LogError(
+                    "The copied file {FileName} is missing metadata field with key {Key}",
+                    Path.GetFileName(copiedFileFullPath),
+                    key);
+                hasMismatch = true;
+            }
+            else if (!valA.Equals(valB))
+            {
+                _logger.LogError(
+                    "The value of metadata field with key {Key} is mismatched between the original copied file {FileName}",
+                    key,
+                    Path.GetFileName(originalFileFullPath));
+                hasMismatch = true;
+            }
+        }
+
+        return !hasMismatch;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using JottaShift.Core.FileStorage;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests;
@@ -464,30 +465,13 @@ public class FileStorageTests
     }
 
     [Fact]
-    public void DoesFileMetadataMatch_DoesNotMatch_WhenCreationDateDiffers()
+    public void DoesFileMetadataMatch_DoesNotMatch_WhenDifferentImages()
     {
-        string fileA = Path.GetRandomFileName();
-        var fileAData = new MockFileData([])
-        {
-            CreationTime = new DateTime(2010, 5, 12),
-            LastWriteTime = new DateTime(2026, 2, 18)
-        };
-
-        string fileB = Path.GetRandomFileName();
-        var fileBData = new MockFileData([])
-        {
-            CreationTime = new DateTime(2026, 1, 1),
-            LastWriteTime = new DateTime(2026, 2, 18),
-        };
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { fileA, fileAData },
-            { fileB, fileBData },
-        });
+        string fileA = Path.Combine(AppContext.BaseDirectory, "TestData", "duck.jpg");
+        string fileB = Path.Combine(AppContext.BaseDirectory, "TestData", "waterfall.jpg");
 
         var fileStorageService = new FileStorageService(
-            fileSystemMock,
+            new FileSystem(),
             new Mock<ILogger<FileStorageService>>().Object);
 
         bool metadataMatches = fileStorageService.DoesFileMetadataMatch(fileA, fileB);
@@ -496,30 +480,13 @@ public class FileStorageTests
     }
 
     [Fact]
-    public void DoesFileMetadataMatch_DoesMatch_WhenBasicFieldsAreEqual()
+    public void DoesFileMetadataMatch_DoesMatch_WhenCopyOfSameImage()
     {
-        string fileA = Path.GetRandomFileName();
-        var fileAData = new MockFileData([])
-        {
-            CreationTime = new DateTime(2026, 1, 1),
-            LastWriteTime = new DateTime(2026, 2, 18)
-        };
-
-        string fileB = Path.GetRandomFileName();
-        var fileBData = new MockFileData([])
-        {
-            CreationTime = new DateTime(2026, 1, 1),
-            LastWriteTime = new DateTime(2026, 2, 18),
-        };
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { fileA, fileAData },
-            { fileB, fileBData },
-        });
+        string fileA = Path.Combine(AppContext.BaseDirectory, "TestData", "duck.jpg");
+        string fileB = Path.Combine(AppContext.BaseDirectory, "TestData", "duck_copy.jpg");
 
         var fileStorageService = new FileStorageService(
-            fileSystemMock,
+            new FileSystem(),
             new Mock<ILogger<FileStorageService>>().Object);
 
         bool metadataMatches = fileStorageService.DoesFileMetadataMatch(fileA, fileB);
