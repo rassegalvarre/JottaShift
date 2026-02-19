@@ -8,6 +8,11 @@ namespace JottaShift.Tests;
 
 public class FileStorageTests
 {
+    private static readonly string TestDataPath = Path.Combine(AppContext.BaseDirectory, "TestData");
+    private static readonly string Duck = Path.Combine(TestDataPath, "duck.jpg");
+    private static readonly string DuckCopy = Path.Combine(TestDataPath, "duck_copy.jpg");
+    private static readonly string Waterfall = Path.Combine(TestDataPath, "waterfall.jpg");
+
     [Fact]
     public void ValidateDirectory_ShouldBeValidated_WhenFolderExists()
     {
@@ -467,14 +472,11 @@ public class FileStorageTests
     [Fact]
     public void FilesAreBitPerfectMatch_DoesMatch_WhenCopyOfImage()
     {
-        string fileA = Path.Combine(AppContext.BaseDirectory, "TestData", "duck.jpg");
-        string fileB = Path.Combine(AppContext.BaseDirectory, "TestData", "duck_copy.jpg");
-
         var fileStorageService = new FileStorageService(
             new FileSystem(),
             new Mock<ILogger<FileStorageService>>().Object);
 
-        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
+        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(Duck, DuckCopy);
 
         Assert.True(filesAreBitPerfectMatch);
     }
@@ -482,14 +484,11 @@ public class FileStorageTests
     [Fact]
     public void DoesFileMetadataMatch_DoesNotMatch_WhenDifferentImages()
     {
-        string fileA = Path.Combine(AppContext.BaseDirectory, "TestData", "duck.jpg");
-        string fileB = Path.Combine(AppContext.BaseDirectory, "TestData", "waterfall.jpg");
-
         var fileStorageService = new FileStorageService(
             new FileSystem(),
             new Mock<ILogger<FileStorageService>>().Object);
 
-        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(fileA, fileB);
+        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(Duck, Waterfall);
 
         Assert.False(metadataMatches);
     }
@@ -497,14 +496,11 @@ public class FileStorageTests
     [Fact]
     public void DoesFileMetadataMatch_DoesMatch_WhenCopyOfSameImage()
     {
-        string fileA = Path.Combine(AppContext.BaseDirectory, "TestData", "duck.jpg");
-        string fileB = Path.Combine(AppContext.BaseDirectory, "TestData", "duck_copy.jpg");
-
         var fileStorageService = new FileStorageService(
             new FileSystem(),
             new Mock<ILogger<FileStorageService>>().Object);
 
-        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(fileA, fileB);
+        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(Duck, DuckCopy);
 
         Assert.True(metadataMatches);
     }
