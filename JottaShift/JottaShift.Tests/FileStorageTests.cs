@@ -465,6 +465,21 @@ public class FileStorageTests
     }
 
     [Fact]
+    public void FilesAreBitPerfectMatch_DoesMatch_WhenCopyOfImage()
+    {
+        string fileA = Path.Combine(AppContext.BaseDirectory, "TestData", "duck.jpg");
+        string fileB = Path.Combine(AppContext.BaseDirectory, "TestData", "duck_copy.jpg");
+
+        var fileStorageService = new FileStorageService(
+            new FileSystem(),
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
+
+        Assert.True(filesAreBitPerfectMatch);
+    }
+
+    [Fact]
     public void DoesFileMetadataMatch_DoesNotMatch_WhenDifferentImages()
     {
         string fileA = Path.Combine(AppContext.BaseDirectory, "TestData", "duck.jpg");
