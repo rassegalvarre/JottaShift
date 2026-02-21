@@ -1,5 +1,6 @@
 ﻿using JottaShift.Core.FileStorage;
 using JottaShift.Core.TimelineExport;
+using JottaShift.Core.GooglePhotos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -17,6 +18,7 @@ var host = Host.CreateDefaultBuilder(args)
     {
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
+        services.AddScoped<IGooglePhotos, GooglePhotosRepository>();
         services.AddScoped<ITimelineExport, TimelineExportService>();
     })
     .ConfigureLogging(logging =>

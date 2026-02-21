@@ -234,7 +234,7 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTimeFromLastWriteTime(string.Empty);
+        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTime(string.Empty);
 
         Assert.Equal(DateTime.MinValue, timestamp);
     }
@@ -261,7 +261,7 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTimeFromLastWriteTime(filePath);
+        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTime(filePath);
 
         Assert.Equal(creationDate, timestamp);
     }
