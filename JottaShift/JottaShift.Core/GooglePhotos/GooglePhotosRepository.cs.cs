@@ -17,7 +17,7 @@ public class GooglePhotosRepository : IGooglePhotos
         try
         {
             // Path to client credentials JSON obtained from Google Cloud Console
-            const string credentialsPath = @"C:\Users\krist\Downloads\credentials.json";
+            string credentialsPath = Path.Combine(AppContext.BaseDirectory, "GooglePhotos", "credentials.json");
             if (!File.Exists(credentialsPath))
                 throw new FileNotFoundException("Credentials.json not found");
 
