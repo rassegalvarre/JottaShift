@@ -5,6 +5,8 @@ using System.Text;
 
 namespace JottaShift.Tests;
 
+// TODO: We dont want to actually make requests to Google in most of these tests.
+// Test only the connection. How to solve? Create an addition service that mocks the Google Photos API? Or use a library like Moq to mock the service?
 public class GooglePhotosTests
 {
     [Fact]
