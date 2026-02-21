@@ -54,7 +54,11 @@ public sealed class FileStorageService(
         return new CopyAsyncResult(true, newFileName);
     }
 
-    public DateTime GetFileTimestamp(string fileFullPath)
+    // TODO: Use the "Dato tatt" property, if available in metadata.
+    // If not, check "CreationDate", but add a buffer of ~1 hour, since this date can be generated on runtime.
+    // Add ability to get date through filename, i.e img_2025021 etc. Regex?
+    // As a last resort, use LastWriteTime (not 100% reliable as we want the date the media was created)
+    public DateTime GetFileTimestampFromLastWriteTime(string fileFullPath)
     {
         if (!_fileSystem.File.Exists(fileFullPath))
         {
@@ -64,7 +68,7 @@ public sealed class FileStorageService(
         // Does not with images stored on disk. Date is then current data. Must fix
         // LastCreatedTime works, but is not always the date we really want.
         // Check if "Dato tatt" is retrievable
-        return  _fileSystem.File.GetCreationTime(fileFullPath);
+        return  _fileSystem.File.GetLastWriteTime(fileFullPath);
     }
 
     public IEnumerable<string> EnumerateDirectories(string directoryFullPath)

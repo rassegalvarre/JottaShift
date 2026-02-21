@@ -226,7 +226,7 @@ public class FileStorageTests
     }
 
     [Fact]
-    public void GetFileTimestamp_ReturnsMinValue_WhenFileNotFound()
+    public void GetFileTimestampFromLastWriteTime_ReturnsMinValue_WhenFileNotFound()
     {
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
 
@@ -234,13 +234,13 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetFileTimestamp(string.Empty);
+        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTimeFromLastWriteTime(string.Empty);
 
         Assert.Equal(DateTime.MinValue, timestamp);
     }
 
     [Fact]
-    public void GetFileTimestamp_ReturnsLocalCreationDate_WhenFileFound()
+    public void GetFileTimestampFromLastWriteTime_ReturnsLocalCreationDate_WhenFileFound()
     {
         var directory = AppContext.BaseDirectory;
         var filePath = Path.Combine(directory, Path.GetRandomFileName());
@@ -261,7 +261,7 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetFileTimestamp(filePath);
+        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTimeFromLastWriteTime(filePath);
 
         Assert.Equal(creationDate, timestamp);
     }

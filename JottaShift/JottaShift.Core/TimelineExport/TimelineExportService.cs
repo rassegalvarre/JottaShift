@@ -45,7 +45,7 @@ public sealed class TimelineExportService(
 
         foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
         {
-            var timestamp = _fileStorage.GetFileTimestamp(file);
+            var timestamp = _fileStorage.GetFileTimestampFromLastWriteTime(file);
             var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(options.DestinationRoot, file, timestamp);
             var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
 
