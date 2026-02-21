@@ -13,8 +13,10 @@ public class GooglePhotosRepository : IGooglePhotos
 {
     private PhotosLibraryService? _service;
 
+    // TODO: Remove once ready
     private static readonly string TestDataPath = Path.Combine(AppContext.BaseDirectory, "TestData");
     private static readonly string Duck = Path.Combine(TestDataPath, "duck.jpg");
+
     public UserCredential Credential()
     {
         string credentialsPath = Path.Combine(AppContext.BaseDirectory, "GooglePhotos", "credentials.json");
@@ -68,7 +70,7 @@ public class GooglePhotosRepository : IGooglePhotos
         {
             Album = new Album()
             {
-                Title = "Lorem ipsum"
+                Title = "Lorem ipsum" // TODO: Add album-name to appsettings.
             }
         };
         Album created = await photosLibraryService.Albums.Create(newAlbum).ExecuteAsync();
@@ -76,6 +78,8 @@ public class GooglePhotosRepository : IGooglePhotos
         return created != null;
     }
 
+    // TODO: Add method "UploadImagesFromStaging"
+    // TODO: Add method ClearStagedImages
     public async Task<bool> UploadImage()
     {
         var credential = Credential();
@@ -99,7 +103,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
                 }
             },
-            AlbumId = albums.Albums.FirstOrDefault()?.Id
+            AlbumId = albums.Albums.FirstOrDefault()?.Id // TODO: Filter on album defined in appsettings
         }).ExecuteAsync();
 
         return created != null;
