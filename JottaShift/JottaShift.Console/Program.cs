@@ -52,8 +52,13 @@ Console.WriteLine($"Destination directory to copy to:   {options.DestinationRoot
 
 Console.WriteLine("Starting timeline export...");
 
+// Export and re-strucuture the timeline-staging to storage folder
 await exporter.ExportAsync(options, new CancellationToken());
+// TODO: Delete contents in staging after export
 
 Console.WriteLine("Timeline export finished");
+
+// TODO: Read from Chromecast-staging and upload to Google Photos
+// Delete contents in staging after successfull upload
 
 await host.StopAsync();
