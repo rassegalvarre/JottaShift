@@ -61,7 +61,10 @@ public sealed class FileStorageService(
             return default;
         }
 
-        return  _fileSystem.File.GetLastWriteTime(fileFullPath);
+        // Does not with images stored on disk. Date is then current data. Must fix
+        // LastCreatedTime works, but is not always the date we really want.
+        // Check if "Dato tatt" is retrievable
+        return  _fileSystem.File.GetCreationTime(fileFullPath);
     }
 
     public IEnumerable<string> EnumerateDirectories(string directoryFullPath)

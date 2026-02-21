@@ -240,15 +240,15 @@ public class FileStorageTests
     }
 
     [Fact]
-    public void GetFileTimestamp_ReturnsLocalLastWriteDate_WhenFileFound()
+    public void GetFileTimestamp_ReturnsLocalCreationDate_WhenFileFound()
     {
         var directory = AppContext.BaseDirectory;
         var filePath = Path.Combine(directory, Path.GetRandomFileName());
 
-        var lastWriteTime = new DateTime(2025, 6, 15);
+        var creationDate = new DateTime(2010, 6, 15);
         var fileData = new MockFileData([])
         {
-            LastWriteTime = lastWriteTime,
+            CreationTime = creationDate,
         };
 
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
@@ -263,7 +263,7 @@ public class FileStorageTests
 
         var timestamp = fileStorageService.GetFileTimestamp(filePath);
 
-        Assert.Equal(lastWriteTime, timestamp);
+        Assert.Equal(creationDate, timestamp);
     }
 
     [Fact]
