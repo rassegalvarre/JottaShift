@@ -12,17 +12,15 @@ namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosRepository : IGooglePhotos
 {
-    private PhotosLibraryService? _service;
-    
+    public const string AlbumName = "Chromecast";    
 
     private readonly string[] _scopes = [
         PhotosLibraryService.Scope.PhotoslibraryAppendonly,
         PhotosLibraryService.Scope.PhotoslibraryReadonlyAppcreateddata
     ];
 
-    private UserCredential? _userCredential { get; set; }
-
-    public const string AlbumName = "Chromecast";
+    private PhotosLibraryService? _service;
+    private UserCredential? _userCredential;
     
     private async Task<UserCredential> CreateUserCredential()
     {      
