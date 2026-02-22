@@ -2,11 +2,7 @@
 using Google.Apis.PhotosLibrary.v1;
 using Google.Apis.PhotosLibrary.v1.Data;
 using Google.Apis.Services;
-using Google.Apis.Util;
 using Google.Apis.Util.Store;
-using System;
-using System.IO;
-using System.Threading;
 
 namespace JottaShift.Core.GooglePhotos;
 
@@ -25,7 +21,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
     public async Task<int> UploadImagesToAlbum(IEnumerable<string> imagesFullPath, string albumName)
     {
-        var credential = await UserCredential();
+        var credential = await GetUserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
         var album = await GetOrCreateAlbum(albumName);
 
@@ -63,7 +59,7 @@ public class GooglePhotosRepository : IGooglePhotos
         return _userCredential;
     }
 
-    private async Task<UserCredential> UserCredential()
+    private async Task<UserCredential> GetUserCredential()
     {
         if (_userCredential == null)
         {
@@ -110,7 +106,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
     private async Task<Album> CreateAlbum(string albumName)
     {
-        var credential = await UserCredential();
+        var credential = await GetUserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
 
         var request = new CreateAlbumRequest
@@ -126,7 +122,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
     public async Task<Album> GetOrCreateAlbum(string albumName)
     {
-        var credential = await UserCredential();
+        var credential = await GetUserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
         var response = await photosLibraryService.Albums.List().ExecuteAsync();
         
@@ -142,7 +138,7 @@ public class GooglePhotosRepository : IGooglePhotos
     // Note: Should those be in this repo, or TimelineService (rename to StagingService?)
     private async Task<BatchCreateMediaItemsResponse> UploadImages(IEnumerable<string> uploadTokens, string albumId)
     {
-        var credential = await UserCredential();
+        var credential = await GetUserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
 
         var albums = await photosLibraryService.Albums.List().ExecuteAsync();
@@ -162,6 +158,7 @@ public class GooglePhotosRepository : IGooglePhotos
         return created;
     }
 
+    // AI-generated. Should be tested and probably refactored.
     private static async Task<string> UploadFileToGoogleStorage(UserCredential cred, string filePath)
     {
         const string uploadUrl = "https://photoslibrary.googleapis.com/v1/uploads";
@@ -184,7 +181,6 @@ public class GooglePhotosRepository : IGooglePhotos
 
         // The body of a successful response is just the upload token (plain text)
         string uploadToken = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"Upload token received: {uploadToken.Substring(0, Math.Min(10, uploadToken.Length))}…");
         return uploadToken;
     }
 }
