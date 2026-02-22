@@ -41,7 +41,8 @@ public class GooglePhotosRepository : IGooglePhotos
             CancellationToken.None,
             new FileDataStore(credPath, true));
 
-        return credential;
+        _userCredential = credential;
+        return _userCredential;
     }
 
     private async Task<UserCredential> UserCredential()
