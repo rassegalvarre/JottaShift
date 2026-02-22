@@ -84,7 +84,7 @@ public class GooglePhotosRepository : IGooglePhotos
     private async Task<PhotosLibraryService> GetPhotosLibraryService()
     {
         try
-        {            
+        {
             var userCredential = await GetUserCredential();
 
             _service = new PhotosLibraryService(new BaseClientService.Initializer()
