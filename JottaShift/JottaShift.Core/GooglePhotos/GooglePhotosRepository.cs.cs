@@ -6,6 +6,7 @@ using Google.Apis.Util.Store;
 
 namespace JottaShift.Core.GooglePhotos;
 
+// TODO: Add logger and logs
 public class GooglePhotosRepository : IGooglePhotos
 {
     // TODO: Move to settings-file
@@ -21,14 +22,13 @@ public class GooglePhotosRepository : IGooglePhotos
 
     public async Task<int> UploadImagesToAlbum(IEnumerable<string> imagesFullPath, string albumName)
     {
-        var credential = await GetUserCredential();
-        using var photosLibraryService = GetPhotosLibraryService(credential);
+        using var photosLibraryService = await GetPhotosLibraryService();
         var album = await GetOrCreateAlbum(albumName);
 
         var tokens = new List<string>();
         foreach (var image in imagesFullPath)
         {
-            var token = await UploadFileToGoogleStorage(credential, image);
+            var token = await UploadFileToGoogleStorage(image);
             tokens.Add(token);
         }
 
@@ -36,12 +36,34 @@ public class GooglePhotosRepository : IGooglePhotos
         return uploaded?.NewMediaItemResults?.Count ?? 0;
     }
 
-    private async Task<UserCredential> CreateUserCredential()
-    {      
+    private async Task<UserCredential> GetUserCredential()
+    {
+        if (_userCredential != null)
+        {
+            var storedScopes = string.Join(' ', _scopes);
+            if (storedScopes != _userCredential.Token.Scope)
+            {
+                await _userCredential.RevokeTokenAsync(CancellationToken.None);
+            }
+            else if (_userCredential.Token.IsStale)
+            {
+                var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
+                if (refreshed)
+                {
+                    return _userCredential;
+                }
+            }
+            else
+            {
+                return _userCredential;
+            }
+        }
+
+        // Create new credential
         string credentialsPath = Path.Combine(AppContext.BaseDirectory, "GooglePhotos", "credentials.json");
         if (!File.Exists(credentialsPath))
             throw new FileNotFoundException("Credentials.json not found");
-        
+
         using var stream = new FileStream(credentialsPath, FileMode.Open, FileAccess.Read);
         var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
 
@@ -59,36 +81,12 @@ public class GooglePhotosRepository : IGooglePhotos
         return _userCredential;
     }
 
-    private async Task<UserCredential> GetUserCredential()
-    {
-        if (_userCredential == null)
-        {
-            return await CreateUserCredential();
-        }
-
-        if (_userCredential.Token.IsStale)
-        {
-            var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
-            if (!refreshed)
-            {
-                return await CreateUserCredential();
-            }
-        }
-
-        if (_scopes.Contains(_userCredential.Token.Scope))
-        {
-            await _userCredential.RevokeTokenAsync(CancellationToken.None);
-            return await CreateUserCredential();
-        }
-
-        return _userCredential;
-        
-    }
-
-    public PhotosLibraryService GetPhotosLibraryService(UserCredential userCredential)
+    private async Task<PhotosLibraryService> GetPhotosLibraryService()
     {
         try
-        {
+        {            
+            var userCredential = await GetUserCredential();
+
             _service = new PhotosLibraryService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = userCredential,
@@ -106,8 +104,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
     private async Task<Album> CreateAlbum(string albumName)
     {
-        var credential = await GetUserCredential();
-        using var photosLibraryService = GetPhotosLibraryService(credential);
+        using var photosLibraryService = await GetPhotosLibraryService();
 
         var request = new CreateAlbumRequest
         {
@@ -122,8 +119,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
     public async Task<Album> GetOrCreateAlbum(string albumName)
     {
-        var credential = await GetUserCredential();
-        using var photosLibraryService = GetPhotosLibraryService(credential);
+        using var photosLibraryService = await GetPhotosLibraryService();
         var response = await photosLibraryService.Albums.List().ExecuteAsync();
         
         var album = response.Albums?.FirstOrDefault(a => a.Title == albumName);
@@ -135,8 +131,7 @@ public class GooglePhotosRepository : IGooglePhotos
     
     private async Task<BatchCreateMediaItemsResponse> UploadImages(IEnumerable<string> uploadTokens, string albumId)
     {
-        var credential = await GetUserCredential();
-        using var photosLibraryService = GetPhotosLibraryService(credential);
+        using var photosLibraryService = await GetPhotosLibraryService();
 
         var albums = await photosLibraryService.Albums.List().ExecuteAsync();
 
@@ -156,7 +151,7 @@ public class GooglePhotosRepository : IGooglePhotos
     }
 
     // AI-generated. Should be tested and probably refactored.
-    private static async Task<string> UploadFileToGoogleStorage(UserCredential cred, string filePath)
+    private async Task<string> UploadFileToGoogleStorage(string filePath)
     {
         const string uploadUrl = "https://photoslibrary.googleapis.com/v1/uploads";
 
@@ -166,8 +161,13 @@ public class GooglePhotosRepository : IGooglePhotos
             Content = new System.Net.Http.ByteArrayContent(data)
         };
 
+        if (_userCredential == null)
+        {
+            throw new InvalidOperationException("User credential is not available. Please authenticate first.");
+        }
+
         // Required headers (see Google docs)
-        request.Headers.Add("Authorization", $"Bearer {cred.Token.AccessToken}");
+        request.Headers.Add("Authorization", $"Bearer {_userCredential.Token.AccessToken}");
         request.Headers.Add("X-Goog-Upload-File-Name", Path.GetFileName(filePath));
         request.Headers.Add("X-Goog-Upload-Protocol", "raw");
         request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
