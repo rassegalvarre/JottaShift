@@ -61,37 +61,31 @@ public class GooglePhotosRepository : IGooglePhotos
         }
     }
 
-    public async Task<Album> InitializeAlbum(string albumName)
+    private async Task<Album> CreateAlbum(string albumName)
     {
         var credential = CreateUserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
 
-        // Check if album already exists
-        var album = await GetAlbum(albumName);
-        if (album != null)
-        {
-            return album;
-        }
-
-        var newAlbum = new CreateAlbumRequest
+        var request = new CreateAlbumRequest
         {
             Album = new Album()
             {
                 Title = albumName
             }
         };
-        album = await photosLibraryService.Albums.Create(newAlbum).ExecuteAsync();
-
-        return album;
+        var newAlbum = await photosLibraryService.Albums.Create(request).ExecuteAsync();
+        return newAlbum;
     }
 
-    public async Task<Album?> GetAlbum(string albumName)
+    public async Task<Album> GetOrCreateAlbum(string albumName)
     {
         var credential = CreateUserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
-        var albums = await photosLibraryService.Albums.List().ExecuteAsync();
+        var response = await photosLibraryService.Albums.List().ExecuteAsync();
+        
+        var album = response.Albums?.FirstOrDefault(a => a.Title == albumName);
 
-        var album = albums.Albums.FirstOrDefault(a => a.Title == albumName);
+        album ??= await CreateAlbum(albumName);
 
         return album;
     }
@@ -100,7 +94,7 @@ public class GooglePhotosRepository : IGooglePhotos
     {
         var credential = CreateUserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
-        var album = await GetAlbum(albumName);
+        var album = await GetOrCreateAlbum(albumName);
 
         var tokens = new List<string>();
         foreach (var image in imagesFullPath)

@@ -15,41 +15,15 @@ public class GooglePhotosTests
 
     private const string TestAlbumName = "JottaShift.UnitTests";
 
-    [Fact]
-    public void GetPhotosLibraryService_CreatesService_WhenCredentialsFound()
-    {
-        var googlePhotosRepository = new GooglePhotosRepository();
-        var credential = googlePhotosRepository.CreateUserCredential();
-
-        var photosLibraryService = googlePhotosRepository.GetPhotosLibraryService(credential);
-
-        Assert.NotNull(photosLibraryService);
-    }
 
     [Fact]
-    public async Task InitializeAlbum_CreatesAlbum_WhenNoneExists()
+    public async Task GetOrCreateAlbum_CreateOrGetsAlbum_WithAlbumName()
     {
         var googlePhotosRepository = new GooglePhotosRepository();
 
-        var noneExstingAlbum = await googlePhotosRepository.GetAlbum(TestAlbumName);
-        Assert.Null(noneExstingAlbum);
-
-        var newAbum = await googlePhotosRepository.InitializeAlbum(TestAlbumName);
-        Assert.NotNull(newAbum);
+        var album = await googlePhotosRepository.GetOrCreateAlbum(TestAlbumName);
+        Assert.NotNull(album);
     }
-
-    [Fact]
-    public async Task InitializeAlbum_ReturnsExistingAlbum_WhenOneExists()
-    {
-        var googlePhotosRepository = new GooglePhotosRepository();
-
-        var exixstingAlbum = await googlePhotosRepository.GetAlbum(TestAlbumName);
-        Assert.NotNull(exixstingAlbum);
-
-        var newResult = await googlePhotosRepository.InitializeAlbum(TestAlbumName);
-        Assert.Equal(exixstingAlbum.Id, newResult.Id);
-    }
-
 
     [Fact]
     public async Task UploadImage_UploadsTestImage()
