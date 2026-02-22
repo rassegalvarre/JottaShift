@@ -1,7 +1,7 @@
 ﻿namespace JottaShift.Core.TimelineExport;
 
-// TODO: Add method "UploadImagesFromStagingToGooglePhotosAlbum"
-// TODO: Add method "UploadSteamScreenShotsToGamesFolder"
+// TODO: Add method "UploadImagesToGooglePhotosAlbum"
+// TODO: Add method "UploadSteamScreenShotsToGamesDirectory"
 // TODO: Add method ClearStagedData
 // TODO: Rename to StagingService
 public interface ITimelineExport
