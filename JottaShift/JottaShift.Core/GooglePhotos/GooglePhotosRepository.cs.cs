@@ -22,7 +22,24 @@ public class GooglePhotosRepository : IGooglePhotos
 
     private PhotosLibraryService? _service;
     private UserCredential? _userCredential;
-    
+
+    public async Task<int> UploadImagesToAlbum(IEnumerable<string> imagesFullPath, string albumName)
+    {
+        var credential = await UserCredential();
+        using var photosLibraryService = GetPhotosLibraryService(credential);
+        var album = await GetOrCreateAlbum(albumName);
+
+        var tokens = new List<string>();
+        foreach (var image in imagesFullPath)
+        {
+            var token = await UploadFileToGoogleStorage(credential, image);
+            tokens.Add(token);
+        }
+
+        var uploaded = await UploadImages(tokens, album.Id);
+        return uploaded?.NewMediaItemResults?.Count ?? 0;
+    }
+
     private async Task<UserCredential> CreateUserCredential()
     {      
         string credentialsPath = Path.Combine(AppContext.BaseDirectory, "GooglePhotos", "credentials.json");
@@ -118,24 +135,7 @@ public class GooglePhotosRepository : IGooglePhotos
         album ??= await CreateAlbum(albumName);
 
         return album;
-    }
-
-    public async Task<int> UploadImagesToAlbum(IEnumerable<string> imagesFullPath, string albumName)
-    {
-        var credential = await UserCredential();
-        using var photosLibraryService = GetPhotosLibraryService(credential);
-        var album = await GetOrCreateAlbum(albumName);
-
-        var tokens = new List<string>();
-        foreach (var image in imagesFullPath)
-        {
-            var token = await UploadFileToGoogleStorage(credential, image);
-            tokens.Add(token);
-        }
-
-        var uploaded = await UploadImages(tokens, album.Id);
-        return uploaded?.NewMediaItemResults?.Count ?? 0;
-    }
+    }    
 
     // TODO: Add method "UploadImagesFromStaging"
     // TODO: Add method ClearStagedImages
