@@ -8,11 +8,6 @@ namespace JottaShift.Tests;
 
 public class FileStorageTests
 {
-    private static readonly string TestDataPath = Path.Combine(AppContext.BaseDirectory, "TestData");
-    private static readonly string Duck = Path.Combine(TestDataPath, "duck.jpg");
-    private static readonly string DuckCopy = Path.Combine(TestDataPath, "duck_copy.jpg");
-    private static readonly string Waterfall = Path.Combine(TestDataPath, "waterfall.jpg");
-
     [Fact]
     public void ValidateDirectory_ShouldBeValidated_WhenFolderExists()
     {
@@ -234,21 +229,21 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTimeFromLastWriteTime(string.Empty);
+        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTime(string.Empty);
 
         Assert.Equal(DateTime.MinValue, timestamp);
     }
 
     [Fact]
-    public void GetFileTimestampFromLastWriteTime_ReturnsLocalCreationDate_WhenFileFound()
+    public void GetFileTimestampFromLastWriteTime_ReturnsLocalWriteDate_WhenFileFound()
     {
         var directory = AppContext.BaseDirectory;
         var filePath = Path.Combine(directory, Path.GetRandomFileName());
 
-        var creationDate = new DateTime(2010, 6, 15);
+        var writeDate = new DateTime(2010, 6, 15);
         var fileData = new MockFileData([])
         {
-            CreationTime = creationDate,
+            LastWriteTime = writeDate,
         };
 
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
@@ -261,9 +256,9 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTimeFromLastWriteTime(filePath);
+        var timestamp = fileStorageService.GetFileTimestampFromLastWriteTime(filePath);
 
-        Assert.Equal(creationDate, timestamp);
+        Assert.Equal(writeDate, timestamp);
     }
 
     [Fact]
@@ -476,7 +471,7 @@ public class FileStorageTests
             new FileSystem(),
             new Mock<ILogger<FileStorageService>>().Object);
 
-        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(Duck, DuckCopy);
+        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(TestData.Duck, TestData.DuckCopy);
 
         Assert.True(filesAreBitPerfectMatch);
     }
@@ -488,7 +483,7 @@ public class FileStorageTests
             new FileSystem(),
             new Mock<ILogger<FileStorageService>>().Object);
 
-        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(Duck, Waterfall);
+        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(TestData.Duck, TestData.Waterfall);
 
         Assert.False(metadataMatches);
     }
@@ -500,7 +495,7 @@ public class FileStorageTests
             new FileSystem(),
             new Mock<ILogger<FileStorageService>>().Object);
 
-        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(Duck, DuckCopy);
+        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(TestData.Duck, TestData.DuckCopy);
 
         Assert.True(metadataMatches);
     }

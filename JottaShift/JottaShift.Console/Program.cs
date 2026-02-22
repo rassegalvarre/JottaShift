@@ -1,5 +1,6 @@
 ﻿using JottaShift.Core.FileStorage;
 using JottaShift.Core.TimelineExport;
+using JottaShift.Core.GooglePhotos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -17,6 +18,7 @@ var host = Host.CreateDefaultBuilder(args)
     {
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
+        services.AddScoped<IGooglePhotos, GooglePhotosRepository>();
         services.AddScoped<ITimelineExport, TimelineExportService>();
     })
     .ConfigureLogging(logging =>
@@ -50,8 +52,13 @@ Console.WriteLine($"Destination directory to copy to:   {options.DestinationRoot
 
 Console.WriteLine("Starting timeline export...");
 
+// Export and re-strucuture the timeline-staging to storage folder
 await exporter.ExportAsync(options, new CancellationToken());
+// TODO: Delete contents in staging after export
 
 Console.WriteLine("Timeline export finished");
+
+// TODO: Read from Chromecast-staging and upload to Google Photos
+// Delete contents in staging after successfull upload
 
 await host.StopAsync();
