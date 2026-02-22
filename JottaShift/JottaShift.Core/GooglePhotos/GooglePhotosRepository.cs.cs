@@ -2,6 +2,7 @@
 using Google.Apis.PhotosLibrary.v1;
 using Google.Apis.PhotosLibrary.v1.Data;
 using Google.Apis.Services;
+using Google.Apis.Util;
 using Google.Apis.Util.Store;
 using System;
 using System.IO;
@@ -13,33 +14,62 @@ public class GooglePhotosRepository : IGooglePhotos
 {
     private PhotosLibraryService? _service;
     
-    public const string AlbumName = "Chromecast";
 
-    private readonly string[] _Scopes = {
+    private readonly string[] _scopes = [
         PhotosLibraryService.Scope.PhotoslibraryAppendonly,
         PhotosLibraryService.Scope.PhotoslibraryReadonlyAppcreateddata
-    };
+    ];
 
-    // TODO: Check if credential.Token.Scopes matches _Scopes. If not - revoke and reload
-    public UserCredential CreateUserCredential()
-    {
+    private UserCredential? _userCredential { get; set; }
+
+    public const string AlbumName = "Chromecast";
+    
+    private async Task<UserCredential> CreateUserCredential()
+    {      
         string credentialsPath = Path.Combine(AppContext.BaseDirectory, "GooglePhotos", "credentials.json");
         if (!File.Exists(credentialsPath))
             throw new FileNotFoundException("Credentials.json not found");
         
         using var stream = new FileStream(credentialsPath, FileMode.Open, FileAccess.Read);
-        var secrets = GoogleClientSecrets.FromStream(stream).Secrets;
+        var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
+
 
         // Token will be stored in the token.json folder
         var credPath = "token.json";
-        var credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-            secrets,
-            _Scopes,
+        var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+            secretsResult.Secrets,
+            _scopes,
             "user",
             CancellationToken.None,
-            new FileDataStore(credPath, true)).Result;
+            new FileDataStore(credPath, true));
 
         return credential;
+    }
+
+    private async Task<UserCredential> UserCredential()
+    {
+        if (_userCredential == null)
+        {
+            return await CreateUserCredential();
+        }
+
+        if (_userCredential.Token.IsStale)
+        {
+            var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
+            if (!refreshed)
+            {
+                return await CreateUserCredential();
+            }
+        }
+
+        if (_scopes.Contains(_userCredential.Token.Scope))
+        {
+            await _userCredential.RevokeTokenAsync(CancellationToken.None);
+            return await CreateUserCredential();
+        }
+
+        return _userCredential;
+        
     }
 
     public PhotosLibraryService GetPhotosLibraryService(UserCredential userCredential)
@@ -63,7 +93,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
     private async Task<Album> CreateAlbum(string albumName)
     {
-        var credential = CreateUserCredential();
+        var credential = await UserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
 
         var request = new CreateAlbumRequest
@@ -79,7 +109,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
     public async Task<Album> GetOrCreateAlbum(string albumName)
     {
-        var credential = CreateUserCredential();
+        var credential = await UserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
         var response = await photosLibraryService.Albums.List().ExecuteAsync();
         
@@ -92,7 +122,7 @@ public class GooglePhotosRepository : IGooglePhotos
 
     public async Task<bool> UploadImageToAlbum(IEnumerable<string> imagesFullPath, string albumName)
     {
-        var credential = CreateUserCredential();
+        var credential = await UserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
         var album = await GetOrCreateAlbum(albumName);
 
@@ -112,7 +142,7 @@ public class GooglePhotosRepository : IGooglePhotos
     // Note: Should those be in this repo, or TimelineService (rename to StagingService?)
     private async Task<BatchCreateMediaItemsResponse> UploadImages(IEnumerable<string> uploadTokens, string albumId)
     {
-        var credential = CreateUserCredential();
+        var credential = await UserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
 
         var albums = await photosLibraryService.Albums.List().ExecuteAsync();
