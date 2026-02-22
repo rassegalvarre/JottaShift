@@ -120,7 +120,7 @@ public class GooglePhotosRepository : IGooglePhotos
         return album;
     }
 
-    public async Task<int> UploadImageToAlbum(IEnumerable<string> imagesFullPath, string albumName)
+    public async Task<int> UploadImagesToAlbum(IEnumerable<string> imagesFullPath, string albumName)
     {
         var credential = await UserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);

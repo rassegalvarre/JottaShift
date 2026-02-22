@@ -31,7 +31,7 @@ public class GooglePhotosTests
 
         var googlePhotosRepository = new GooglePhotosRepository();
 
-        var uploadedItems = await googlePhotosRepository.UploadImageToAlbum(images, TestAlbumName);
+        var uploadedItems = await googlePhotosRepository.UploadImagesToAlbum(images, TestAlbumName);
 
         Assert.Equal(images.Count, uploadedItems);
     }
