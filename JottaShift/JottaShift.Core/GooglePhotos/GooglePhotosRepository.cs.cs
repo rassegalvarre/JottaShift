@@ -67,6 +67,11 @@ public class GooglePhotosRepository : IGooglePhotos
         using var photosLibraryService = GetPhotosLibraryService(credential);
 
         // Check if album already exists
+        var album = await GetAlbum(albumName);
+        if (album != null)
+        {
+            return album;
+        }
 
         var newAlbum = new CreateAlbumRequest
         {
@@ -75,20 +80,18 @@ public class GooglePhotosRepository : IGooglePhotos
                 Title = albumName
             }
         };
-        Album album = await photosLibraryService.Albums.Create(newAlbum).ExecuteAsync();
+        album = await photosLibraryService.Albums.Create(newAlbum).ExecuteAsync();
 
         return album;
     }
 
-    private async Task<Album> GetAlbum(string albumName)
+    public async Task<Album?> GetAlbum(string albumName)
     {
         var credential = CreateUserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
         var albums = await photosLibraryService.Albums.List().ExecuteAsync();
 
         var album = albums.Albums.FirstOrDefault(a => a.Title == albumName);
-
-        album ??= await InitializeAlbum(albumName);
 
         return album;
     }

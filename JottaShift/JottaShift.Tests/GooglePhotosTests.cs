@@ -13,6 +13,8 @@ public class GooglePhotosTests
     private static readonly string TestDataPath = Path.Combine(AppContext.BaseDirectory, "TestData");
     private static readonly string Duck = Path.Combine(TestDataPath, "duck.jpg");
 
+    private const string TestAlbumName = "JottaShift.UnitTests";
+
     [Fact]
     public void GetPhotosLibraryService_CreatesService_WhenCredentialsFound()
     {
@@ -29,10 +31,25 @@ public class GooglePhotosTests
     {
         var googlePhotosRepository = new GooglePhotosRepository();
 
-        var result = await googlePhotosRepository.InitializeAlbum(GooglePhotosRepository.AlbumName);
+        var noneExstingAlbum = await googlePhotosRepository.GetAlbum(TestAlbumName);
+        Assert.Null(noneExstingAlbum);
 
-        Assert.NotNull(result);
+        var newAbum = await googlePhotosRepository.InitializeAlbum(TestAlbumName);
+        Assert.NotNull(newAbum);
     }
+
+    [Fact]
+    public async Task InitializeAlbum_ReturnsExistingAlbum_WhenOneExists()
+    {
+        var googlePhotosRepository = new GooglePhotosRepository();
+
+        var exixstingAlbum = await googlePhotosRepository.GetAlbum(TestAlbumName);
+        Assert.NotNull(exixstingAlbum);
+
+        var newResult = await googlePhotosRepository.InitializeAlbum(TestAlbumName);
+        Assert.Equal(exixstingAlbum.Id, newResult.Id);
+    }
+
 
     [Fact]
     public async Task UploadImage_UploadsTestImage()
