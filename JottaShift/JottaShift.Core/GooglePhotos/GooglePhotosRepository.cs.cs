@@ -131,11 +131,8 @@ public class GooglePhotosRepository : IGooglePhotos
         album ??= await CreateAlbum(albumName);
 
         return album;
-    }    
-
-    // TODO: Add method "UploadImagesFromStaging"
-    // TODO: Add method ClearStagedImages
-    // Note: Should those be in this repo, or TimelineService (rename to StagingService?)
+    }
+    
     private async Task<BatchCreateMediaItemsResponse> UploadImages(IEnumerable<string> uploadTokens, string albumId)
     {
         var credential = await GetUserCredential();
