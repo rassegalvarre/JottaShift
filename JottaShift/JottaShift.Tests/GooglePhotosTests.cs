@@ -9,10 +9,6 @@ namespace JottaShift.Tests;
 // Test only the connection. How to solve? Create an addition service that mocks the Google Photos API? Or use a library like Moq to mock the service?
 public class GooglePhotosTests
 {
-    // TODO: Move to TestData-class
-    private static readonly string TestDataPath = Path.Combine(AppContext.BaseDirectory, "TestData");
-    private static readonly string Duck = Path.Combine(TestDataPath, "duck.jpg");
-
     private const string TestAlbumName = "JottaShift.UnitTests";
 
 
@@ -28,12 +24,15 @@ public class GooglePhotosTests
     [Fact]
     public async Task UploadImage_UploadsTestImage()
     {
-        var images = new List<string> { Duck };
+        var images = new List<string> {
+            TestData.Duck,
+            TestData.Waterfall
+        };
 
         var googlePhotosRepository = new GooglePhotosRepository();
 
-        var result = await googlePhotosRepository.UploadImageToAlbum(images, GooglePhotosRepository.AlbumName);
+        var uploadedItems = await googlePhotosRepository.UploadImageToAlbum(images, TestAlbumName);
 
-        Assert.True(result);
+        Assert.Equal(images.Count, uploadedItems);
     }
 }

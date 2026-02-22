@@ -12,7 +12,8 @@ namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosRepository : IGooglePhotos
 {
-    public const string AlbumName = "Chromecast";    
+    // TODO: Move to settings-file
+    public const string DefaultAlbumName = "Chromecast";    
 
     private readonly string[] _scopes = [
         PhotosLibraryService.Scope.PhotoslibraryAppendonly,
@@ -119,7 +120,7 @@ public class GooglePhotosRepository : IGooglePhotos
         return album;
     }
 
-    public async Task<bool> UploadImageToAlbum(IEnumerable<string> imagesFullPath, string albumName)
+    public async Task<int> UploadImageToAlbum(IEnumerable<string> imagesFullPath, string albumName)
     {
         var credential = await UserCredential();
         using var photosLibraryService = GetPhotosLibraryService(credential);
@@ -133,7 +134,7 @@ public class GooglePhotosRepository : IGooglePhotos
         }
 
         var uploaded = await UploadImages(tokens, album.Id);
-        return uploaded != null;
+        return uploaded?.NewMediaItemResults?.Count ?? 0;
     }
 
     // TODO: Add method "UploadImagesFromStaging"
