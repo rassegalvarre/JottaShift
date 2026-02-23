@@ -4,6 +4,6 @@ using System.Text;
 
 namespace JottaShift.Core.SteamRepository;
 
-internal class ISteamRepository
+public interface ISteamRepository
 {
 }
