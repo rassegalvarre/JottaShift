@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="GooglePhotos\credentials.json" />
+    <None Remove="GooglePhotosRepository\credentials.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="GooglePhotos\credentials.json">
+    <Content Include="GooglePhotosRepository\credentials.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -7,7 +7,7 @@ using Google.Apis.Util.Store;
 namespace JottaShift.Core.GooglePhotos;
 
 // TODO: Add logger and logs
-public class GooglePhotosRepository : IGooglePhotos
+public class GooglePhotosRepository : IGooglePhotosRepository
 {
     // TODO: Move to settings-file
     public const string DefaultAlbumName = "Chromecast";    

@@ -1,6 +1,6 @@
 ﻿namespace JottaShift.Core.GooglePhotos;
 
-public interface IGooglePhotos
+public interface IGooglePhotosRepository
 {
     /// <summary>
     /// Uploads a list of images to Google Storage and adds them to an album.

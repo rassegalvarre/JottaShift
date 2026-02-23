@@ -18,7 +18,7 @@ var host = Host.CreateDefaultBuilder(args)
     {
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
-        services.AddScoped<IGooglePhotos, GooglePhotosRepository>();
+        services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
         services.AddScoped<ITimelineExport, TimelineExportService>();
     })
     .ConfigureLogging(logging =>

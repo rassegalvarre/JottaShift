@@ -55,3 +55,4 @@ nunit-*.xml
 /JottaShift/.vs
 /JottaShift/JottaShift.Core/GooglePhotos/credentials.json
 /.vs
+/JottaShift/JottaShift.Core/GooglePhotosRepository/credentials.json
