@@ -54,3 +54,4 @@ TestResult.xml
 nunit-*.xml
 /JottaShift/.vs
 /JottaShift/JottaShift.Core/GooglePhotos/credentials.json
+/.vs
