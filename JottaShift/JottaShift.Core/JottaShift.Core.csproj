@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <None Remove="google-api-credentials.json" />
-    <None Remove="GooglePhotosRepository\credentials.json" />
   </ItemGroup>
 
   <ItemGroup>
