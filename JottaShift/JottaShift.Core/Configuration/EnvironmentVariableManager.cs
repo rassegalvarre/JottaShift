@@ -1,8 +1,4 @@
-﻿using JottaShift.Core.FileStorage;
-using System;
-using System.Collections.Generic;
-using System.IO.Abstractions;
-using System.Text;
+﻿using System.IO.Abstractions;
 using System.Text.Json;
 
 namespace JottaShift.Core.Configuration;
@@ -14,6 +10,8 @@ public class EnvironmentVariableManager()
     private const string _googlePhotosLibraryApiClientSecret = "GOOGLEPHOTOSLIBRARAPI_CLIENTSECRET";
     private const string _steamWebApiClientApiKey = "STEAMWEBAPI_CLIENTAPIKEY";
     private const string _steamWebApiStoreLanguage = "STEAMWEBAPI_STORELANGUAGE";
+
+    private const EnvironmentVariableTarget _defaultEnvironmentVariableTarget = EnvironmentVariableTarget.User;
 
     public static string? GooglePhotosLibraryApiProjectId => Environment.GetEnvironmentVariable(_googlePhotosLibraryApiProjectId);
     public static string? GooglePhotosLibraryApiClientId => Environment.GetEnvironmentVariable(_googlePhotosLibraryApiClientId);
@@ -36,17 +34,30 @@ public class EnvironmentVariableManager()
 
         var environmentVariables = MapApiCredentialsToEnvironmentVariables(apiCredentials);
 
+        bool hasError = false;
+
         foreach (var envFromFile in environmentVariables)
         {
-            Console.WriteLine(envFromFile.Key);
-            var storedEnv = Environment.GetEnvironmentVariable(envFromFile.Key);
+            var storedEnv = Environment.GetEnvironmentVariable(envFromFile.Key, _defaultEnvironmentVariableTarget);
 
             if (envFromFile.Value == storedEnv)
             {
                 continue;
             }
             
-            Environment.SetEnvironmentVariable(envFromFile.Key, envFromFile.Value);
+            Environment.SetEnvironmentVariable(envFromFile.Key, envFromFile.Value, _defaultEnvironmentVariableTarget);
+
+            var newStoredEnv = Environment.GetEnvironmentVariable(envFromFile.Key, _defaultEnvironmentVariableTarget);
+            if (newStoredEnv != envFromFile.Value)
+            {
+                hasError = true;
+            }
+
+        }
+
+        if (!hasError)
+        {
+            fileSystem.File.Delete(filePath);
         }
     }
 
