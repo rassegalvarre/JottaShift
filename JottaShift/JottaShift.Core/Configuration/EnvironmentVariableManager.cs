@@ -19,6 +19,8 @@ public class EnvironmentVariableManager()
     public static string? SteamWebApiClientApiKey => Environment.GetEnvironmentVariable(_steamWebApiClientApiKey);
     public static string? SteamWebApiStoreLanguage => Environment.GetEnvironmentVariable(_steamWebApiStoreLanguage);
 
+    /// <param name="filePath">A JSON-file that follows the schema of <see cref="ApiCredentials"/></param>
+    /// <param name="deleteFileAfterInit"></param>
     public static void InitializeEnvironmentVariables(string filePath, bool deleteFileAfterInit = true)
     {
         var fileSystem = new FileSystem();
@@ -39,7 +41,6 @@ public class EnvironmentVariableManager()
         foreach (var envFromFile in environmentVariables)
         {
             var storedEnv = Environment.GetEnvironmentVariable(envFromFile.Key, _defaultEnvironmentVariableTarget);
-
             if (envFromFile.Value == storedEnv)
             {
                 continue;
@@ -55,7 +56,7 @@ public class EnvironmentVariableManager()
 
         }
 
-        if (!hasError)
+        if (deleteFileAfterInit && !hasError)
         {
             fileSystem.File.Delete(filePath);
         }
