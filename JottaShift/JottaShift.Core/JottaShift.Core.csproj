@@ -7,11 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Configuration\export_settings.json" />
     <None Remove="GooglePhotosRepository\credentials.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="GooglePhotosRepository\credentials.json">
+    <Content Include="Configuration\api_credentials.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Configuration\export_settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

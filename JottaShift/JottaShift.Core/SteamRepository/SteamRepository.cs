@@ -11,7 +11,7 @@ public class SteamRepository : ISteamRepository
         var factory = new SteamWebInterfaceFactory(apiKey);
         var web = new SteamStore(new HttpClient());
 
-        var result = await web.GetStoreAppDetailsAsync(id, language: "no");
+        var result = await web.GetStoreAppDetailsAsync(id, language: "no"); // TODO: Make language configurable
 
         return result.Name;
     }
