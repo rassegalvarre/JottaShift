@@ -1,45 +1,66 @@
-﻿using System;
+﻿using JottaShift.Core.FileStorage;
+using System;
 using System.Collections.Generic;
+using System.IO.Abstractions;
 using System.Text;
+using System.Text.Json;
 
 namespace JottaShift.Core.Configuration;
 
-public class EnvironmentVariableManager
+public class EnvironmentVariableManager()
 {
-    public static string? GooglePhotosLibraryApiProjectId => Environment.GetEnvironmentVariable("GooglePhotosLibraryApi_ProjectId");
-    public static string? GooglePhotosLibraryApiClientId => Environment.GetEnvironmentVariable("GooglePhotosLibraryApi_ClientId");
-    public static string? GooglePhotosLibraryApiClientSecret => Environment.GetEnvironmentVariable("GooglePhotosLibraryApi_ClientSecret");
-    public static string? SteamWebApiClientApiKey => Environment.GetEnvironmentVariable("SteamWebApi_ClientApiKey");
-    public static string? SteamWebApiStoreLanguage => Environment.GetEnvironmentVariable("SteamWebApi_StoreLanguage");
+    private const string _googlePhotosLibraryApiProjectId = "GOOGLEPHOTOSLIBRARAPI_PROJECTID";
+    private const string _googlePhotosLibraryApiClientId = "GOOGLEPHOTOSLIBRARAPI_CLIENTID";
+    private const string _googlePhotosLibraryApiClientSecret = "GOOGLEPHOTOSLIBRARAPI_CLIENTSECRET";
+    private const string _steamWebApiClientApiKey = "STEAMWEBAPI_CLIENTAPIKEY";
+    private const string _steamWebApiStoreLanguage = "STEAMWEBAPI_STORELANGUAGE";
 
-    private static readonly string?[] _environmentVariableNames =
-    [
-        GooglePhotosLibraryApiProjectId,
-        GooglePhotosLibraryApiClientId,
-        GooglePhotosLibraryApiClientSecret,
-        SteamWebApiClientApiKey,
-        SteamWebApiStoreLanguage,
-    ];
+    public static string? GooglePhotosLibraryApiProjectId => Environment.GetEnvironmentVariable(_googlePhotosLibraryApiProjectId);
+    public static string? GooglePhotosLibraryApiClientId => Environment.GetEnvironmentVariable(_googlePhotosLibraryApiClientId);
+    public static string? GooglePhotosLibraryApiClientSecret => Environment.GetEnvironmentVariable(_googlePhotosLibraryApiClientSecret);
+    public static string? SteamWebApiClientApiKey => Environment.GetEnvironmentVariable(_steamWebApiClientApiKey);
+    public static string? SteamWebApiStoreLanguage => Environment.GetEnvironmentVariable(_steamWebApiStoreLanguage);
 
-    // Prompt each variable from the user, and set it in the environment 
-    public static void InitializeEnvironmentVariables()
+    public static void InitializeEnvironmentVariables(string filePath, bool deleteFileAfterInit = true)
     {
-        foreach (var environmentVariable in _environmentVariableNames)
-        {
-            Console.WriteLine(environmentVariable);
-            //if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(environmentVariable)))
-            //{
-            //    continue; // Skip if already set
-            //}
+        var fileSystem = new FileSystem();
 
-            //Console.Write($"Enter value for {environmentVariable}: ");
-            //var value = Console.ReadLine();
-            //if (string.IsNullOrEmpty(value))
-            //{
-            //    Console.WriteLine($"Value for {environmentVariable} cannot be empty. Please try again.");
-            //    return;
-            //}
-            //Environment.SetEnvironmentVariable(environmentVariable, value);
+        if (!fileSystem.File.Exists(filePath))
+        {
+            throw new FileNotFoundException($"File not found");
         }
+
+        var file = fileSystem.File.ReadAllText(filePath);
+        var apiCredentials = JsonSerializer.Deserialize<ApiCredentials>(file) ??
+            throw new JsonException("Failed to deserialize API credentials");
+
+        var environmentVariables = MapApiCredentialsToEnvironmentVariables(apiCredentials);
+
+        foreach (var envFromFile in environmentVariables)
+        {
+            Console.WriteLine(envFromFile.Key);
+            var storedEnv = Environment.GetEnvironmentVariable(envFromFile.Key);
+
+            if (envFromFile.Value == storedEnv)
+            {
+                continue;
+            }
+            
+            Environment.SetEnvironmentVariable(envFromFile.Key, envFromFile.Value);
+        }
+    }
+
+    private static Dictionary<string, string> MapApiCredentialsToEnvironmentVariables(ApiCredentials apiCredentials)
+    {
+        var dictonary = new Dictionary<string, string>()
+        {
+            { _googlePhotosLibraryApiProjectId, apiCredentials.ApiClients.GooglePhotosLibraryApi.Installed.ProjectId },
+            { _googlePhotosLibraryApiClientId, apiCredentials.ApiClients.GooglePhotosLibraryApi.Installed.ClientId  },
+            { _googlePhotosLibraryApiClientSecret, apiCredentials.ApiClients.GooglePhotosLibraryApi.Installed.ClientSecret },
+            { _steamWebApiClientApiKey, apiCredentials.ApiClients.SteamWebApi.ApiKey },
+            { _steamWebApiStoreLanguage, apiCredentials.ApiClients.SteamWebApi.StoreLanguage }
+        };
+
+        return dictonary;
     }
 }

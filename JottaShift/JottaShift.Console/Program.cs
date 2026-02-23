@@ -38,7 +38,7 @@ var host = Host.CreateDefaultBuilder(args)
 
 await host.StartAsync();
 
-EnvironmentVariableManager.InitializeEnvironmentVariables();
+EnvironmentVariableManager.InitializeEnvironmentVariables(@"C:\Users\krist\Downloads\api_credentials.json");
 
 bool doExport = false;
 
