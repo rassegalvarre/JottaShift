@@ -60,9 +60,13 @@ public class GooglePhotosRepository : IGooglePhotosRepository
         }
 
         // Create new credential
-        string credentialsPath = Path.Combine(AppContext.BaseDirectory, "GooglePhotos", "credentials.json");
+        string credentialsPath = Path.Combine(AppContext.BaseDirectory, "google-api-credentials.json");
         if (!File.Exists(credentialsPath))
             throw new FileNotFoundException("Credentials.json not found");
+
+        // TODO: Serialize to POCO
+        // Add values from EnvVars
+        // Read into stream
 
         using var stream = new FileStream(credentialsPath, FileMode.Open, FileAccess.Read);
         var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
