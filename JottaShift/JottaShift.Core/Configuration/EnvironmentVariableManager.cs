@@ -9,8 +9,8 @@ public class EnvironmentVariableManager
     public static string? GooglePhotosLibraryApiProjectId => Environment.GetEnvironmentVariable("GooglePhotosLibraryApi_ProjectId");
     public static string? GooglePhotosLibraryApiClientId => Environment.GetEnvironmentVariable("GooglePhotosLibraryApi_ClientId");
     public static string? GooglePhotosLibraryApiClientSecret => Environment.GetEnvironmentVariable("GooglePhotosLibraryApi_ClientSecret");
-    public static string? SteamWebApiClientApiKey = Environment.GetEnvironmentVariable("SteamWebApi_ClientApiKey");
-    public static string? SteamWebApiStoreLanguage = Environment.GetEnvironmentVariable("SteamWebApi_StoreLanguage");
+    public static string? SteamWebApiClientApiKey => Environment.GetEnvironmentVariable("SteamWebApi_ClientApiKey");
+    public static string? SteamWebApiStoreLanguage => Environment.GetEnvironmentVariable("SteamWebApi_StoreLanguage");
 
     private static readonly string?[] _environmentVariableNames =
     [
