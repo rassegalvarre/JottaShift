@@ -1,18 +1,27 @@
-﻿using SteamWebAPI2.Interfaces;
+﻿using Microsoft.Extensions.Logging;
+using SteamWebAPI2.Interfaces;
 using SteamWebAPI2.Utilities;
 
 namespace JottaShift.Core.SteamRepository;
 
-public class SteamRepository : ISteamRepository
+public class SteamRepository(ILogger<SteamRepository> _logger) : ISteamRepository
 {
-    public async Task<string> GetAppNameFromId(uint id)
+    public async Task<string> GetAppNameFromId(uint appId)
     {
-        const string apiKey = ""; // DONT COMMIT
-        var factory = new SteamWebInterfaceFactory(apiKey);
         var web = new SteamStore(new HttpClient());
 
-        var result = await web.GetStoreAppDetailsAsync(id, language: "no"); // TODO: Make language configurable
+        string appName = string.Empty;
 
-        return result.Name;
+        try
+        {
+            var result = await web.GetStoreAppDetailsAsync(appId, language: "no"); // TODO: Get from config
+            appName = result?.Name ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Exception occured when fetching name for app with id {Appid}. ExceptionMessage: {Message}", appId, ex.Message);
+        }
+
+        return appName;
     }
 }

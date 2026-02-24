@@ -38,11 +38,12 @@ var host = Host.CreateDefaultBuilder(args)
 
 await host.StartAsync();
 
-EnvironmentVariableManager.InitializeEnvironmentVariables(@"C:\Users\krist\Downloads\api_credentials.json");
+// TODO: Improve
+EnvironmentVariableManager.InitializeEnvironmentVariables(@"C:\<path>\api_credentials.json");
 
-bool doExport = false;
+bool doExportFlag = false;
 
-if (doExport)
+if (doExportFlag)
 {
     using var scope = host.Services.CreateScope();
     var exporter = scope.ServiceProvider.GetRequiredService<ITimelineExport>();
