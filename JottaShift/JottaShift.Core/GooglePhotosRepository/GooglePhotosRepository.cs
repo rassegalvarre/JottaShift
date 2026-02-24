@@ -3,11 +3,14 @@ using Google.Apis.PhotosLibrary.v1;
 using Google.Apis.PhotosLibrary.v1.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
+using JottaShift.Core.Configuration;
+using System.IO.Abstractions;
+using System.Text.Json;
 
 namespace JottaShift.Core.GooglePhotos;
 
 // TODO: Add logger and logs
-public class GooglePhotosRepository : IGooglePhotosRepository
+public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepository
 {
     // TODO: Move to settings-file
     public const string DefaultAlbumName = "Chromecast";    
@@ -36,6 +39,35 @@ public class GooglePhotosRepository : IGooglePhotosRepository
         return uploaded?.NewMediaItemResults?.Count ?? 0;
     }
 
+    private async Task<GoogleClientSecrets> GetGoogleClientSecretsAsync()
+    {
+        string credentialsPath = Path.Combine(AppContext.BaseDirectory, "google-api-credentials.json");
+        if (!_fileSystem.File.Exists(credentialsPath))
+            throw new FileNotFoundException("google-api-credentials not found");
+
+        string fileContent = await _fileSystem.File.ReadAllTextAsync(credentialsPath);
+
+        var apiCredentials = JsonSerializer.Deserialize<GooglePhotosLibraryApi>(fileContent) ??
+            throw new InvalidOperationException("Failed to deserialize Google API credentials.");
+
+        if (EnvironmentVariableManager.GooglePhotosLibraryApiProjectId == null ||
+            EnvironmentVariableManager.GooglePhotosLibraryApiClientId == null ||
+            EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret == null)
+        {
+            throw new InvalidOperationException("Required environment variables for Google Photos API are not set.");
+        }
+
+        apiCredentials.Installed.ProjectId = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
+        apiCredentials.Installed.ClientId = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
+        apiCredentials.Installed.ClientSecret = EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
+
+        var json = JsonSerializer.Serialize(apiCredentials);
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+        
+        var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
+        return secretsResult;
+    }
+
     private async Task<UserCredential> GetUserCredential()
     {
         if (_userCredential != null)
@@ -59,14 +91,7 @@ public class GooglePhotosRepository : IGooglePhotosRepository
             }
         }
 
-        // Create new credential
-        string credentialsPath = Path.Combine(AppContext.BaseDirectory, "GooglePhotos", "credentials.json");
-        if (!File.Exists(credentialsPath))
-            throw new FileNotFoundException("Credentials.json not found");
-
-        using var stream = new FileStream(credentialsPath, FileMode.Open, FileAccess.Read);
-        var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
-
+        var secretsResult = await GetGoogleClientSecretsAsync();
 
         // Token will be stored in the token.json folder
         var credPath = "token.json";

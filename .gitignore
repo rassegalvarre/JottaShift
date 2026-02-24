@@ -56,3 +56,5 @@ nunit-*.xml
 /JottaShift/JottaShift.Core/GooglePhotos/credentials.json
 /.vs
 /JottaShift/JottaShift.Core/GooglePhotosRepository/credentials.json
+/JottaShift/JottaShift.Core/Configuration/api_credentials.json
+/JottaShift/JottaShift.Core/Configuration/export_settings.json

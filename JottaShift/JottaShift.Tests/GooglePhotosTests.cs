@@ -1,4 +1,5 @@
 ﻿using JottaShift.Core.GooglePhotos;
+using System.IO.Abstractions;
 
 namespace JottaShift.Tests;
 
@@ -12,7 +13,7 @@ public class GooglePhotosTests
     [Fact]
     public async Task GetOrCreateAlbum_CreateOrGetsAlbum_WithAlbumName()
     {
-        var googlePhotosRepository = new GooglePhotosRepository();
+        var googlePhotosRepository = new GooglePhotosRepository(new FileSystem());
 
         var album = await googlePhotosRepository.GetOrCreateAlbum(TestAlbumName);
         Assert.NotNull(album);
@@ -26,7 +27,7 @@ public class GooglePhotosTests
             TestData.Waterfall
         };
 
-        var googlePhotosRepository = new GooglePhotosRepository();
+        var googlePhotosRepository = new GooglePhotosRepository(new FileSystem());
 
         var uploadedItems = await googlePhotosRepository.UploadImagesToAlbum(images, TestAlbumName);
 
