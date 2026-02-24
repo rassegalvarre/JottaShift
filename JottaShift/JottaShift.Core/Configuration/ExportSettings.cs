@@ -1,66 +1,39 @@
 ﻿using System.Text.Json.Serialization;
 
+namespace JottaShift.Core.Configuration;
+
 public class ExportSettings
 {
     [JsonPropertyName("jottacloud_timeline")]
-    public required JottacloudTimeline JottacloudTimeline { get; init; }
+    public required FileExportMapping JottacloudTimeline { get; init; }
 
     [JsonPropertyName("steam_screenshots")]
-    public required SteamScreenshots SteamScreenshots { get; init; }
-
-    [JsonPropertyName("chromecast_photos")]
-    public required ChromecastPhotos ChromecastPhotos { get; init; }
+    public required FileExportMapping SteamScreenshots { get; init; }
 
     [JsonPropertyName("desktop_wallpapers_4k")]
-    public required DesktopWallpapers4k DesktopWallpapers4k { get; init; }
+    public required FileExportMapping DesktopWallpapers4k { get; init; }
 
     [JsonPropertyName("desktop_wallpapers_1440p")]
-    public required DesktopWallpapers1440p DesktopWallpapers1440p { get; init; }
+    public required FileExportMapping DesktopWallpapers1440p { get; init; }
+
+    [JsonPropertyName("chromecast_photos")]
+    public required GooglePhotosUploadMapping ChromecastPhotos { get; init; }
 }
 
-/* ---------- Individual sections ---------- */
-// TODO: Create single class for Staging/Target classes
-public class JottacloudTimeline
+public abstract record BaseFileExportMapping()
 {
-    [JsonPropertyName("staging_directory_path")]
-    public required string StagingDirectoryPath { get; init; }
-
-    [JsonPropertyName("target_directory")]
-    public required string TargetDirectory { get; init; }
+    [JsonPropertyName("source_directory_path")]
+    public required string SourceDirectoryPath { get; init; }
 }
 
-public class SteamScreenshots
+public record FileExportMapping
 {
-    [JsonPropertyName("staging_directory_path")]
-    public required string StagingDirectoryPath { get; init; }
-
-    [JsonPropertyName("target_directory")]
-    public required string TargetDirectory { get; init; }
+    [JsonPropertyName("target_directory_path")]
+    public required string TargetDirectoryPath { get; init; }
 }
 
-public class ChromecastPhotos
+public record GooglePhotosUploadMapping : BaseFileExportMapping
 {
-    [JsonPropertyName("staging_directory_path")]
-    public required string StagingDirectoryPath { get; init; }
-
     [JsonPropertyName("album_name")]
     public required string AlbumName { get; init; }
-}
-
-public class DesktopWallpapers4k
-{
-    [JsonPropertyName("staging_directory_path")]
-    public required string StagingDirectoryPath { get; init; }
-
-    [JsonPropertyName("target_directory")]
-    public required string TargetDirectory { get; init; }
-}
-
-public class DesktopWallpapers1440p
-{
-    [JsonPropertyName("staging_directory_path")]
-    public required string StagingDirectoryPath { get; init; }
-
-    [JsonPropertyName("target_directory")]
-    public required string TargetDirectory { get; init; }
 }
