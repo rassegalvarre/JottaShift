@@ -45,10 +45,8 @@ public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepo
         if (!_fileSystem.File.Exists(credentialsPath))
             throw new FileNotFoundException("google-api-credentials not found");
 
-        // Read file contents
         string fileContent = await _fileSystem.File.ReadAllTextAsync(credentialsPath);
 
-        // Serialize to POCO
         var apiCredentials = JsonSerializer.Deserialize<GooglePhotosLibraryApi>(fileContent) ??
             throw new InvalidOperationException("Failed to deserialize Google API credentials.");
 
@@ -59,14 +57,13 @@ public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepo
             throw new InvalidOperationException("Required environment variables for Google Photos API are not set.");
         }
 
-        // Add values from EnvVars
         apiCredentials.Installed.ProjectId = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
         apiCredentials.Installed.ClientId = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
         apiCredentials.Installed.ClientSecret = EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
 
-        // Serialize modified credentials to stream
         var json = JsonSerializer.Serialize(apiCredentials);
         using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+        
         var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
         return secretsResult;
     }
