@@ -26,13 +26,13 @@ public class GooglePhotosLibraryApi
 public class Installed
 {
     [JsonPropertyName("client_id")]
-    public required string ClientId { get; init; }
+    public required string ClientId { get; set; }
 
     [JsonPropertyName("client_secret")]
-    public required string ClientSecret { get; init; }
+    public required string ClientSecret { get; set; }
 
     [JsonPropertyName("project_id")]
-    public required string ProjectId { get; init; }
+    public required string ProjectId { get; set; }
 
     [JsonPropertyName("auth_uri")]
     public required string AuthUri { get; init; }
