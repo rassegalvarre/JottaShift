@@ -1,10 +1,16 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JottaShift.Core.Configuration;
+using Microsoft.Extensions.Logging;
 using SteamWebAPI2.Interfaces;
 
 namespace JottaShift.Core.SteamRepository;
 
-public class SteamRepository(ILogger<SteamRepository> _logger) : ISteamRepository
+public class SteamRepository(ILogger<SteamRepository> logger) : ISteamRepository
 {
+    private readonly ILogger<SteamRepository> _logger = logger;
+    private readonly string _storeLanguage = EnvironmentVariableManager.SteamWebApiStoreLanguage ?? FallbackStoreLanguage;
+
+    private const string FallbackStoreLanguage = "en";
+
     public async Task<string> GetAppNameFromId(uint appId)
     {
         var web = new SteamStore(new HttpClient());
@@ -13,7 +19,7 @@ public class SteamRepository(ILogger<SteamRepository> _logger) : ISteamRepositor
 
         try
         {
-            var result = await web.GetStoreAppDetailsAsync(appId, language: "no"); // TODO: Get from config
+            var result = await web.GetStoreAppDetailsAsync(appId, language: _storeLanguage);
             appName = result?.Name ?? string.Empty;
         }
         catch (Exception ex)
