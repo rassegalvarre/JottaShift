@@ -19,7 +19,7 @@ public class ExportSettings
 }
 
 /* ---------- Individual sections ---------- */
-
+// TODO: Create single class for Staging/Target classes
 public class JottacloudTimeline
 {
     [JsonPropertyName("staging_directory_path")]
