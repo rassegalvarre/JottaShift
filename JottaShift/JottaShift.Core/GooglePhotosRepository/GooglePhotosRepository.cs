@@ -39,30 +39,8 @@ public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepo
         return uploaded?.NewMediaItemResults?.Count ?? 0;
     }
 
-    private async Task<UserCredential> GetUserCredential()
+    private async Task<GoogleClientSecrets> GetGoogleClientSecretsAsync()
     {
-        if (_userCredential != null)
-        {
-            var storedScopes = string.Join(' ', _scopes);
-            if (storedScopes != _userCredential.Token.Scope)
-            {
-                await _userCredential.RevokeTokenAsync(CancellationToken.None);
-            }
-            else if (_userCredential.Token.IsStale)
-            {
-                var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
-                if (refreshed)
-                {
-                    return _userCredential;
-                }
-            }
-            else
-            {
-                return _userCredential;
-            }
-        }
-
-        // Create new credential
         string credentialsPath = Path.Combine(AppContext.BaseDirectory, "google-api-credentials.json");
         if (!_fileSystem.File.Exists(credentialsPath))
             throw new FileNotFoundException("google-api-credentials not found");
@@ -90,7 +68,33 @@ public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepo
         var json = JsonSerializer.Serialize(apiCredentials);
         using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
         var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
+        return secretsResult;
+    }
 
+    private async Task<UserCredential> GetUserCredential()
+    {
+        if (_userCredential != null)
+        {
+            var storedScopes = string.Join(' ', _scopes);
+            if (storedScopes != _userCredential.Token.Scope)
+            {
+                await _userCredential.RevokeTokenAsync(CancellationToken.None);
+            }
+            else if (_userCredential.Token.IsStale)
+            {
+                var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
+                if (refreshed)
+                {
+                    return _userCredential;
+                }
+            }
+            else
+            {
+                return _userCredential;
+            }
+        }
+
+        var secretsResult = await GetGoogleClientSecretsAsync();
 
         // Token will be stored in the token.json folder
         var credPath = "token.json";
