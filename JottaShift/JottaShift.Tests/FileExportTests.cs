@@ -45,33 +45,36 @@ public class FileExportTests
             }
         };
 
-        string img2025_12_31_source = Path.Combine(job.SourceDirectoryPath, "img20251231.jpg");
-        string img2025_12_31_destination = @"C:\backup\2025\12 Desember\img20251231.jpg";
-        var img2025_12_31_data = new MockFileData([])
-        {
-            LastWriteTime = new DateTime(2025, 12, 31, 23, 0, 0)
-        };
-
-        string img2026_01_01_source = Path.Combine(job.SourceDirectoryPath, "2026", "1", "2", "img20260101.jpg");
-        string img2026_01_01_destination = @"C:\backup\2026\01 Januar\img20260101.jpg";
-        var img2026_01_01_data = new MockFileData([])
-        {
-            LastWriteTime = new DateTime(2026, 1, 1, 1, 0, 0)
-        };
-
-        string img2026_01_31_source = Path.Combine(job.SourceDirectoryPath, "2026", "2", "3", "img20260131.jpg");
-        string img2026_01_31_destination = @"C:\backup\2026\01 Januar\img20260131.jpg";
-        var img2026_01_31_data = new MockFileData([])
-        {
-            LastWriteTime = new DateTime(2026, 1, 31, 12, 0, 0)
-        };
+        var duckSource = Path.Combine(
+            job.SourceDirectoryPath,
+            "2025",
+            "02",
+            "21",
+            Path.GetFileName(TestData.Duck));
+        var duckTarget = Path.Combine( // TODO: Fix path when target-dir from metadata is fixed
+            job.TargetDirectoryPath,
+            "2026",
+            "02 Februar",
+            Path.GetFileName(TestData.Duck));
+        var duckContent = await File.ReadAllBytesAsync(TestData.Duck);
+        
+        var waterfallSource = Path.Combine(
+            job.SourceDirectoryPath,
+            "lorem ipsum",
+            "dolor lamet",
+            Path.GetFileName(TestData.Waterfall));
+        var waterfallTarget = Path.Combine( // TODO: Fix path when target-dir from metadata is fixed
+            job.TargetDirectoryPath,
+            "2026",
+            "02 Februar",
+            Path.GetFileName(TestData.Waterfall));
+        var waterfallContent = await File.ReadAllBytesAsync(TestData.Waterfall);
 
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
         {
             { job.SourceDirectoryPath, new MockDirectoryData() },
-            { img2025_12_31_source, img2025_12_31_data },
-            { img2026_01_01_source, img2026_01_01_data },
-            { img2026_01_31_source, img2026_01_31_data },
+            { duckSource, new MockFileData(duckContent) },
+            { waterfallSource, new MockFileData(waterfallContent) },
 
         });
 
@@ -89,8 +92,7 @@ public class FileExportTests
         var result = await timelineExportService.ExportJottacloudTimelineAsync(CancellationToken.None);
 
         Assert.True(result.Success);
-        Assert.True(fileSystemMock.File.Exists(img2025_12_31_destination));
-        Assert.True(fileSystemMock.File.Exists(img2026_01_01_destination));
-        Assert.True(fileSystemMock.File.Exists(img2026_01_31_destination));
+        Assert.True(fileSystemMock.File.Exists(duckTarget));
+        Assert.True(fileSystemMock.File.Exists(waterfallTarget));
     }
 }

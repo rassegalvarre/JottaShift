@@ -2,9 +2,9 @@
 
 public interface IFileExportOrchestrator
 {
-    Task<FileExportResult> ExportJottacloudTimelineAsync(CancellationToken ct = default);
-    Task<FileExportResult> ExportSteamScreenshotsAsync(CancellationToken ct = default);
-    Task<FileExportResult> ExportDesktopWallpapers4kAsync(CancellationToken ct = default);
-    Task<FileExportResult> ExportDesktopWallpapersWQHDAsync(CancellationToken ct = default);
-    Task<FileExportResult> ExportChromecastPhotosAsync(CancellationToken ct = default);
+    Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct = default);
+    Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default);
+    Task<FileTransferJobResult> ExportDesktopWallpapers4kAsync(CancellationToken ct = default);
+    Task<FileTransferJobResult> ExportDesktopWallpapersWQHDAsync(CancellationToken ct = default);
+    Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default);
 }

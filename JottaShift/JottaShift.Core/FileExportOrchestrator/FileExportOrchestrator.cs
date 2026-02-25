@@ -29,32 +29,35 @@ public sealed class FileExportOrchestrator(
         "12 Desember"
     ];
 
-    public Task<FileExportResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
+    public Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<FileExportResult> ExportDesktopWallpapers4kAsync(CancellationToken ct = default)
+    public Task<FileTransferJobResult> ExportDesktopWallpapers4kAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<FileExportResult> ExportDesktopWallpapersWQHDAsync(CancellationToken ct = default)
+    public Task<FileTransferJobResult> ExportDesktopWallpapersWQHDAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<FileExportResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
+    public Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<FileExportResult> ExportJottacloudTimelineAsync(CancellationToken ct)
+    public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
-        var job = GetFileTransferJob("jottacloud_timeline");
+        const string jobKey = "jottacloud_timeline";
+
+        var job = GetFileTransferJob(jobKey);
         if (job == null)
         {
-            return new FileExportResult(false);
+            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
+            return FileTransferJobResult.Invalid(jobKey, "Missing job setting");
         }
 
         if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
@@ -63,7 +66,7 @@ public sealed class FileExportOrchestrator(
                 "Source directory with name @{DirectoryName} does not exist",
                 job.SourceDirectoryPath);
 
-            return new FileExportResult(false);
+            return FileTransferJobResult.Invalid(jobKey, "Missing source directory");
         }
         else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
         {
@@ -71,8 +74,10 @@ public sealed class FileExportOrchestrator(
                 "Could not create target directory with name @{DirectoryName}",
                 job.TargetDirectoryPath);
 
-            return new FileExportResult(false);
+            return FileTransferJobResult.Invalid(jobKey, "Missing target directory");
         }
+
+        var result = FileTransferJobResult.Start(job);
 
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
@@ -83,7 +88,7 @@ public sealed class FileExportOrchestrator(
             if (!copyResult.Success)
             {
                 _logger.LogError("Failed to copy file: {FilePath}", file);
-                return new FileExportResult(false);
+                return result.Fail($"File transfer failed");
             }
 
             if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
@@ -91,21 +96,21 @@ public sealed class FileExportOrchestrator(
                 _logger.LogError(
                     "File was copied, but file content does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                return new FileExportResult(false);
+                return result.Fail($"Mismatched file content");
             }
 
-            if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
+            if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
             {
                 _logger.LogError(
                     "File was copied, but metadata does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                return new FileExportResult(false);
+                return result.Fail($"Mismatched file metadata");
             }
 
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
 
-        return new FileExportResult(true);
+        return result.Completed();
     }
 
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)
