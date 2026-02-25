@@ -81,14 +81,21 @@ public sealed class FileExportOrchestrator(
 
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
+            var operation = FileTransferOperationResult.Prepare(file);
             var timestamp = _fileStorage.GetFileTimestampFromLastWriteTime(file);
             var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, file, timestamp);
+
+            operation.Start();
+            
             var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
+
+            operation.TransferEnded(copyResult.targetFileFullPath);
 
             if (!copyResult.Success)
             {
                 _logger.LogError("Failed to copy file: {FilePath}", file);
-                return result.Fail($"File transfer failed");
+                operation.TransferFailed(copyResult.targetFileFullPath);
+                return result.Fail($"File transfer failed", operation);
             }
 
             if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
@@ -96,7 +103,8 @@ public sealed class FileExportOrchestrator(
                 _logger.LogError(
                     "File was copied, but file content does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                return result.Fail($"Mismatched file content");
+                operation.InvalidFileContent();
+                return result.Fail($"Mismatched file content", operation);
             }
 
             if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
@@ -104,10 +112,13 @@ public sealed class FileExportOrchestrator(
                 _logger.LogError(
                     "File was copied, but metadata does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                return result.Fail($"Mismatched file metadata");
+                operation.InvalidMetadata();
+                return result.Fail($"Mismatched file metadata", operation);
             }
 
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
+            operation.Complete();
+            result.Continue(operation);
         }
 
         return result.Completed();
