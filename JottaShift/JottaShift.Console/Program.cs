@@ -1,5 +1,5 @@
 ﻿using JottaShift.Core.FileStorage;
-using JottaShift.Core.TimelineExport;
+using JottaShift.Core.FileExportOrchestrator;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Configuration;
@@ -21,8 +21,8 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
-        services.AddScoped<ITimelineExport, TimelineExportService>();
         services.AddScoped<ISteamRepository, SteamRepository>();
+        services.AddScoped<IFileExportOrchestrator, FileExportOrchestrator>();
     })
     .ConfigureLogging(logging =>
     {
@@ -46,14 +46,14 @@ bool doExportFlag = false;
 if (doExportFlag)
 {
     using var scope = host.Services.CreateScope();
-    var exporter = scope.ServiceProvider.GetRequiredService<ITimelineExport>();
+    var exporter = scope.ServiceProvider.GetRequiredService<IFileExportOrchestrator>();
 
     var config = new ConfigurationBuilder()
         .SetBasePath(Directory.GetCurrentDirectory()) 
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .Build();
 
-    var options = new TimelineExportOptions(
+    var options = new FileExportOptions(
         SourceRoot: config.GetValue<string>("SourceRoot")!,
         DestinationRoot: config.GetValue<string>("DestinationRoot")!);
 

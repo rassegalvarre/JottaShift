@@ -1,5 +1,5 @@
 ﻿using JottaShift.Core.FileStorage;
-using JottaShift.Core.TimelineExport;
+using JottaShift.Core.FileExportOrchestrator;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.IO.Abstractions.TestingHelpers;
@@ -15,8 +15,8 @@ public class TimelineExportTests
         string destinationDirectory = AppContext.BaseDirectory;
         string fileName = Path.GetRandomFileName();
 
-        var timelineExportService = new TimelineExportService(
-            new Mock<ILogger<TimelineExportService>>().Object,
+        var timelineExportService = new FileExportOrchestrator(
+            new Mock<ILogger<FileExportOrchestrator>>().Object,
             new Mock<IFileStorage>().Object);
 
         var fullFileName = timelineExportService.GetTargetDirectoryNameFromFileTimestamp(destinationDirectory, fileName, creationDate);
@@ -64,11 +64,11 @@ public class TimelineExportTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timelineExportService = new TimelineExportService(
-            new Mock<ILogger<TimelineExportService>>().Object,
+        var timelineExportService = new FileExportOrchestrator(
+            new Mock<ILogger<FileExportOrchestrator>>().Object,
             fileStorageService);
 
-        var options = new TimelineExportOptions(sourceDirectory, destinationDirectory);
+        var options = new FileExportOptions(sourceDirectory, destinationDirectory);
         var result = await timelineExportService.ExportAsync(options, new CancellationToken());
 
         Assert.True(result.Success);

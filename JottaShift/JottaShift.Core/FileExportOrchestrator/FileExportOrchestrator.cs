@@ -1,12 +1,11 @@
 ﻿using JottaShift.Core.FileStorage;
 using Microsoft.Extensions.Logging;
 
-namespace JottaShift.Core.TimelineExport;
+namespace JottaShift.Core.FileExportOrchestrator;
 
-// TOOD: Rename to "ExportOrchestrator"
-public sealed class TimelineExportService(
-    ILogger<TimelineExportService> _logger,
-    IFileStorage _fileStorage) : ITimelineExport
+public sealed class FileExportOrchestrator(
+    ILogger<FileExportOrchestrator> _logger,
+    IFileStorage _fileStorage) : IFileExportOrchestrator
 {
     // TODO: Replace hardcoded list
     private readonly string[] MonthDirectoryNames =
@@ -25,7 +24,7 @@ public sealed class TimelineExportService(
         "12 Desember"
     ];
 
-    public async Task<TimelineExportResult> ExportAsync(TimelineExportOptions options, CancellationToken ct)
+    public async Task<FileExportResult> ExportAsync(FileExportOptions options, CancellationToken ct)
     {
         if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.SourceRoot, false)))
         {
@@ -33,7 +32,7 @@ public sealed class TimelineExportService(
                 "Source folder with name @{FolderName} does not exist",
                 options.SourceRoot);
 
-            return new TimelineExportResult(false);
+            return new FileExportResult(false);
         }
         else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.DestinationRoot, true)))
         {
@@ -41,7 +40,7 @@ public sealed class TimelineExportService(
                 "Could not create destination folder with name @{FolderName}",
                 options.DestinationRoot);
 
-            return new TimelineExportResult(false);
+            return new FileExportResult(false);
         }
 
         foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
@@ -53,7 +52,7 @@ public sealed class TimelineExportService(
             if (!copyResult.Success)
             {
                 _logger.LogError("Failed to copy file: {FilePath}", file);
-                return new TimelineExportResult(false);
+                return new FileExportResult(false);
             }
 
             if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
@@ -61,7 +60,7 @@ public sealed class TimelineExportService(
                 _logger.LogError(
                     "File was copied, but file content does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                return new TimelineExportResult(false);
+                return new FileExportResult(false);
             }
 
             if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
@@ -69,13 +68,13 @@ public sealed class TimelineExportService(
                 _logger.LogError(
                     "File was copied, but metadata does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                return new TimelineExportResult(false);
+                return new FileExportResult(false);
             }
 
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
 
-        return new TimelineExportResult(true);
+        return new FileExportResult(true);
     }
 
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)
