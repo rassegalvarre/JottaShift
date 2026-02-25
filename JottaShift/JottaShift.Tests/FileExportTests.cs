@@ -18,6 +18,7 @@ public class FileExportTests
         string fileName = Path.GetRandomFileName();
 
         var timelineExportService = new FileExportOrchestrator(
+            new FileExportSettings(),
             new Mock<ILogger<FileExportOrchestrator>>().Object,
             new Mock<IFileStorage>().Object,
             new Mock<IGooglePhotosRepository>().Object,
@@ -31,24 +32,34 @@ public class FileExportTests
     [Fact]
     public async Task ExportAsync_ShouldExportAndRestrucutureTimeline()
     {
-        string sourceDirectory = @"C:\timeline";
-        string destinationDirectory = @"C:\backup";
+        var job = new FileTransferJob()
+        {
+            Key = "jottacloud_timeline",
+            SourceDirectoryPath = @"C:\timeline",
+            TargetDirectoryPath = @"C:\backup"
+        };
+        var settings = new FileExportSettings()
+        { 
+            FileTransferJobs = new List<FileTransferJob>() {
+                job
+            }
+        };
 
-        string img2025_12_31_source = Path.Combine(sourceDirectory, "img20251231.jpg");
+        string img2025_12_31_source = Path.Combine(job.SourceDirectoryPath, "img20251231.jpg");
         string img2025_12_31_destination = @"C:\backup\2025\12 Desember\img20251231.jpg";
         var img2025_12_31_data = new MockFileData([])
         {
             LastWriteTime = new DateTime(2025, 12, 31, 23, 0, 0)
         };
 
-        string img2026_01_01_source = Path.Combine(sourceDirectory, "2026", "1", "2", "img20260101.jpg");
+        string img2026_01_01_source = Path.Combine(job.SourceDirectoryPath, "2026", "1", "2", "img20260101.jpg");
         string img2026_01_01_destination = @"C:\backup\2026\01 Januar\img20260101.jpg";
         var img2026_01_01_data = new MockFileData([])
         {
             LastWriteTime = new DateTime(2026, 1, 1, 1, 0, 0)
         };
 
-        string img2026_01_31_source = Path.Combine(sourceDirectory, "2026", "2", "3", "img20260131.jpg");
+        string img2026_01_31_source = Path.Combine(job.SourceDirectoryPath, "2026", "2", "3", "img20260131.jpg");
         string img2026_01_31_destination = @"C:\backup\2026\01 Januar\img20260131.jpg";
         var img2026_01_31_data = new MockFileData([])
         {
@@ -57,7 +68,7 @@ public class FileExportTests
 
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
         {
-            { sourceDirectory, new MockDirectoryData() },
+            { job.SourceDirectoryPath, new MockDirectoryData() },
             { img2025_12_31_source, img2025_12_31_data },
             { img2026_01_01_source, img2026_01_01_data },
             { img2026_01_31_source, img2026_01_31_data },
@@ -69,13 +80,13 @@ public class FileExportTests
             new Mock<ILogger<FileStorageService>>().Object);
 
         var timelineExportService = new FileExportOrchestrator(
+            settings,
             new Mock<ILogger<FileExportOrchestrator>>().Object,
             fileStorageService,
             new Mock<IGooglePhotosRepository>().Object,
             new Mock<ISteamRepository>().Object);
 
-        var options = new FileExportOptions(sourceDirectory, destinationDirectory);
-        var result = await timelineExportService.ExportJottacloudTimelineAsync(options, new CancellationToken());
+        var result = await timelineExportService.ExportJottacloudTimelineAsync(CancellationToken.None);
 
         Assert.True(result.Success);
         Assert.True(fileSystemMock.File.Exists(img2025_12_31_destination));

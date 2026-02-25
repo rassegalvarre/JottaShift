@@ -53,17 +53,10 @@ if (doExportFlag)
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .Build();
 
-    var options = new FileExportOptions(
-        SourceRoot: config.GetValue<string>("SourceRoot")!,
-        DestinationRoot: config.GetValue<string>("DestinationRoot")!);
-
-    Console.WriteLine($"Source directory to copy from:      {options.SourceRoot}");
-    Console.WriteLine($"Destination directory to copy to:   {options.DestinationRoot}");
-
     Console.WriteLine("Starting timeline export...");
 
     // Export and re-strucuture the timeline-staging to storage folder
-    await exporter.ExportJottacloudTimelineAsync(options, new CancellationToken());
+    await exporter.ExportJottacloudTimelineAsync(new CancellationToken());
     // TODO: Delete contents in staging after export
 
     Console.WriteLine("Timeline export finished");

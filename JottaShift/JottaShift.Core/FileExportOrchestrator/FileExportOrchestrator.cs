@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace JottaShift.Core.FileExportOrchestrator;
 
 public sealed class FileExportOrchestrator(
+    FileExportSettings _fileExportSettings,
     ILogger<FileExportOrchestrator> _logger,
     IFileStorage _fileStorage,
     IGooglePhotosRepository _googlePhotosRepository,
@@ -28,49 +29,55 @@ public sealed class FileExportOrchestrator(
         "12 Desember"
     ];
 
-    public Task<FileExportResult> ExportChromecastPhotosAsync(FileExportOptions options, CancellationToken ct = default)
+    public Task<FileExportResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<FileExportResult> ExportDesktopWallpapers4kAsync(FileExportOptions options, CancellationToken ct = default)
+    public Task<FileExportResult> ExportDesktopWallpapers4kAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<FileExportResult> ExportDesktopWallpapersWQHDAsync(FileExportOptions options, CancellationToken ct = default)
+    public Task<FileExportResult> ExportDesktopWallpapersWQHDAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<FileExportResult> ExportSteamScreenshotsAsync(FileExportOptions options, CancellationToken ct = default)
+    public Task<FileExportResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<FileExportResult> ExportJottacloudTimelineAsync(FileExportOptions options, CancellationToken ct)
+    public async Task<FileExportResult> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
-        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.SourceRoot, false)))
+        var job = GetFileTransferJob("jottacloud_timeline");
+        if (job == null)
         {
-            _logger.LogError(
-                "Source folder with name @{FolderName} does not exist",
-                options.SourceRoot);
-
-            return new FileExportResult(false);
-        }
-        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.DestinationRoot, true)))
-        {
-            _logger.LogError(
-                "Could not create destination folder with name @{FolderName}",
-                options.DestinationRoot);
-
             return new FileExportResult(false);
         }
 
-        foreach (var file in _fileStorage.EnumerateFiles(options.SourceRoot))
+        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        {
+            _logger.LogError(
+                "Source directory with name @{DirectoryName} does not exist",
+                job.SourceDirectoryPath);
+
+            return new FileExportResult(false);
+        }
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
+        {
+            _logger.LogError(
+                "Could not create target directory with name @{DirectoryName}",
+                job.TargetDirectoryPath);
+
+            return new FileExportResult(false);
+        }
+
+        foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
             var timestamp = _fileStorage.GetFileTimestampFromLastWriteTime(file);
-            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(options.DestinationRoot, file, timestamp);
+            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, file, timestamp);
             var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
 
             if (!copyResult.Success)
@@ -108,5 +115,15 @@ public sealed class FileExportOrchestrator(
         string monthDirectoryName = MonthDirectoryNames[monthIndex];
 
         return Path.Combine(destinationRootPath, year, monthDirectoryName);
+    }
+
+    public FileTransferJob? GetFileTransferJob(string key)
+    {
+        return _fileExportSettings.FileTransferJobs.FirstOrDefault(j => j.Key == key);
+    }
+
+    public GooglePhotosUploadJob? GetGooglePhotosUploadJob(string key)
+    {
+        return _fileExportSettings.GooglePhotosUploadJobs.FirstOrDefault(j => j.Key == key);
     }
 }

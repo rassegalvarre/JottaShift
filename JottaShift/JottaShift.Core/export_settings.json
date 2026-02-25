@@ -1,29 +1,29 @@
 {
     "file_transfer_jobs": [
         {
-            "job_key": "jottacloud_timeline",
+            "key": "jottacloud_timeline",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\Tidslinje",
             "target_directory_path": "E:\\Jottacloud\\Bilder og videoer"
         },
         {
-            "job_key": "steam_screenshots",
+            "key": "steam_screenshots",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\remote",
             "target_directory_path": "E:\\Jottacloud\\Spill\\Bibliotek"
         },
         {
-            "job_key": "desktop_wallpapers_4k",
+            "key": "desktop_wallpapers_4k",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\Skrivebordsbakgrunner\\4k",
             "target_directory_path": "C:\\Users\\krist\\OneDrive\\Bilder\\Skrivebordsbakgrunner\\4k"
         },
         {
-            "job_key": "desktop_wallpapers_wqhd",
+            "key": "desktop_wallpapers_wqhd",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\Skrivebordsbakgrunner\\WQHD",
             "target_directory_path": "C:\\Users\\krist\\OneDrive\\Bilder\\Skrivebordsbakgrunner\\WQHD"
         }
     ],
     "google_photos_upload_jobs": [
         {
-            "job_key": "chromecast_photos",
+            "key": "chromecast_photos",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\Chromecast",
             "album_name": "Chromecast"
         }
