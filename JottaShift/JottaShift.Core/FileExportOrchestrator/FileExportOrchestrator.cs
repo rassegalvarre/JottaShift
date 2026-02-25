@@ -1,11 +1,15 @@
 ﻿using JottaShift.Core.FileStorage;
+using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.FileExportOrchestrator;
 
 public sealed class FileExportOrchestrator(
     ILogger<FileExportOrchestrator> _logger,
-    IFileStorage _fileStorage) : IFileExportOrchestrator
+    IFileStorage _fileStorage,
+    IGooglePhotosRepository _googlePhotosRepository,
+    ISteamRepository _steamRepository) : IFileExportOrchestrator
 {
     // TODO: Replace hardcoded list
     private readonly string[] MonthDirectoryNames =
@@ -24,7 +28,27 @@ public sealed class FileExportOrchestrator(
         "12 Desember"
     ];
 
-    public async Task<FileExportResult> ExportAsync(FileExportOptions options, CancellationToken ct)
+    public Task<FileExportResult> ExportChromecastPhotosAsync(FileExportOptions options, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<FileExportResult> ExportDesktopWallpapers4kAsync(FileExportOptions options, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<FileExportResult> ExportDesktopWallpapersWQHDAsync(FileExportOptions options, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<FileExportResult> ExportSteamScreenshotsAsync(FileExportOptions options, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<FileExportResult> ExportJottacloudTimelineAsync(FileExportOptions options, CancellationToken ct)
     {
         if (!_fileStorage.ValidateDirectory(new DirectoryOptions(options.SourceRoot, false)))
         {

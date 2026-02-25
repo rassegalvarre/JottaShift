@@ -1,12 +1,14 @@
-﻿using JottaShift.Core.FileStorage;
-using JottaShift.Core.FileExportOrchestrator;
+﻿using JottaShift.Core.FileExportOrchestrator;
+using JottaShift.Core.FileStorage;
+using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests;
 
-public class TimelineExportTests
+public class FileExportTests
 {
     [Fact]
     public void GetTargetDirectoryNameFromFileTimestamp_CreatesPathBasedOnFileCreationTime()
@@ -17,7 +19,9 @@ public class TimelineExportTests
 
         var timelineExportService = new FileExportOrchestrator(
             new Mock<ILogger<FileExportOrchestrator>>().Object,
-            new Mock<IFileStorage>().Object);
+            new Mock<IFileStorage>().Object,
+            new Mock<IGooglePhotosRepository>().Object,
+            new Mock<ISteamRepository>().Object);
 
         var fullFileName = timelineExportService.GetTargetDirectoryNameFromFileTimestamp(destinationDirectory, fileName, creationDate);
         var expectedDirectoryName = Path.Combine(destinationDirectory, "2026", "05 Mai");
@@ -66,10 +70,12 @@ public class TimelineExportTests
 
         var timelineExportService = new FileExportOrchestrator(
             new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService);
+            fileStorageService,
+            new Mock<IGooglePhotosRepository>().Object,
+            new Mock<ISteamRepository>().Object);
 
         var options = new FileExportOptions(sourceDirectory, destinationDirectory);
-        var result = await timelineExportService.ExportAsync(options, new CancellationToken());
+        var result = await timelineExportService.ExportJottacloudTimelineAsync(options, new CancellationToken());
 
         Assert.True(result.Success);
         Assert.True(fileSystemMock.File.Exists(img2025_12_31_destination));

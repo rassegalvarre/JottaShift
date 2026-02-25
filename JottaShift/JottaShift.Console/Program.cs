@@ -63,7 +63,7 @@ if (doExportFlag)
     Console.WriteLine("Starting timeline export...");
 
     // Export and re-strucuture the timeline-staging to storage folder
-    await exporter.ExportAsync(options, new CancellationToken());
+    await exporter.ExportJottacloudTimelineAsync(options, new CancellationToken());
     // TODO: Delete contents in staging after export
 
     Console.WriteLine("Timeline export finished");
