@@ -77,25 +77,21 @@ public sealed class FileExportOrchestrator(
             return FileTransferJobResult.Invalid(jobKey, "Missing target directory");
         }
 
-        var result = FileTransferJobResult.Start(job);
+        var result = FileTransferJobResult.StartJob(job);
 
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
-            var operation = FileTransferOperationResult.Prepare(file);
+            result.PrepareOperation(file);
             var timestamp = _fileStorage.GetFileTimestampFromLastWriteTime(file);
             var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, file, timestamp);
 
-            operation.Start();
+            result.StartOperation();
             
             var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
 
-            operation.TransferEnded(copyResult.targetFileFullPath);
-
             if (!copyResult.Success)
             {
-                _logger.LogError("Failed to copy file: {FilePath}", file);
-                operation.TransferFailed(copyResult.targetFileFullPath);
-                return result.Fail($"File transfer failed", operation);
+                return result.FailOperation($"File transfer failed");
             }
 
             if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
@@ -103,8 +99,7 @@ public sealed class FileExportOrchestrator(
                 _logger.LogError(
                     "File was copied, but file content does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                operation.InvalidFileContent();
-                return result.Fail($"Mismatched file content", operation);
+                return result.FailOperation($"Mismatched file content");
             }
 
             if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
@@ -112,16 +107,14 @@ public sealed class FileExportOrchestrator(
                 _logger.LogError(
                     "File was copied, but metadata does not match: {FilePath}",
                     copyResult.targetFileFullPath);
-                operation.InvalidMetadata();
-                return result.Fail($"Mismatched file metadata", operation);
+                return result.FailOperation($"Mismatched file metadata");
             }
 
+            result.CompleteOperation(copyResult.targetFileFullPath);
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
-            operation.Complete();
-            result.Continue(operation);
         }
 
-        return result.Completed();
+        return result.CompleteJob();
     }
 
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)

@@ -2,19 +2,18 @@
 
 public enum FileTransferOperationResultStatus
 {
+    Invalid,
     NotStarted,
     InProgress,
-    TransferFailed,
-    InvalidFileContent,
-    InvalidFileMetadata,
     Completed,
+    Failed
 }
 
 public record FileTransferOperationResult(string SourceFilePath)
 {
     public FileTransferOperationResultStatus Status { get; private set; } = FileTransferOperationResultStatus.NotStarted;
     public string SourceFilePath { get; init; } = SourceFilePath;
-    public string TargetFilePath { get; private set; } = string.Empty;
+    public string? TargetFilePath { get; private set; }
     public bool Success { get; init; }
 
     private static FileTransferOperationResult CreateFromStatus(string SourceFilePath, FileTransferOperationResultStatus status)
@@ -35,29 +34,19 @@ public record FileTransferOperationResult(string SourceFilePath)
         Status = FileTransferOperationResultStatus.InProgress;
     }
 
-    public void TransferEnded(string targetFilePath)
+    public void Fail(string? targetFilePath)
     {
         TargetFilePath = targetFilePath;
+        Status = FileTransferOperationResultStatus.Failed;
     }
 
-    public void TransferFailed(string targetFilePath)
+    public void Complete(string? targetFilePath)
     {
+        if (string.IsNullOrEmpty(targetFilePath))
+        {
+            throw new ArgumentException("Target file path cannot be null or empty when completing the file transfer operation.", nameof(targetFilePath));
+        }
         TargetFilePath = targetFilePath;
-        Status = FileTransferOperationResultStatus.TransferFailed;
-    }
-
-    public void InvalidFileContent()
-    {
-        Status = FileTransferOperationResultStatus.InvalidFileContent;
-    }
-
-    public void InvalidMetadata()
-    {
-        Status = FileTransferOperationResultStatus.InvalidFileMetadata;
-    }
-
-    public void Complete()
-    {
         Status = FileTransferOperationResultStatus.Completed;
     }
 }
