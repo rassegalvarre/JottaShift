@@ -235,7 +235,7 @@ public class FileStorageTests
     }
 
     [Fact]
-    public void GetImageDate_ReturnsDateTakenExiff_WhenFileFound()
+    public void GetImageDate_ReturnsDateTakenExiffTag_WhenFileFound()
     {
         var fileSystem = new FileSystem();
 
@@ -250,6 +250,62 @@ public class FileStorageTests
         Assert.Equal(17, timestamp.Day);
         Assert.Equal(13, timestamp.Hour);
         Assert.Equal(42, timestamp.Minute);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetImageFilenameTestData))]
+    public void GetImageDate_ReturnsDateFromFileName_WhenNoMetadataFound(string filename, int expectedYear, int expectedMonth, int expectedDay)
+    {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { filename, new MockFileData([]) }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var timestamp = fileStorageService.GetImageDate(filename);
+
+        Assert.Equal(expectedYear, timestamp.Year);
+        Assert.Equal(expectedMonth, timestamp.Month);
+        Assert.Equal(expectedDay, timestamp.Day);
+    }
+
+    public static IEnumerable<object[]> GetImageFilenameTestData()
+    {
+        return new List<object[]>
+        {
+            // Underscore prefix with 8-digit format (img_YYYYMMDD)
+            new object[] { "img_20250517.jpg", 2025, 5, 17 },
+            new object[] { "img_20241225.png", 2024, 12, 25 },
+            new object[] { "photo_20230815.jpg", 2023, 8, 15 },
+            new object[] { "picture_20220101.jpg", 2022, 1, 1 },
+
+            // Hyphenated format (YYYY-MM-DD)
+            new object[] { "vacation_2025-05-17.jpg", 2025, 5, 17 },
+            new object[] { "photo_2024-12-25.png", 2024, 12, 25 },
+            new object[] { "2025-05-17_family_photo.jpg", 2025, 5, 17 },
+            new object[] { "2024-12-25_christmas.jpg", 2024, 12, 25 },
+
+            // Compact 8-digit format (YYYYMMDD)
+            new object[] { "20250517_beach.jpg", 2025, 5, 17 },
+            new object[] { "20241225_holiday.png", 2024, 12, 25 },
+            new object[] { "20230815_vacation.jpg", 2023, 8, 15 },
+
+            // Camera default filenames with dates
+            new object[] { "IMG_20250517_134210.jpg", 2025, 5, 17 },
+            new object[] { "PHOTO_20241225_090000.jpg", 2024, 12, 25 },
+            new object[] { "DSC_20230815_143022.jpg", 2023, 8, 15 },
+
+            // Complex filenames with dates in the middle
+            new object[] { "IMG_20250517_landscape_001.jpg", 2025, 5, 17 },
+            new object[] { "photo_2025-05-17_sunset.jpg", 2025, 5, 17 },
+            new object[] { "vacation_20250517_moment.jpg", 2025, 5, 17 },
+
+            // Alternative formats
+            new object[] { "pic-2025-05-17-001.jpg", 2025, 5, 17 },
+        };
     }
 
     [Fact]
