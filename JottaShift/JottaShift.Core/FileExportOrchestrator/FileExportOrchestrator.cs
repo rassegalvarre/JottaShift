@@ -82,7 +82,7 @@ public sealed class FileExportOrchestrator(
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
             result.PrepareOperation(file);
-            var timestamp = _fileStorage.GetFileTimestampFromLastWriteTime(file);
+            var timestamp = _fileStorage.GetImageDate(file);
             var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, file, timestamp);
 
             result.StartOperation();

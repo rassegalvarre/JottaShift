@@ -10,7 +10,7 @@ public interface IFileStorage
 
     IEnumerable<string> EnumerateFiles(string directoryFullPath);
 
-    DateTime GetFileTimestampFromLastWriteTime(string fileFullPath);
+    DateTime GetImageDate(string fileFullPath);
 
     bool FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024);
 

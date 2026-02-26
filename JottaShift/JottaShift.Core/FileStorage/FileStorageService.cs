@@ -2,6 +2,7 @@
 using System.IO.Abstractions;
 using MetadataExtractor;
 using System.Collections.Immutable;
+using System.Text.RegularExpressions;
 
 namespace JottaShift.Core.FileStorage;
 
@@ -54,21 +55,162 @@ public sealed class FileStorageService(
         return new CopyAsyncResult(true, newFileName);
     }
 
-    // TODO: Use the "Dato tatt" property, if available in metadata.
-    // If not, check "CreationDate", but add a buffer of ~1 hour, since this date can be generated on runtime.
-    // Add ability to get date through filename, i.e img_2025021 etc. Regex?
-    // As a last resort, use LastWriteTime (not 100% reliable as we want the date the media was created)
-    public DateTime GetFileTimestampFromLastWriteTime(string fileFullPath)
+    public DateTime GetImageDate(string fileFullPath)
     {
         if (!_fileSystem.File.Exists(fileFullPath))
         {
             return default;
         }
 
-        // Does not with images stored on disk. Date is then current data. Must fix
-        // LastCreatedTime works, but is not always the date we really want.
-        // Check if "Dato tatt" is retrievable
-        return  _fileSystem.File.GetLastWriteTime(fileFullPath);
+        // Try to extract "Date taken" from EXIF metadata
+        var dateTakenFromExif = TryGetDateTakenFromExif(fileFullPath);
+        if (dateTakenFromExif != default)
+        {
+            return dateTakenFromExif;
+        }
+
+        // Try to extract "CreationDate" with 1-hour buffer
+        var creationDate = TryGetCreationDateFromExif(fileFullPath);
+        if (creationDate != default)
+        {
+            return creationDate.AddHours(-1);
+        }
+
+        // Try to extract date from filename (e.g., img_20250215_*.jpg)
+        var dateFromFilename = TryGetDateFromFilename(Path.GetFileName(fileFullPath));
+        if (dateFromFilename != default)
+        {
+            return dateFromFilename;
+        }
+
+        // Fall back to LastWriteTime
+        return _fileSystem.File.GetLastWriteTime(fileFullPath);
+    }
+
+    private DateTime TryGetDateTakenFromExif(string fileFullPath)
+    {
+        try
+        {
+            using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
+            var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
+
+            var exifDir = directories.FirstOrDefault(d => d.Name.Contains("Exif"));
+            if (exifDir == null)
+                return default;
+
+            // Look for "Date/Time Original" tag
+            var dateTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Date/Time Original");
+
+            if (dateTag == null)
+                dateTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Date/Time");
+
+            if (dateTag == null)
+                dateTag = exifDir.Tags.FirstOrDefault(t => t.Name == "DateTime");
+
+            if (dateTag != null)
+            {
+                // Try to parse with explicit EXIF format (yyyy:MM:dd HH:mm:ss)
+                if (DateTime.TryParseExact(dateTag.Description, "yyyy:MM:dd HH:mm:ss", null, System.Globalization.DateTimeStyles.None, out var dateTaken))
+                {
+                    return dateTaken;
+                }
+
+                // Fall back to general parsing
+                if (DateTime.TryParse(dateTag.Description, out dateTaken))
+                {
+                    return dateTaken;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("Could not extract date taken from EXIF metadata: {ExceptionMessage}", ex.Message);
+        }
+
+        return default;
+    }
+
+    private DateTime TryGetCreationDateFromExif(string fileFullPath)
+    {
+        try
+        {
+            using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
+            var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
+
+            var exifDir = directories.FirstOrDefault(d => d.Name.Contains("Exif"));
+            if (exifDir == null)
+                return default;
+
+            var creationDateTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Date/Time Digitized");
+            if (creationDateTag != null)
+            {
+                // Try to parse with explicit EXIF format (yyyy:MM:dd HH:mm:ss)
+                if (DateTime.TryParseExact(creationDateTag.Description, "yyyy:MM:dd HH:mm:ss", null, System.Globalization.DateTimeStyles.None, out var creationDate))
+                {
+                    return creationDate;
+                }
+
+                // Fall back to general parsing
+                if (DateTime.TryParse(creationDateTag.Description, out creationDate))
+                {
+                    return creationDate;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("Could not extract creation date from EXIF metadata: {ExceptionMessage}", ex.Message);
+        }
+
+        return default;
+    }
+
+    private DateTime TryGetDateFromFilename(string fileName)
+    {
+        try
+        {
+            // Pattern matches filenames like: img_20250215_*, photo_2025-02-15_*, etc.
+            var patterns = new[]
+            {
+                @"(?:img|photo|picture|photo)_?(\d{8})",      // img_20250215 or img20250215
+                @"(\d{4})-(\d{2})-(\d{2})",                    // 2025-02-15
+                @"(\d{4})(\d{2})(\d{2})"                       // 20250215
+            };
+
+            foreach (var pattern in patterns)
+            {
+                var match = Regex.Match(fileName, pattern, RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    if (match.Groups.Count == 2 && match.Groups[1].Value.Length == 8)
+                    {
+                        // 8-digit format: YYYYMMDD
+                        var dateStr = match.Groups[1].Value;
+                        if (DateTime.TryParseExact(dateStr, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out var date))
+                        {
+                            return date;
+                        }
+                    }
+                    else if (match.Groups.Count == 4)
+                    {
+                        // YYYY-MM-DD or YYYYMMDD format with groups
+                        var year = match.Groups[1].Value;
+                        var month = match.Groups[2].Value;
+                        var day = match.Groups[3].Value;
+                        if (DateTime.TryParse($"{year}-{month}-{day}", out var date))
+                        {
+                            return date;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("Could not extract date from filename: {ExceptionMessage}", ex.Message);
+        }
+
+        return default;
     }
 
     public IEnumerable<string> EnumerateDirectories(string directoryFullPath)
