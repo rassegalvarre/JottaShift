@@ -53,8 +53,8 @@ public class FileExportTests
             Path.GetFileName(TestData.Duck));
         var duckTarget = Path.Combine( // TODO: Fix path when target-dir from metadata is fixed
             job.TargetDirectoryPath,
-            "2026",
-            "02 Februar",
+            "2025",
+            "05 Mai",
             Path.GetFileName(TestData.Duck));
         var duckContent = await File.ReadAllBytesAsync(TestData.Duck);
         
@@ -65,8 +65,8 @@ public class FileExportTests
             Path.GetFileName(TestData.Waterfall));
         var waterfallTarget = Path.Combine( // TODO: Fix path when target-dir from metadata is fixed
             job.TargetDirectoryPath,
-            "2026",
-            "02 Februar",
+            "2025",
+            "05 Mai",
             Path.GetFileName(TestData.Waterfall));
         var waterfallContent = await File.ReadAllBytesAsync(TestData.Waterfall);
 

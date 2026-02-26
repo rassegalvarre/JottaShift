@@ -2,6 +2,7 @@
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace JottaShift.Core.FileExportOrchestrator;
 
@@ -12,22 +13,6 @@ public sealed class FileExportOrchestrator(
     IGooglePhotosRepository _googlePhotosRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator
 {
-    // TODO: Replace hardcoded list
-    private readonly string[] MonthDirectoryNames =
-    [
-        "01 Januar",
-        "02 Februar",
-        "03 Mars",
-        "04 April",
-        "05 Mai",
-        "06 Juni",
-        "07 Juli",
-        "08 August",
-        "09 September",
-        "10 Oktober",
-        "11 November",
-        "12 Desember"
-    ];
 
     public Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
@@ -120,10 +105,22 @@ public sealed class FileExportOrchestrator(
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)
     {
         string year = fileCreationTime.Year.ToString();
-        int monthIndex = fileCreationTime.Month-1;
-        string monthDirectoryName = MonthDirectoryNames[monthIndex];
+        int monthIndex = fileCreationTime.Month - 1;
+        string monthDirectoryName = GetMonthDirectoryName(monthIndex);
 
         return Path.Combine(destinationRootPath, year, monthDirectoryName);
+    }
+
+    private string GetMonthDirectoryName(int monthIndex)
+    {
+        if (monthIndex < 0 || monthIndex > 11)
+            throw new ArgumentOutOfRangeException(nameof(monthIndex), "Month index must be between 0 and 11");
+
+        var culture = CultureInfo.CurrentCulture;
+        string monthName = culture.DateTimeFormat.MonthNames[monthIndex];
+        string capitalizedMonthName = char.ToUpper(monthName[0]) + monthName[1..];
+
+        return $"{monthIndex + 1:D2} {capitalizedMonthName}";
     }
 
     public FileTransferJob? GetFileTransferJob(string key)
