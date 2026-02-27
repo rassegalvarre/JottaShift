@@ -29,9 +29,87 @@ public sealed class FileExportOrchestrator(
         throw new NotImplementedException();
     }
 
-    public Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
+    public async Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        const string jobKey = "steam_screenshots";
+
+        var job = GetFileTransferJob(jobKey);
+        if (job == null)
+        {
+            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
+            return FileTransferJobResult.Invalid(jobKey, "Missing job setting");
+        }
+
+        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        {
+            _logger.LogError(
+                "Source directory with name @{DirectoryName} does not exist",
+                job.SourceDirectoryPath);
+
+            return FileTransferJobResult.Invalid(jobKey, "Missing source directory");
+        }
+
+        var result = FileTransferJobResult.StartJob(job);
+        foreach (var directory in _fileStorage.EnumerateDirectories(job.SourceDirectoryPath))
+        {
+            var directoryNameToCharArray = Path.GetFileName(directory)?.ToCharArray();
+            if (!uint.TryParse(directoryNameToCharArray, out uint appId))
+            {
+                _logger.LogWarning(
+                    "Skipping directory with name @{DirectoryName} since it does not match expected format of a Steam appId",
+                    directory);
+                continue;
+            }
+
+            var appName = await _steamRepository.GetAppNameFromId(appId);
+
+            if (string.IsNullOrEmpty(appName))
+            {
+                _logger.LogWarning("Could not find Steam app name for appId {AppId}", appId);
+                continue;
+            }
+
+            string targetDirectoryForApp = Path.Combine(job.TargetDirectoryPath, appName);
+
+            if (!_fileStorage.ValidateDirectory(new DirectoryOptions(targetDirectoryForApp, true)))
+            {
+                _logger.LogError(
+                    "Could not create target directory with name @{DirectoryName}",
+                    targetDirectoryForApp);
+
+                return result.FailOperation("Cannot create target directory");
+            }
+
+            foreach (var file in _fileStorage.EnumerateFiles(directory))
+            {
+                result.PrepareOperation(file);
+                var copyResult = await _fileStorage.CopyAsync(file, targetDirectoryForApp, false, ct);
+                if (!copyResult.Success)
+                {
+                    return result.FailOperation($"File transfer failed for file {file}");
+                }
+                if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
+                {
+                    _logger.LogError(
+                        "File was copied, but file content does not match: {FilePath}",
+                        copyResult.targetFileFullPath);
+                    return result.FailOperation($"Mismatched file content for file {file}");
+                }
+                if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
+                {
+                    _logger.LogError(
+                        "File was copied, but metadata does not match: {FilePath}",
+                        copyResult.targetFileFullPath);
+                    return result.FailOperation($"Mismatched file metadata for file {file}");
+                }
+                result.CompleteOperation(copyResult.targetFileFullPath);
+                _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
+            }
+
+            _logger.LogInformation("Processed Steam-directory {Directory}", directory);
+        }
+
+        return result.CompleteJob();
     }
 
     public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)

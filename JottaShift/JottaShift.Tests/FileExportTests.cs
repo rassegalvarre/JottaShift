@@ -117,11 +117,12 @@ public class FileExportTests
         var mockFileData = new Dictionary<string, MockFileData>();
         var steamRepositoryMock = new Mock<ISteamRepository>();
 
+        var fileByteContent = File.ReadAllBytes(TestData.Duck);
         foreach (var app in appIdAndNamePair)
         {
             mockFileData.Add(
                 Path.Combine(@"C:\steam", app.Key.ToString(), "image.png"),
-                new MockFileData([]));
+                new MockFileData(fileByteContent));
         
             steamRepositoryMock
                 .Setup(repo => repo.GetAppNameFromId(app.Key))
