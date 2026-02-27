@@ -2,11 +2,12 @@
 
 public enum FileTransferJobStatus
 {
+    Diabled,
     Invalid,
     NotStarted,
     InProgress,
     Completed,
-    Failed
+    Failed,
 }
 
 // TODO: Rename to FileExportJobResult and make abstract
@@ -30,6 +31,11 @@ public record FileTransferJobResult(string Key)
         {
             Status = status
         };
+    }
+
+    public static FileTransferJobResult Disabled(string jobKey)
+    {
+        return CreateFromStatus(jobKey, FileTransferJobStatus.Diabled);
     }
 
     public static FileTransferJobResult Invalid(string jobKey, string errorMessage)

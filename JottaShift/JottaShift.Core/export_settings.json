@@ -3,22 +3,30 @@
         {
             "key": "jottacloud_timeline",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\Tidslinje",
-            "target_directory_path": "E:\\Jottacloud\\Bilder og videoer"
+            "target_directory_path": "E:\\Jottacloud\\Bilder og videoer",
+            "delete_source_files": false,
+            "enabled": false
         },
         {
             "key": "steam_screenshots",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\remote",
-            "target_directory_path": "E:\\Jottacloud\\Spill\\Bibliotek"
+            "target_directory_path": "E:\\Jottacloud\\Spill\\Bibliotek",
+            "delete_source_files": false,
+            "enabled": false
         },
         {
             "key": "desktop_wallpapers_4k",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\Skrivebordsbakgrunner\\4k",
-            "target_directory_path": "C:\\Users\\krist\\OneDrive\\Bilder\\Skrivebordsbakgrunner\\4k"
+            "target_directory_path": "C:\\Users\\krist\\OneDrive\\Bilder\\Skrivebordsbakgrunner\\4k",
+            "delete_source_files": false,
+            "enabled": false
         },
         {
             "key": "desktop_wallpapers_wqhd",
             "staging_directory_path": "E:\\Jottacloud\\Staging\\Skrivebordsbakgrunner\\WQHD",
-            "target_directory_path": "C:\\Users\\krist\\OneDrive\\Bilder\\Skrivebordsbakgrunner\\WQHD"
+            "target_directory_path": "C:\\Users\\krist\\OneDrive\\Bilder\\Skrivebordsbakgrunner\\WQHD",
+            "delete_source_files": false,
+            "enabled": false
         }
     ],
     "google_photos_upload_jobs": [

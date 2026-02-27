@@ -40,6 +40,12 @@ public sealed class FileExportOrchestrator(
             return FileTransferJobResult.Invalid(jobKey, "Missing job setting");
         }
 
+        if (!job.Enabled)
+        {
+            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
+            return FileTransferJobResult.Disabled(job.Key);
+        }
+
         if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
         {
             _logger.LogError(
@@ -121,6 +127,12 @@ public sealed class FileExportOrchestrator(
         {
             _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
             return FileTransferJobResult.Invalid(jobKey, "Missing job setting");
+        }
+
+        if (!job.Enabled)
+        {
+            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
+            return FileTransferJobResult.Disabled(job.Key);
         }
 
         if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
