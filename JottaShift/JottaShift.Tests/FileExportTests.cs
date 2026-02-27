@@ -36,7 +36,9 @@ public class FileExportTests
         {
             Key = "jottacloud_timeline",
             SourceDirectoryPath = @"C:\timeline",
-            TargetDirectoryPath = @"C:\backup"
+            TargetDirectoryPath = @"C:\backup",
+            Enabled = true,
+            DeleteSourceFiles = true
         };
         var settings = new FileExportSettings()
         {
@@ -111,7 +113,9 @@ public class FileExportTests
         {
             Key = "steam_screenshots",
             SourceDirectoryPath = @"C:\steam",
-            TargetDirectoryPath = @"C:\backup\steam"
+            TargetDirectoryPath = @"C:\backup\steam",
+            Enabled = true,
+            DeleteSourceFiles = true
         };
 
         var mockFileData = new Dictionary<string, MockFileData>();
