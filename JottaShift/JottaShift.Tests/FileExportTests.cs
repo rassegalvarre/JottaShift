@@ -101,7 +101,6 @@ public class FileExportTests
     [Fact]
     public async Task ExportSteamScreenshotsAsync_ShouldExportSteamScreenshots_ToDirectoryWithAppName()
     {
-
         var appIdAndNamePair = new Dictionary<uint, string>
         {
             { 1, "Pung" },

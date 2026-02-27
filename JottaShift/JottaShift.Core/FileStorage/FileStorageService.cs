@@ -10,6 +10,17 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorage
 {
+    public bool DeleteFile(string fileFullPath)
+    {
+        try
+        {
+            _fileSystem.File.Delete(fileFullPath);
+        }
+        catch (Exception) { }
+
+        return _fileSystem.File.Exists(fileFullPath) == false;
+    }
+
     public async Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default)
     {
         string fileName = Path.GetFileName(sourceFileFullPath);

@@ -108,6 +108,14 @@ public sealed class FileExportOrchestrator(
                         copyResult.targetFileFullPath);
                     return result.FailOperation($"Mismatched file metadata for file {file}");
                 }
+
+                if(job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
+                {
+                    _logger.LogError(
+                        "File was copied, but failed to delete source file: {FilePath}",
+                        file);
+                }
+
                 result.CompleteOperation(copyResult.targetFileFullPath);
                 _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
             }
@@ -185,6 +193,12 @@ public sealed class FileExportOrchestrator(
                 return result.FailOperation($"Mismatched file metadata");
             }
 
+            if (job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
+            {
+                _logger.LogError(
+                    "File was copied, but failed to delete source file: {FilePath}",
+                    file);
+            }
             result.CompleteOperation(copyResult.targetFileFullPath);
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
