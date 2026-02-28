@@ -11,6 +11,7 @@ public class GooglePhotosTests
 
 
     [Fact]
+    [Trait("Category", "CI-Skip")]
     public async Task GetOrCreateAlbum_CreateOrGetsAlbum_WithAlbumName()
     {
         var googlePhotosRepository = new GooglePhotosRepository(new FileSystem());
@@ -20,12 +21,13 @@ public class GooglePhotosTests
     }
 
     [Fact]
+    [Trait("Category", "CI-Skip")]
     public async Task UploadImage_UploadsTestImage()
     {
         var images = new List<string> {
             TestData.Duck,
             TestData.Waterfall
-        };
+        };[Trait("Category", "CI-Skip")]
 
         var googlePhotosRepository = new GooglePhotosRepository(new FileSystem());
 
