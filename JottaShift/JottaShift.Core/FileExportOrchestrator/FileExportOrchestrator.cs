@@ -126,6 +126,7 @@ public sealed class FileExportOrchestrator(
         return result.CompleteJob();
     }
 
+// Todo: Handle (Conflict) files and dirs. Ignore?
     public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
         const string jobKey = "jottacloud_timeline";
