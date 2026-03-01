@@ -111,8 +111,6 @@ public sealed class FileExportOrchestrator(
 
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
-            result.PrepareOperation(file);
-
             var imageResolution = _fileStorage.GetImageResolution(file);
             string targetDirectoryForResolution;
 
@@ -133,10 +131,15 @@ public sealed class FileExportOrchestrator(
                 _logger.LogWarning(
                     "Skipping file with name @{FileName} since it does not match expected format of ending with resolution",
                     file);
+
                 continue;
             }
+
+            result.PrepareOperation(file);
+
             string fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
 
+            result.StartOperation();
             var copyResult = await _fileStorage.CopyAsync(file, fullTargetDirectoryPath, false, ct);
             if (!copyResult.Success)
             {

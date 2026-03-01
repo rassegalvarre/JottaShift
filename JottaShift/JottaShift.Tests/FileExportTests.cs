@@ -113,7 +113,7 @@ public class FileExportTests
         {
             { 1, "Pung" },
             { 12345, "Duum" },
-            { 987653, "Super Mawio" }        
+            { 987653, "Super Mawio" }
         };
 
         var jobSettings = new FileTransferJob()
@@ -134,10 +134,10 @@ public class FileExportTests
             mockFileData.Add(
                 Path.Combine(@"C:\steam", app.Key.ToString(), "image.png"),
                 new MockFileData(fileByteContent));
-        
+
             steamRepositoryMock
                 .Setup(repo => repo.GetAppNameFromId(app.Key))
-                .ReturnsAsync(app.Value);        
+                .ReturnsAsync(app.Value);
         }
 
         var fileSystemMock = new MockFileSystem(mockFileData);
@@ -208,4 +208,45 @@ public class FileExportTests
         // Assert.Equal(2, result.GooglePhotosUploadOperationResults.Count());
     }
 
+    [Fact]
+    public async Task ExportDesktopWallpapersAsync_ShouldExportWallpapers_ToDirectoryBasedOnResolution()
+    {
+        var imageBytes = await File.ReadAllBytesAsync(TestData.Egypt);
+
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { TestData.Egypt, new MockFileData(imageBytes) }
+        });
+
+        string targetDirectory = @"C:\wallpapers";
+        string expectedTargetDirectory = Path.Combine(targetDirectory, "4K");
+
+        var fileStorageService = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var fileExportOrchestrator = new FileExportOrchestrator(
+            new FileExportSettings()
+            {
+                FileTransferJobs = [
+                    new FileTransferJob()
+                    {
+                        Key = "desktop_wallpapers",
+                        SourceDirectoryPath = TestData.TestDataPath,
+                        TargetDirectoryPath = targetDirectory,
+                        Enabled = true,
+                        DeleteSourceFiles = false
+                    }
+                ]
+            },
+            new Mock<ILogger<FileExportOrchestrator>>().Object,
+            fileStorageService,
+            new Mock<IGooglePhotosRepository>().Object,
+            new Mock<ISteamRepository>().Object);
+
+        var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
+
+        Assert.True(result.Success);
+        Assert.True(fileSystem.File.Exists(@"C:\wallpapers\4K\egypt.jpg"));
+    }
 }

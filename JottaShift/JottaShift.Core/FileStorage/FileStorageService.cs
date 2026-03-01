@@ -108,13 +108,13 @@ public sealed class FileStorageService(
             using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
             var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
 
-            var exifDir = directories.FirstOrDefault(d => d.Name.Contains("Exif"));
-            if (exifDir == null)
+            var tags = directories.Where(d => d.Name == "Exif" || d.Name == "JPEG").SelectMany(d => d.Tags);
+            if (!tags.Any())
                 return string.Empty;
 
             // Look for image width and height
-            var widthTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Image Width");
-            var heightTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Image Height");
+            var widthTag = tags.FirstOrDefault(t => t.Name == "Image Width");
+            var heightTag = tags.FirstOrDefault(t => t.Name == "Image Height");
 
             if (widthTag?.Description != null && heightTag?.Description != null)
             {
