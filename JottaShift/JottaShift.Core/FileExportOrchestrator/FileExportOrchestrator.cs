@@ -20,35 +20,57 @@ public sealed class FileExportOrchestrator(
         _culture = culture;
     }
 
-
     // Todo: Handle (Conflict) files and dirs. Ignore?
     public async Task<FileExportJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         const string jobKey = "chromecast_photos";
-        throw new NotImplementedException();
-        //var job = GetGooglePhotosUploadJob(jobKey);
-        //if (job == null)
-        //{
-        //    _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-        //    return GooglePhotosUploadJobResult.Invalid(jobKey, "Missing job setting");
-        //}
+        var job = GetGooglePhotosUploadJob(jobKey);
+        if (job == null)
+        {
+            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
+            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
+        }
 
-        //if (!job.Enabled)
-        //{
-        //    _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
-        //    return GooglePhotosUploadJobResult.Disabled(job.Key);
-        //}
+        if (!job.Enabled)
+        {
+            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
+            return FileExportJobResult.Disabled(job.Key);
+        }
 
-        //if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
-        //{
-        //    _logger.LogError(
-        //        "Source directory with name @{DirectoryName} does not exist",
-        //        job.SourceDirectoryPath);
+        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        {
+            _logger.LogError(
+                "Source directory with name @{DirectoryName} does not exist",
+                job.SourceDirectoryPath);
 
-        //    return GooglePhotosUploadJobResult.Invalid(jobKey, "Missing source directory");
-        //}
+            return FileExportJobResult.Invalid(jobKey, "Missing source directory");
+        }
 
-        //var result = GooglePhotosUploadJobResult.StartJob(job);
+        var result = FileExportJobResult.StartJob(job);
+
+        List<string> filePathsToUpload = [.. _fileStorage.EnumerateFiles(job.SourceDirectoryPath)];
+        if (filePathsToUpload.Count == 0)
+        {
+            _logger.LogInformation("No images staged for upload to Google Photos");
+            return result.CompleteJob();
+        }
+
+        var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(filePathsToUpload, job.AlbumName);
+
+        if (filesUploaded == 0)
+        {
+            return result.FailOperation($"No files were uploaded to Google");
+        }
+
+        if (filePathsToUpload.Count() != filesUploaded)
+        {
+            _logger.LogError(
+                "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
+                filesUploaded, filePathsToUpload.Count());
+            return result.FailOperation($"Missing files");
+        }
+
+        return result.CompleteJob();
     }
 
     public Task<FileExportJobResult> ExportDesktopWallpapers4kAsync(CancellationToken ct = default)
