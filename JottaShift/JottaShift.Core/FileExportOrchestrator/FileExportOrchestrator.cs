@@ -13,7 +13,15 @@ public sealed class FileExportOrchestrator(
     IGooglePhotosRepository _googlePhotosRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator
 {
-// Todo: Handle (Conflict) files and dirs. Ignore?
+    private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;
+
+    public void SetCulture(CultureInfo culture)
+    {
+        _culture = culture;
+    }
+
+
+    // Todo: Handle (Conflict) files and dirs. Ignore?
     public Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         throw new NotImplementedException();
@@ -167,7 +175,7 @@ public sealed class FileExportOrchestrator(
         {
             result.PrepareOperation(file);
             var timestamp = _fileStorage.GetImageDate(file);
-            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, file, timestamp);
+            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, timestamp);
 
             result.StartOperation();
             
@@ -207,7 +215,7 @@ public sealed class FileExportOrchestrator(
         return result.CompleteJob();
     }
 
-    public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, string fileFullPath, DateTime fileCreationTime)
+    public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, DateTime fileCreationTime)
     {
         string year = fileCreationTime.Year.ToString();
         int monthIndex = fileCreationTime.Month - 1;
@@ -221,8 +229,7 @@ public sealed class FileExportOrchestrator(
         if (monthIndex < 0 || monthIndex > 11)
             throw new ArgumentOutOfRangeException(nameof(monthIndex), "Month index must be between 0 and 11");
 
-        var culture = CultureInfo.CurrentCulture;
-        string monthName = culture.DateTimeFormat.MonthNames[monthIndex];
+        string monthName = _culture.DateTimeFormat.MonthNames[monthIndex];
         string capitalizedMonthName = char.ToUpper(monthName[0]) + monthName[1..];
 
         return $"{monthIndex + 1:D2} {capitalizedMonthName}";
