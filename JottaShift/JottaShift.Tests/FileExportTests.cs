@@ -249,14 +249,14 @@ public class FileExportTests
             new Mock<ISteamRepository>().Object);
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
-
+        var operation = result.FileTransferOperationResults.FirstOrDefault();
         Assert.True(result.Success,
             "Result did not have status Success");
         Assert.True(result.FileTransferOperationResults.Count > 0,
             "No operation in job was executed");
-        Assert.True(result.FileTransferOperationResults.First().Success,
+        Assert.True(operation?.Success == true,
             "Operation was not successfull");
         Assert.True(fileSystem.File.Exists(@"C:\wallpapers\4K\egypt.jpg"),
-            "Image was not copied to the expected directory");
+            $"Image was not copied to the expected directory. Actual: {operation.TargetFilePath}");
     }
 }
