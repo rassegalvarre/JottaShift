@@ -256,7 +256,6 @@ public class FileExportTests
             "No operation in job was executed");
         Assert.True(operation?.Success == true,
             "Operation was not successfull");
-        Assert.Equal(expectedTarget, operation.TargetFilePath);
-            // $"Image was not copied to the expected directory. Actual: {operation.TargetFilePath}");
+        Assert.Equal(expectedTarget, operation.TargetFilePath);          
     }
 }
