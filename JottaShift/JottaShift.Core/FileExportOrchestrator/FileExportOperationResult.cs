@@ -14,7 +14,7 @@ public record FileExportOperationResult(string SourceFilePath)
     public FileExportOperationResultStatus Status { get; private set; } = FileExportOperationResultStatus.NotStarted;
     public string SourceFilePath { get; init; } = SourceFilePath;
     public string? TargetFilePath { get; private set; }
-    public bool Success { get; init; }
+    public bool Success => Status == FileExportOperationResultStatus.Completed;
 
     private static FileExportOperationResult CreateFromStatus(string SourceFilePath, FileExportOperationResultStatus status)
     {

@@ -98,6 +98,39 @@ public sealed class FileStorageService(
         return _fileSystem.File.GetLastWriteTime(fileFullPath);
     }
 
+    public string GetImageResolution(string fileFullPath)
+    {
+        if (!_fileSystem.File.Exists(fileFullPath))
+            return string.Empty;
+
+        try
+        {
+            using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
+            var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
+
+            var tags = directories.Where(d => d.Name == "Exif" || d.Name == "JPEG").SelectMany(d => d.Tags);
+            if (!tags.Any())
+                return string.Empty;
+
+            // Look for image width and height
+            var widthTag = tags.FirstOrDefault(t => t.Name == "Image Width");
+            var heightTag = tags.FirstOrDefault(t => t.Name == "Image Height");
+
+            if (widthTag?.Description != null && heightTag?.Description != null)
+            {
+                string widthStr = widthTag.Description.Split(' ')[0];
+                string heightStr = heightTag.Description.Split(' ')[0];
+                return $"{widthStr}x{heightStr}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("Could not extract image resolution: {ExceptionMessage}", ex.Message);
+        }
+
+        return string.Empty;
+    }
+
     private DateTime TryGetDateTakenFromExif(string fileFullPath)
     {
         try

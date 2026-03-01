@@ -515,4 +515,16 @@ public class FileStorageTests
 
         Assert.True(metadataMatches);
     }
+
+    [Fact]
+    public void GetImageResolution_GetResolutionForTestFile()
+    {
+        var fileStorageService = new FileStorageService(
+           new FileSystem(),
+           new Mock<ILogger<FileStorageService>>().Object);
+
+        string resolution = fileStorageService.GetImageResolution(TestData.Duck);
+
+        Assert.Equal("4096x3072", resolution);
+    }
 }

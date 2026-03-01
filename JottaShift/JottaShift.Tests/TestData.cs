@@ -10,6 +10,7 @@ internal static class TestData
     public static readonly string Duck = Path.Combine(TestDataPath, "duck.jpg");
     public static readonly string DuckCopy = Path.Combine(TestDataPath, "duck_copy.jpg");
     public static readonly string Waterfall = Path.Combine(TestDataPath, "waterfall.jpg");
+    public static readonly string Egypt = Path.Combine(TestDataPath, "egypt.jpg");
 
     /// <summary>
     /// Collection of typical image filenames with dates in various formats and their expected date components.

@@ -13,6 +13,8 @@ public interface IFileStorage
 
     DateTime GetImageDate(string fileFullPath);
 
+    string GetImageResolution(string fileFullPath);
+
     bool FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024);
 
     bool DoesFileMetadataMatch(string pathA, string pathB);
