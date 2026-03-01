@@ -22,7 +22,7 @@ public sealed class FileExportOrchestrator(
 
 
     // Todo: Handle (Conflict) files and dirs. Ignore?
-    public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
+    public async Task<FileExportJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         const string jobKey = "chromecast_photos";
         throw new NotImplementedException();
