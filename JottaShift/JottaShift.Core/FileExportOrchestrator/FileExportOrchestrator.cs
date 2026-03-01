@@ -24,6 +24,7 @@ public sealed class FileExportOrchestrator(
     // Todo: Handle (Conflict) files and dirs. Ignore?
     public Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
+        _ = _googlePhotosRepository;
         throw new NotImplementedException();
     }
 
