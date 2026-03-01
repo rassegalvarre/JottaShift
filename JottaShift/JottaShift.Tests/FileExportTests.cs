@@ -4,6 +4,7 @@ using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Globalization;
 using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests;
@@ -15,7 +16,6 @@ public class FileExportTests
     {
         var creationDate = new DateTime(2026, 5, 31);
         string destinationDirectory = AppContext.BaseDirectory;
-        string fileName = Path.GetRandomFileName();
 
         var timelineExportService = new FileExportOrchestrator(
             new FileExportSettings(),
@@ -24,9 +24,13 @@ public class FileExportTests
             new Mock<IGooglePhotosRepository>().Object,
             new Mock<ISteamRepository>().Object);
 
-        var fullFileName = timelineExportService.GetTargetDirectoryNameFromFileTimestamp(destinationDirectory, fileName, creationDate);
-        var expectedDirectoryName = Path.Combine(destinationDirectory, "2026", "05 Mai");
-        Assert.Equal(expectedDirectoryName, fullFileName);
+        var culture = CultureInfo.GetCultureInfo("en-GB");
+        timelineExportService.SetCulture(culture);
+
+        string directoryNameResult = timelineExportService.GetTargetDirectoryNameFromFileTimestamp(destinationDirectory, creationDate);
+        string expectedDirectoryName = Path.Combine(destinationDirectory, "2026", "05 May");
+
+        Assert.Equal(expectedDirectoryName, directoryNameResult);
     }
 
     [Fact]
@@ -56,7 +60,7 @@ public class FileExportTests
         var duckTarget = Path.Combine( // TODO: Fix path when target-dir from metadata is fixed
             job.TargetDirectoryPath,
             "2025",
-            "05 Mai",
+            "05 May",
             Path.GetFileName(TestData.Duck));
         var duckContent = await File.ReadAllBytesAsync(TestData.Duck);
 
@@ -68,7 +72,7 @@ public class FileExportTests
         var waterfallTarget = Path.Combine( // TODO: Fix path when target-dir from metadata is fixed
             job.TargetDirectoryPath,
             "2025",
-            "05 Mai",
+            "05 May",
             Path.GetFileName(TestData.Waterfall));
         var waterfallContent = await File.ReadAllBytesAsync(TestData.Waterfall);
 
@@ -90,6 +94,9 @@ public class FileExportTests
             fileStorageService,
             new Mock<IGooglePhotosRepository>().Object,
             new Mock<ISteamRepository>().Object);
+
+        var culture = CultureInfo.GetCultureInfo("en-GB");
+        timelineExportService.SetCulture(culture);
 
         var result = await timelineExportService.ExportJottacloudTimelineAsync(CancellationToken.None);
 

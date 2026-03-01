@@ -25,4 +25,4 @@ jobs:
     - name: Build
       run: dotnet build JottaShift/JottaShift.slnx --no-restore
     - name: Test
-      run: dotnet test JottaShift/JottaShift.Tests/JottaShift.Tests.csproj --no-build --verbosity normal
+      run: dotnet test JottaShift/JottaShift.Tests/JottaShift.Tests.csproj --no-build --verbosity normal --filter "API!=Google"

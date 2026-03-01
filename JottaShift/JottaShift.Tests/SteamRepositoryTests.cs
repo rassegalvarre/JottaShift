@@ -4,6 +4,7 @@ using Moq;
 
 namespace JottaShift.Tests;
 
+[Trait("API", "Google")]
 public class SteamRepositoryTests
 {
     [Fact]
