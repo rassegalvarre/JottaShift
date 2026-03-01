@@ -246,7 +246,9 @@ public class FileExportTests
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
 
-        Assert.True(result.Success);
-        Assert.True(fileSystem.File.Exists(@"C:\wallpapers\4K\egypt.jpg"));
+        Assert.True(result.Success,
+            "Result did not have status Success");
+        Assert.True(fileSystem.File.Exists(@"C:\wallpapers\4K\egypt.jpg"),
+            "Image was not copied to the expected directory");
     }
 }
