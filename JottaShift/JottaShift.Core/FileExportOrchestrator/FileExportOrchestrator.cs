@@ -113,8 +113,6 @@ public sealed class FileExportOrchestrator(
         {
             result.PrepareOperation(file);
 
-            // Check resolution
-            // Move file to correct subdirectory based on resolution (e.g. 4K, 1080p, etc.)
             var imageResolution = _fileStorage.GetImageResolution(file);
             string targetDirectoryForResolution;
 
@@ -137,9 +135,9 @@ public sealed class FileExportOrchestrator(
                     file);
                 continue;
             }
-           var fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
+            string fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
 
-            var copyResult = await _fileStorage.CopyAsync(file, job.TargetDirectoryPath, false, ct);
+            var copyResult = await _fileStorage.CopyAsync(file, fullTargetDirectoryPath, false, ct);
             if (!copyResult.Success)
             {
                 return result.FailOperation($"File transfer failed for file {file}");
