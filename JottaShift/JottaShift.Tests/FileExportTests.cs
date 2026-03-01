@@ -216,7 +216,7 @@ public class FileExportTests
         string sourceDirectory = @"C:\games";
         var sourceFilePath = Path.Combine(sourceDirectory, Path.GetFileName(TestData.Egypt));
         string targetDirectory = @"C:\wallpapers";
-        string expectedTargetDirectory = Path.Combine(targetDirectory, "4K");
+        string expectedTarget = Path.Combine(targetDirectory, "4K", "egypt.jpg");
 
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
@@ -256,7 +256,7 @@ public class FileExportTests
             "No operation in job was executed");
         Assert.True(operation?.Success == true,
             "Operation was not successfull");
-        Assert.True(fileSystem.File.Exists(@"C:\wallpapers\4K\egypt.jpg"),
-            $"Image was not copied to the expected directory. Actual: {operation.TargetFilePath}");
+        Assert.Equal(expectedTarget, operation.TargetFilePath);
+            // $"Image was not copied to the expected directory. Actual: {operation.TargetFilePath}");
     }
 }
