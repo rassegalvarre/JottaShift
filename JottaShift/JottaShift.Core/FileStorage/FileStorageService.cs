@@ -116,9 +116,11 @@ public sealed class FileStorageService(
             var widthTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Image Width");
             var heightTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Image Height");
 
-            if (widthTag != null && heightTag != null)
+            if (widthTag?.Description != null && heightTag?.Description != null)
             {
-                return $"{widthTag.Description}x{heightTag.Description}";
+                string widthStr = widthTag.Description.Split(' ')[0];
+                string heightStr = heightTag.Description.Split(' ')[0];
+                return $"{widthStr}x{heightStr}";
             }
         }
         catch (Exception ex)
