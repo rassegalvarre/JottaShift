@@ -73,14 +73,102 @@ public sealed class FileExportOrchestrator(
         return result.CompleteJob();
     }
 
-    public Task<FileExportJobResult> ExportDesktopWallpapers4kAsync(CancellationToken ct = default)
+    public async Task<FileExportJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
     {
-        throw new NotImplementedException();
-    }
+        const string jobKey = "desktop_wallpapers";
 
-    public Task<FileExportJobResult> ExportDesktopWallpapersWQHDAsync(CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
+        var job = GetFileTransferJob(jobKey);
+        if (job == null)
+        {
+            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
+            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
+        }
+
+        if (!job.Enabled)
+        {
+            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
+            return FileExportJobResult.Disabled(job.Key);
+        }
+
+        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        {
+            _logger.LogError(
+                "Source directory with name @{DirectoryName} does not exist",
+                job.SourceDirectoryPath);
+
+            return FileExportJobResult.Invalid(jobKey, "Missing source directory");
+        }
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
+        {
+            _logger.LogError(
+                "Could not create target directory with name @{DirectoryName}",
+                job.TargetDirectoryPath);
+
+            return FileExportJobResult.Invalid(jobKey, "Missing target directory");
+        }
+
+        var result = FileExportJobResult.StartJob(job);
+
+        foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
+        {
+            result.PrepareOperation(file);
+
+            // Check resolution
+            // Move file to correct subdirectory based on resolution (e.g. 4K, 1080p, etc.)
+            var imageResolution = _fileStorage.GetImageResolution(file);
+            string targetDirectoryForResolution;
+
+            if (imageResolution.EndsWith("1440"))
+            {
+                targetDirectoryForResolution = "QHD";
+            }
+            else if (imageResolution.EndsWith("2160"))
+            {
+                targetDirectoryForResolution = "4K";
+            }
+            else if (imageResolution.EndsWith("1080"))
+            {
+                targetDirectoryForResolution = "FullHD";
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Skipping file with name @{FileName} since it does not match expected format of ending with resolution",
+                    file);
+                continue;
+            }
+           var fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
+
+            var copyResult = await _fileStorage.CopyAsync(file, job.TargetDirectoryPath, false, ct);
+            if (!copyResult.Success)
+            {
+                return result.FailOperation($"File transfer failed for file {file}");
+            }
+            if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
+            {
+                _logger.LogError(
+                    "File was copied, but file content does not match: {FilePath}",
+                    copyResult.targetFileFullPath);
+                return result.FailOperation($"Mismatched file content for file {file}");
+            }
+            if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
+            {
+                _logger.LogError(
+                    "File was copied, but metadata does not match: {FilePath}",
+                    copyResult.targetFileFullPath);
+                return result.FailOperation($"Mismatched file metadata for file {file}");
+            }
+            if (job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
+            {
+                _logger.LogError(
+                    "File was copied, but failed to delete source file: {FilePath}",
+                    file);
+            }
+            result.CompleteOperation(copyResult.targetFileFullPath);
+            _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
+        }
+
+        return result.CompleteJob();
     }
 
     public async Task<FileExportJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
