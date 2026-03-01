@@ -254,6 +254,8 @@ public class FileExportTests
             "Result did not have status Success");
         Assert.True(result.FileTransferOperationResults.Count > 0,
             "No operation in job was executed");
+        Assert.True(result.FileTransferOperationResults.First().Success,
+            "Operation was not successfull");
         Assert.True(fileSystem.File.Exists(@"C:\wallpapers\4K\egypt.jpg"),
             "Image was not copied to the expected directory");
     }
