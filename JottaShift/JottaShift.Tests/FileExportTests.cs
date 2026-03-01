@@ -5,6 +5,7 @@ using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Globalization;
+using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests;
@@ -169,4 +170,43 @@ public class FileExportTests
             Assert.True(fileSystemMock.File.Exists(expectedTargetPath), $"Expected file at path {expectedTargetPath} was not found.");
         }
     }
+
+    [Fact]
+    [Trait("API", "Google")]
+    public async Task ExportChromecastPhotosAsync_ShouldExportPhots_ToAlbumName()
+    {
+        var googlePhotosRepositoryMock = new Mock<IGooglePhotosRepository>();
+
+        var fileSystem = new FileSystem();
+        var fileStorageService = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var fileExportOrchestrator = new FileExportOrchestrator(
+            new FileExportSettings()
+            {
+                GooglePhotosUploadJobs = new List<GooglePhotosUploadJob>()
+                    {
+                        new GooglePhotosUploadJob()
+                        {
+                            Key = "chromecast_photos",
+                            SourceDirectoryPath = TestData.TestDataPath,
+                            AlbumName = "JottaSync.UnitTests.FileExport",
+                            Enabled = true,
+                            DeleteSourceFiles = false
+                        }
+                    }
+            },
+            new Mock<ILogger<FileExportOrchestrator>>().Object,
+            fileStorageService,
+            googlePhotosRepositoryMock.Object,
+            new Mock<ISteamRepository>().Object);
+
+        var result = await fileExportOrchestrator.ExportChromecastPhotosAsync();
+
+        Assert.True(result.Success);
+        Assert.Equal(2, result.GooglePhotosUploadOperationResults.Count());
+
+    }
+
 }
