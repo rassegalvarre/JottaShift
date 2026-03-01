@@ -1,6 +1,6 @@
 ﻿namespace JottaShift.Core.FileExportOrchestrator;
 
-public enum FileTransferJobStatus
+public enum FileExportJobStatus
 {
     Diabled,
     Invalid,
@@ -12,46 +12,46 @@ public enum FileTransferJobStatus
 
 // TODO: Rename to FileExportJobResult and make abstract
 // with derived classes for FileTransferJobResult and GooglePhotosUploadJobResult
-public record FileTransferJobResult(string Key)
+public record FileExportJobResult(string Key)
 {
     public string Key { get; init; } = Key;
-    public FileTransferJobStatus Status { get; private set; } = FileTransferJobStatus.NotStarted;
+    public FileExportJobStatus Status { get; private set; } = FileExportJobStatus.NotStarted;
     public string? SourceDirectoryPath { get; private set; }
     public string? TargetDirectoryPath { get; private set; }
     public string? ErrorMessage { get; private set; }
-    public List<FileTransferOperationResult> FileTransferOperationResults { get; init; } = [];
+    public List<FileExportOperationResult> FileTransferOperationResults { get; init; } = [];
 
-    private FileTransferOperationResult? CurrentOperation {  get; set; }
+    private FileExportOperationResult? CurrentOperation {  get; set; }
 
-    public bool Success => Status == FileTransferJobStatus.Completed;
+    public bool Success => Status == FileExportJobStatus.Completed;
 
-    private static FileTransferJobResult CreateFromStatus(string key, FileTransferJobStatus status)
+    private static FileExportJobResult CreateFromStatus(string key, FileExportJobStatus status)
     {
-        return new FileTransferJobResult(key)
+        return new FileExportJobResult(key)
         {
             Status = status
         };
     }
 
-    public static FileTransferJobResult Disabled(string jobKey)
+    public static FileExportJobResult Disabled(string jobKey)
     {
-        return CreateFromStatus(jobKey, FileTransferJobStatus.Diabled);
+        return CreateFromStatus(jobKey, FileExportJobStatus.Diabled);
     }
 
-    public static FileTransferJobResult Invalid(string jobKey, string errorMessage)
+    public static FileExportJobResult Invalid(string jobKey, string errorMessage)
     {
-        return CreateFromStatus(jobKey, FileTransferJobStatus.Invalid) with
+        return CreateFromStatus(jobKey, FileExportJobStatus.Invalid) with
         {
             ErrorMessage = errorMessage
         };
     }
 
-    public static FileTransferJobResult StartJob(FileTransferJob job)
+    public static FileExportJobResult StartJob(FileExportJob job)
     {
-        return CreateFromStatus(job.Key, FileTransferJobStatus.InProgress) with
+        return CreateFromStatus(job.Key, FileExportJobStatus.InProgress) with
         {
             SourceDirectoryPath =  job.SourceDirectoryPath,
-            TargetDirectoryPath = job.TargetDirectoryPath
+            //TargetDirectoryPath = job.TargetDirectoryPath
         };
     }
 
@@ -62,7 +62,7 @@ public record FileTransferJobResult(string Key)
             throw new InvalidOperationException("Cannot prepare a new operation while another operation is in progress.");
         }
 
-        var operation = FileTransferOperationResult.Prepare(sourceFilePath);
+        var operation = FileExportOperationResult.Prepare(sourceFilePath);
         CurrentOperation = operation;
     }
 
@@ -76,11 +76,11 @@ public record FileTransferJobResult(string Key)
         CurrentOperation.Start();
     }
 
-    public FileTransferJobResult FailOperation(string errorMessage)
+    public FileExportJobResult FailOperation(string errorMessage)
     {
         if (CurrentOperation != null)
         {
-            Status = FileTransferJobStatus.Failed;
+            Status = FileExportJobStatus.Failed;
             ErrorMessage = errorMessage;
             CurrentOperation.Fail(errorMessage);
             FileTransferOperationResults.Add(CurrentOperation);
@@ -103,15 +103,15 @@ public record FileTransferJobResult(string Key)
         CurrentOperation = null;        
     }
 
-    public FileTransferJobResult CompleteJob()
+    public FileExportJobResult CompleteJob()
     {
         if (CurrentOperation != null &&
-            CurrentOperation.Status != FileTransferOperationResultStatus.Completed)
+            CurrentOperation.Status != FileExportOperationResultStatus.Completed)
         {
             throw new InvalidOperationException("Current operation as not been marked as completed.");
         }
         
-        Status = FileTransferJobStatus.Completed;
+        Status = FileExportJobStatus.Completed;
         return this;
     }
 }
