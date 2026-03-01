@@ -213,13 +213,17 @@ public class FileExportTests
     {
         var imageBytes = await File.ReadAllBytesAsync(TestData.Egypt);
 
-        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
-        {
-            { TestData.Egypt, new MockFileData(imageBytes) }
-        });
-
+        string sourceDirectory = @"C:\games";
+        var sourceFilePath = Path.Combine(sourceDirectory, Path.GetFileName(TestData.Egypt));
         string targetDirectory = @"C:\wallpapers";
         string expectedTargetDirectory = Path.Combine(targetDirectory, "4K");
+
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { sourceDirectory, new MockDirectoryData() },
+            { targetDirectory, new MockDirectoryData() },
+            { sourceFilePath, new MockFileData(imageBytes) },
+        });
 
         var fileStorageService = new FileStorageService(
             fileSystem,
@@ -232,7 +236,7 @@ public class FileExportTests
                     new FileTransferJob()
                     {
                         Key = "desktop_wallpapers",
-                        SourceDirectoryPath = TestData.TestDataPath,
+                        SourceDirectoryPath = sourceDirectory,
                         TargetDirectoryPath = targetDirectory,
                         Enabled = true,
                         DeleteSourceFiles = false
