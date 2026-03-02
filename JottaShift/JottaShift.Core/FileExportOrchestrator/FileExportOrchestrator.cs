@@ -20,21 +20,30 @@ public sealed class FileExportOrchestrator(
         _culture = culture;
     }
 
-    private FileExportJobResult FileTransferJobPreValidation (FileTransferJob job)
+    private FileExportJobResult FileExportJobPreValidation(FileExportJob job)
     {
         if (!job.Enabled)
         {
             _logger.LogError("Job with key {JobKey} is diabled and will not be started", job.Key);
             return FileExportJobResult.Disabled(job.Key);
         }
-
         if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
         {
             _logger.LogError(
                 "Source directory with name @{DirectoryName} does not exist",
                 job.SourceDirectoryPath);
-
             return FileExportJobResult.Invalid(job.Key, "Missing source directory");
+        }
+
+        return FileExportJobResult.Ready(job);
+    }
+
+    private FileExportJobResult FileTransferJobPreValidation (FileTransferJob job)
+    {
+        var result = FileExportJobPreValidation(job);
+        if (result.PreValidationFailed)
+        {
+            return result;
         }
         else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
         {
@@ -48,6 +57,11 @@ public sealed class FileExportOrchestrator(
         return FileExportJobResult.Ready(job);
     }
 
+    private FileExportJobResult GooglePhotosUploadJobPreValidation(GooglePhotosUploadJob job)
+    {
+        return FileExportJobPreValidation(job);
+    }
+
     // Todo: Handle (Conflict) files and dirs. Ignore?
     public async Task<FileExportJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
@@ -59,22 +73,14 @@ public sealed class FileExportOrchestrator(
             return FileExportJobResult.Invalid(jobKey, "Missing job setting");
         }
 
-        if (!job.Enabled)
+        var result = GooglePhotosUploadJobPreValidation(job);
+        if (result.PreValidationFailed)
         {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
-            return FileExportJobResult.Disabled(job.Key);
+            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+            return result;
         }
 
-        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
-        {
-            _logger.LogError(
-                "Source directory with name @{DirectoryName} does not exist",
-                job.SourceDirectoryPath);
-
-            return FileExportJobResult.Invalid(jobKey, "Missing source directory");
-        }
-
-        var result = FileExportJobResult.StartJob(job);
+        result = FileExportJobResult.StartJob(job);
 
         List<string> filePathsToUpload = [.. _fileStorage.EnumerateFiles(job.SourceDirectoryPath)];
         if (filePathsToUpload.Count == 0)
