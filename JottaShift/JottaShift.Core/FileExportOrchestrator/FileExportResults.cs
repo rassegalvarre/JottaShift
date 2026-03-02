@@ -4,7 +4,7 @@ public enum FileExportJobStatus
 {
     Diabled,
     Invalid,
-    NotStarted,
+    Ready,
     InProgress,
     Completed,
     Failed,
@@ -15,7 +15,7 @@ public enum FileExportJobStatus
 public record FileExportJobResult(string Key)
 {
     public string Key { get; init; } = Key;
-    public FileExportJobStatus Status { get; private set; } = FileExportJobStatus.NotStarted;
+    public FileExportJobStatus Status { get; private set; } = FileExportJobStatus.Ready;
     public string? SourceDirectoryPath { get; private set; }
     public string? TargetDirectoryPath { get; private set; }
     public string? ErrorMessage { get; private set; }
@@ -24,6 +24,7 @@ public record FileExportJobResult(string Key)
     private FileExportOperationResult? CurrentOperation {  get; set; }
 
     public bool Success => Status == FileExportJobStatus.Completed;
+    public bool PreValidationFailed => Status == FileExportJobStatus.Invalid;
 
     private static FileExportJobResult CreateFromStatus(string key, FileExportJobStatus status)
     {
@@ -43,6 +44,15 @@ public record FileExportJobResult(string Key)
         return CreateFromStatus(jobKey, FileExportJobStatus.Invalid) with
         {
             ErrorMessage = errorMessage
+        };
+    }
+
+    public static FileExportJobResult Ready(FileExportJob job)
+    {
+        return CreateFromStatus(job.Key, FileExportJobStatus.Ready) with
+        {
+            SourceDirectoryPath = job.SourceDirectoryPath,
+            //TargetDirectoryPath = job.TargetDirectoryPath
         };
     }
 

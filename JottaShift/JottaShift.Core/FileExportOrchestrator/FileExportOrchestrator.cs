@@ -20,6 +20,34 @@ public sealed class FileExportOrchestrator(
         _culture = culture;
     }
 
+    private FileExportJobResult FileTransferJobPreValidation (FileTransferJob job)
+    {
+        if (!job.Enabled)
+        {
+            _logger.LogError("Job with key {JobKey} is diabled and will not be started", job.Key);
+            return FileExportJobResult.Disabled(job.Key);
+        }
+
+        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        {
+            _logger.LogError(
+                "Source directory with name @{DirectoryName} does not exist",
+                job.SourceDirectoryPath);
+
+            return FileExportJobResult.Invalid(job.Key, "Missing source directory");
+        }
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
+        {
+            _logger.LogError(
+                "Could not create target directory with name @{DirectoryName}",
+                job.TargetDirectoryPath);
+
+            return FileExportJobResult.Invalid(job.Key, "Missing target directory");
+        }
+
+        return FileExportJobResult.Ready(job);
+    }
+
     // Todo: Handle (Conflict) files and dirs. Ignore?
     public async Task<FileExportJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
@@ -84,30 +112,14 @@ public sealed class FileExportOrchestrator(
             return FileExportJobResult.Invalid(jobKey, "Missing job setting");
         }
 
-        if (!job.Enabled)
+        var result = FileTransferJobPreValidation(job);
+        if (result.PreValidationFailed)
         {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
-            return FileExportJobResult.Disabled(job.Key);
-        }
+            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+            return result;
+        }      
 
-        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
-        {
-            _logger.LogError(
-                "Source directory with name @{DirectoryName} does not exist",
-                job.SourceDirectoryPath);
-
-            return FileExportJobResult.Invalid(jobKey, "Missing source directory");
-        }
-        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
-        {
-            _logger.LogError(
-                "Could not create target directory with name @{DirectoryName}",
-                job.TargetDirectoryPath);
-
-            return FileExportJobResult.Invalid(jobKey, "Missing target directory");
-        }
-
-        var result = FileExportJobResult.StartJob(job);
+        result = FileExportJobResult.StartJob(job);
 
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
