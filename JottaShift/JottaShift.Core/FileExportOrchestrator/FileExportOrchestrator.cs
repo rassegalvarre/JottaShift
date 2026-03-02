@@ -1,4 +1,7 @@
-﻿using JottaShift.Core.FileStorage;
+﻿using JottaShift.Core.FileExportOrchestrator.Jobs;
+using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
+using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
+using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Logging;
@@ -21,10 +24,10 @@ public sealed class FileExportOrchestrator(
     }
 
     // Todo: Handle (Conflict) files and dirs. Ignore?
-    public async Task<FileExportJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
+    public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         const string jobKey = "chromecast_photos";
-        var result = _fileExportJobValidator.GooglePhotosUploadJobPreValidation(jobKey);
+        var result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(jobKey);
         if (result.PreValidationFailed && result.Job != null)
         {
             _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
@@ -58,11 +61,11 @@ public sealed class FileExportOrchestrator(
         return result.CompleteJob();
     }
 
-    public async Task<FileExportJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
+    public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
     {
         const string jobKey = "desktop_wallpapers";
 
-        var result = _fileExportJobValidator.GooglePhotosUploadJobPreValidation(jobKey);
+        var result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(jobKey);
         if (result.PreValidationFailed && result.Job != null)
         {
             _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
@@ -134,11 +137,11 @@ public sealed class FileExportOrchestrator(
         return result.CompleteJob();
     }
 
-    public async Task<FileExportJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
+    public async Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
     {
         const string jobKey = "steam_screenshots";
 
-        var result = _fileExportJobValidator.GooglePhotosUploadJobPreValidation(jobKey);
+        var result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(jobKey);
         if (result.PreValidationFailed && result.Job != null)
         {
             _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
@@ -217,19 +220,19 @@ public sealed class FileExportOrchestrator(
     }
 
 // Todo: Handle (Conflict) files and dirs. Ignore?
-    public async Task<FileExportJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
+    public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
         const string jobKey = "jottacloud_timeline";
-        var result = _fileExportJobValidator.GooglePhotosUploadJobPreValidation(jobKey);
-        if (result.PreValidationFailed && result.Job != null)
+        var result = _fileExportJobValidator.ValidateFileTransferJob(jobKey);
+        if (result.PreValidationFailed)
         {
             _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
             return result;
         }
 
-        result.StartJob();
+        result.Start();
 
-        foreach (var file in _fileStorage.EnumerateFiles(result.Job.SourceDirectoryPath))
+        foreach (var file in _fileStorage.EnumerateFiles(result.SourceDirectoryPath))
         {
             result.PrepareOperation(file);
             var timestamp = _fileStorage.GetImageDate(file);
@@ -270,7 +273,7 @@ public sealed class FileExportOrchestrator(
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
 
-        return result.CompleteJob();
+        return result.Complete();
     }
 
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, DateTime fileCreationTime)

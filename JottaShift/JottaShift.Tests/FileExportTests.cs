@@ -249,10 +249,10 @@ public class FileExportTests
             new Mock<ISteamRepository>().Object);
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
-        var operation = result.FileTransferOperationResults.FirstOrDefault();
+        var operation = result.FileExportOperationResults.FirstOrDefault();
         Assert.True(result.Success,
             "Result did not have status Success");
-        Assert.True(result.FileTransferOperationResults.Count > 0,
+        Assert.True(result.FileExportOperationResults.Count > 0,
             "No operation in job was executed");
         Assert.True(operation?.Success == true,
             "Operation was not successfull");

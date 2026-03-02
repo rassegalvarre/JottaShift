@@ -1,7 +1,9 @@
-﻿using JottaShift.Core.FileStorage;
+﻿using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
+using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
+using JottaShift.Core.FileStorage;
 using Microsoft.Extensions.Logging;
 
-namespace JottaShift.Core.FileExportOrchestrator;
+namespace JottaShift.Core.FileExportOrchestrator.Jobs;
 
 public class FileExportJobValidator(
     ILogger<FileExportJobValidator> _logger,
@@ -41,7 +43,7 @@ public class FileExportJobValidator(
         return result;
     }
 
-    public FileExportJobResult FileTransferJobPreValidation(string jobKey)
+    public FileTransferJobResult ValidateFileTransferJob(string jobKey)
     {
         var job = GetFileTransferJob(jobKey);
         if (job == null)
@@ -66,12 +68,12 @@ public class FileExportJobValidator(
         return FileExportJobResult.Ready(job);
     }
 
-    public FileExportJobResult GooglePhotosUploadJobPreValidation(string jobKey)
+    public GooglePhotosUploadJobResult ValidateGooglePhotosUploadJob(string jobKey)
     {
         var job = GetGooglePhotosUploadJob(jobKey);
         if (job == null)
         {
-            return FileExportJobResult.Invalid(jobKey, "Job not found");
+            return GooglePhotosUploadJobResult.Invalid(jobKey, "Job not found");
         }
 
         return FileExportJobPreValidation(job);
