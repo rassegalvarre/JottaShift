@@ -68,148 +68,63 @@ public sealed class FileStorageService(
 
     public DateTime GetImageDate(string fileFullPath)
     {
-        if (!_fileSystem.File.Exists(fileFullPath))
+        var directories = GetMetadataDirectories(fileFullPath);
+        string[] potentialTagNames = [
+            "Date/Time Original",
+            "Date/Time",
+            "DateTime",
+            "Date/Time Digitized"
+        ];
+
+        if (TryGetTagValue(directories, potentialTagNames, out string tagValue))
         {
-            return default;
+            if (DateTime.TryParseExact(
+                tagValue,
+                "yyyy:MM:dd HH:mm:ss",
+                null,
+                System.Globalization.DateTimeStyles.None,
+                out var imageDate))
+            {
+                return imageDate;
+            }
+
+            // Fall back to general parsing
+            if (DateTime.TryParse(tagValue, out imageDate))
+            {
+                return imageDate;
+            }
         }
 
-        // Try to extract "Date taken" from EXIF metadata
-        var dateTakenFromExif = TryGetDateTakenFromExif(fileFullPath);
-        if (dateTakenFromExif != default)
-        {
-            return dateTakenFromExif;
-        }
-
-        // Try to extract "CreationDate" with 1-hour buffer
-        var creationDate = TryGetCreationDateFromExif(fileFullPath);
-        if (creationDate != default)
-        {
-            return creationDate.AddHours(-1);
-        }
-
-        // Try to extract date from filename (e.g., img_20250215_*.jpg)
-        var dateFromFilename = TryGetDateFromFilename(Path.GetFileName(fileFullPath));
-        if (dateFromFilename != default)
+        if (TryGetDateFromFilename(Path.GetFileName(fileFullPath), out DateTime dateFromFilename))
         {
             return dateFromFilename;
         }
 
         // Fall back to LastWriteTime
-        return _fileSystem.File.GetLastWriteTime(fileFullPath);
+        if (_fileSystem.File.Exists(fileFullPath))
+        {
+            return _fileSystem.File.GetLastWriteTime(fileFullPath);
+        }
+
+        return default;
     }
 
     public string GetImageResolution(string fileFullPath)
-    {
-        if (!_fileSystem.File.Exists(fileFullPath))
-            return string.Empty;
+    {        
+        var directories = GetMetadataDirectories(fileFullPath);
 
-        try
+        if (TryGetTagValue(directories, "Image Width", out string width) &&
+            TryGetTagValue(directories, "Image Height", out string height))
         {
-            using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
-            var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
-
-            var tags = directories.Where(d => d.Name == "Exif" || d.Name == "JPEG").SelectMany(d => d.Tags);
-            if (!tags.Any())
-                return string.Empty;
-
-            // Look for image width and height
-            var widthTag = tags.FirstOrDefault(t => t.Name == "Image Width");
-            var heightTag = tags.FirstOrDefault(t => t.Name == "Image Height");
-
-            if (widthTag?.Description != null && heightTag?.Description != null)
-            {
-                string widthStr = widthTag.Description.Split(' ')[0];
-                string heightStr = heightTag.Description.Split(' ')[0];
-                return $"{widthStr}x{heightStr}";
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug("Could not extract image resolution: {ExceptionMessage}", ex.Message);
+            string widthStr = width.Split(' ')[0];
+            string heightStr = height.Split(' ')[0];
+            return $"{widthStr}x{heightStr}";
         }
 
         return string.Empty;
     }
 
-    private DateTime TryGetDateTakenFromExif(string fileFullPath)
-    {
-        try
-        {
-            using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
-            var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
-
-            var exifDir = directories.FirstOrDefault(d => d.Name.Contains("Exif"));
-            if (exifDir == null)
-                return default;
-
-            // Look for "Date/Time Original" tag
-            var dateTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Date/Time Original");
-
-            if (dateTag == null)
-                dateTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Date/Time");
-
-            if (dateTag == null)
-                dateTag = exifDir.Tags.FirstOrDefault(t => t.Name == "DateTime");
-
-            if (dateTag != null)
-            {
-                // Try to parse with explicit EXIF format (yyyy:MM:dd HH:mm:ss)
-                if (DateTime.TryParseExact(dateTag.Description, "yyyy:MM:dd HH:mm:ss", null, System.Globalization.DateTimeStyles.None, out var dateTaken))
-                {
-                    return dateTaken;
-                }
-
-                // Fall back to general parsing
-                if (DateTime.TryParse(dateTag.Description, out dateTaken))
-                {
-                    return dateTaken;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug("Could not extract date taken from EXIF metadata: {ExceptionMessage}", ex.Message);
-        }
-
-        return default;
-    }
-
-    private DateTime TryGetCreationDateFromExif(string fileFullPath)
-    {
-        try
-        {
-            using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
-            var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
-
-            var exifDir = directories.FirstOrDefault(d => d.Name.Contains("Exif"));
-            if (exifDir == null)
-                return default;
-
-            var creationDateTag = exifDir.Tags.FirstOrDefault(t => t.Name == "Date/Time Digitized");
-            if (creationDateTag != null)
-            {
-                // Try to parse with explicit EXIF format (yyyy:MM:dd HH:mm:ss)
-                if (DateTime.TryParseExact(creationDateTag.Description, "yyyy:MM:dd HH:mm:ss", null, System.Globalization.DateTimeStyles.None, out var creationDate))
-                {
-                    return creationDate;
-                }
-
-                // Fall back to general parsing
-                if (DateTime.TryParse(creationDateTag.Description, out creationDate))
-                {
-                    return creationDate;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug("Could not extract creation date from EXIF metadata: {ExceptionMessage}", ex.Message);
-        }
-
-        return default;
-    }
-
-    private DateTime TryGetDateFromFilename(string fileName)
+    private bool TryGetDateFromFilename(string fileName, out DateTime date)
     {
         try
         {
@@ -230,9 +145,9 @@ public sealed class FileStorageService(
                     {
                         // 8-digit format: YYYYMMDD
                         var dateStr = match.Groups[1].Value;
-                        if (DateTime.TryParseExact(dateStr, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out var date))
+                        if (DateTime.TryParseExact(dateStr, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out date))
                         {
-                            return date;
+                            return true;
                         }
                     }
                     else if (match.Groups.Count == 4)
@@ -241,9 +156,9 @@ public sealed class FileStorageService(
                         var year = match.Groups[1].Value;
                         var month = match.Groups[2].Value;
                         var day = match.Groups[3].Value;
-                        if (DateTime.TryParse($"{year}-{month}-{day}", out var date))
+                        if (DateTime.TryParse($"{year}-{month}-{day}", out date))
                         {
-                            return date;
+                            return true;
                         }
                     }
                 }
@@ -254,7 +169,8 @@ public sealed class FileStorageService(
             _logger.LogDebug("Could not extract date from filename: {ExceptionMessage}", ex.Message);
         }
 
-        return default;
+        date = default;
+        return false;
     }
 
     public IEnumerable<string> EnumerateDirectories(string directoryFullPath)
@@ -385,9 +301,7 @@ public sealed class FileStorageService(
 
     private SortedDictionary<string, string> GetFileMetadata(string fileFullPath)
     {
-        using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
-
-        var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
+        var directories = GetMetadataDirectories(fileFullPath);
         var map = new SortedDictionary<string, string>(); // sorted for deterministic output
 
         foreach (var dir in directories)
@@ -401,5 +315,69 @@ public sealed class FileStorageService(
         }
 
         return map;
+    }
+
+    private bool TryGetTagValue(
+        IEnumerable<MetadataExtractor.Directory> directories,
+        string tagName,
+        out string tagValue)
+    {
+        bool hasValue = false;
+        tagValue = string.Empty;
+
+        var tag = directories
+                  .SelectMany(d => d.Tags)
+                  .FirstOrDefault(t => t.Name == tagName &&
+                      !string.IsNullOrEmpty(t.Description));
+
+        if (tag != null && !string.IsNullOrEmpty(tag.Description))
+        {
+            tagValue = tag.Description;
+            hasValue = true;
+        }
+
+        return hasValue;
+    }
+
+    private bool TryGetTagValue(IEnumerable<MetadataExtractor.Directory> directories,
+        string[] tagNames,
+        out string tagValue)
+    {
+        foreach (var dir in directories)
+        {
+            foreach (var tag in dir.Tags)
+            {
+                if (tagNames.Contains(tag.Name) && !string.IsNullOrEmpty(tag.Description))
+                {
+                    tagValue = tag.Description;
+                    return true;
+                }
+            }           
+        }
+
+        tagValue = string.Empty;
+        return false;
+    }
+
+    private IReadOnlyList<MetadataExtractor.Directory> GetMetadataDirectories(string fileFullPath)
+    {
+        var defaultDirectories = Enumerable.Empty<MetadataExtractor.Directory>().ToImmutableList();
+
+        if (!_fileSystem.File.Exists(fileFullPath))
+            return defaultDirectories;
+
+        try
+        {
+            using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
+            var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
+            
+            return directories;
+        }
+        catch(Exception ex)
+        {
+            _logger.LogWarning("Could not extract metadata directory: {ExceptionMessage}", ex.Message);
+        }
+
+        return defaultDirectories;
     }
 }
