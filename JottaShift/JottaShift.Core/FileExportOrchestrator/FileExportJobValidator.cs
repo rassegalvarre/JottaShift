@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.FileExportOrchestrator;
 
-internal class FileExportJobValidator(
+public class FileExportJobValidator(
     ILogger<FileExportJobValidator> _logger,
     FileExportSettings _fileExportSettings,
     IFileStorage _fileStorage) : IFileExportJobValidator

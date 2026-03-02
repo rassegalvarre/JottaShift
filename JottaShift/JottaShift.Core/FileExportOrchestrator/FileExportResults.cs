@@ -59,13 +59,9 @@ public record FileExportJobResult(string Key)
         };
     }
 
-    public static FileExportJobResult StartJob(FileExportJob job)
+    public void StartJob()
     {
-        return CreateFromStatus(job.Key, FileExportJobStatus.InProgress) with
-        {
-            SourceDirectoryPath =  job.SourceDirectoryPath,
-            //TargetDirectoryPath = job.TargetDirectoryPath
-        };
+        Status = FileExportJobStatus.InProgress;
     }
 
     public void PrepareOperation(string sourceFilePath)

@@ -1,6 +1,6 @@
 ﻿namespace JottaShift.Core.FileExportOrchestrator;
 
-internal interface IFileExportJobValidator
+public interface IFileExportJobValidator
 {
     FileExportJobResult FileTransferJobPreValidation(string jobKey);
 

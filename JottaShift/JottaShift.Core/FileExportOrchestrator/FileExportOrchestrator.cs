@@ -7,9 +7,9 @@ using System.Globalization;
 namespace JottaShift.Core.FileExportOrchestrator;
 
 public sealed class FileExportOrchestrator(
-    FileExportSettings _fileExportSettings,
     ILogger<FileExportOrchestrator> _logger,
     IFileStorage _fileStorage,
+    IFileExportJobValidator _fileExportJobValidator,
     IGooglePhotosRepository _googlePhotosRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator
 {
@@ -20,76 +20,27 @@ public sealed class FileExportOrchestrator(
         _culture = culture;
     }
 
-    private FileExportJobResult FileExportJobPreValidation(FileExportJob job)
-    {
-        if (!job.Enabled)
-        {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", job.Key);
-            return FileExportJobResult.Disabled(job.Key);
-        }
-        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
-        {
-            _logger.LogError(
-                "Source directory with name @{DirectoryName} does not exist",
-                job.SourceDirectoryPath);
-            return FileExportJobResult.Invalid(job.Key, "Missing source directory");
-        }
-
-        return FileExportJobResult.Ready(job);
-    }
-
-    private FileExportJobResult FileTransferJobPreValidation (FileTransferJob job)
-    {
-        var result = FileExportJobPreValidation(job);
-        if (result.PreValidationFailed)
-        {
-            return result;
-        }
-        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
-        {
-            _logger.LogError(
-                "Could not create target directory with name @{DirectoryName}",
-                job.TargetDirectoryPath);
-
-            return FileExportJobResult.Invalid(job.Key, "Missing target directory");
-        }
-
-        return FileExportJobResult.Ready(job);
-    }
-
-    private FileExportJobResult GooglePhotosUploadJobPreValidation(GooglePhotosUploadJob job)
-    {
-        return FileExportJobPreValidation(job);
-    }
-
     // Todo: Handle (Conflict) files and dirs. Ignore?
     public async Task<FileExportJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         const string jobKey = "chromecast_photos";
-        var job = GetGooglePhotosUploadJob(jobKey);
-        if (job == null)
-        {
-            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
-        }
-
-        var result = GooglePhotosUploadJobPreValidation(job);
-        if (result.PreValidationFailed)
+        var result = _fileExportJobValidator.GooglePhotosUploadJobPreValidation(jobKey);
+        if (result.PreValidationFailed && result.Job != null)
         {
             _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
             return result;
         }
 
-        result = FileExportJobResult.StartJob(job);
+        result.StartJob();
 
-        List<string> filePathsToUpload = [.. _fileStorage.EnumerateFiles(job.SourceDirectoryPath)];
+        List<string> filePathsToUpload = [.. _fileStorage.EnumerateFiles(result.Job.SourceDirectoryPath)];
         if (filePathsToUpload.Count == 0)
         {
             _logger.LogInformation("No images staged for upload to Google Photos");
             return result.CompleteJob();
         }
 
-        var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(filePathsToUpload, job.AlbumName);
+        var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(filePathsToUpload, result.Job.AlbumName);
 
         if (filesUploaded == 0)
         {
@@ -111,23 +62,16 @@ public sealed class FileExportOrchestrator(
     {
         const string jobKey = "desktop_wallpapers";
 
-        var job = GetFileTransferJob(jobKey);
-        if (job == null)
-        {
-            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
-        }
-
-        var result = FileTransferJobPreValidation(job);
-        if (result.PreValidationFailed)
+        var result = _fileExportJobValidator.GooglePhotosUploadJobPreValidation(jobKey);
+        if (result.PreValidationFailed && result.Job != null)
         {
             _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
             return result;
-        }      
+        }
 
-        result = FileExportJobResult.StartJob(job);
+        result.StartJob();
 
-        foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
+        foreach (var file in _fileStorage.EnumerateFiles(result.Job.SourceDirectoryPath))
         {
             var imageResolution = _fileStorage.GetImageResolution(file);
             string targetDirectoryForResolution;
@@ -155,7 +99,7 @@ public sealed class FileExportOrchestrator(
 
             result.PrepareOperation(file);
 
-            string fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
+            string fullTargetDirectoryPath = Path.Combine(result.Job.TargetDirectoryPath, targetDirectoryForResolution);
 
             result.StartOperation();
             var copyResult = await _fileStorage.CopyAsync(file, fullTargetDirectoryPath, false, ct);
@@ -177,7 +121,7 @@ public sealed class FileExportOrchestrator(
                     copyResult.targetFileFullPath);
                 return result.FailOperation($"Mismatched file metadata for file {file}");
             }
-            if (job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
+            if (result.Job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
             {
                 _logger.LogError(
                     "File was copied, but failed to delete source file: {FilePath}",
@@ -194,22 +138,15 @@ public sealed class FileExportOrchestrator(
     {
         const string jobKey = "steam_screenshots";
 
-        var job = GetFileTransferJob(jobKey);
-        if (job == null)
-        {
-            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
-        }
-
-        var result = FileTransferJobPreValidation(job);
-        if (result.PreValidationFailed)
+        var result = _fileExportJobValidator.GooglePhotosUploadJobPreValidation(jobKey);
+        if (result.PreValidationFailed && result.Job != null)
         {
             _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
             return result;
         }
 
-        result = FileExportJobResult.StartJob(job);
-        foreach (var directory in _fileStorage.EnumerateDirectories(job.SourceDirectoryPath))
+        result.StartJob();
+        foreach (var directory in _fileStorage.EnumerateDirectories(result.Job.SourceDirectoryPath))
         {
             var directoryNameToCharArray = Path.GetFileName(directory)?.ToCharArray();
             if (!uint.TryParse(directoryNameToCharArray, out uint appId))
@@ -228,7 +165,7 @@ public sealed class FileExportOrchestrator(
                 continue;
             }
 
-            string targetDirectoryForApp = Path.Combine(job.TargetDirectoryPath, appName);
+            string targetDirectoryForApp = Path.Combine(result.Job.TargetDirectoryPath, appName);
 
             if (!_fileStorage.ValidateDirectory(new DirectoryOptions(targetDirectoryForApp, true)))
             {
@@ -262,7 +199,7 @@ public sealed class FileExportOrchestrator(
                     return result.FailOperation($"Mismatched file metadata for file {file}");
                 }
 
-                if(job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
+                if(result.Job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
                 {
                     _logger.LogError(
                         "File was copied, but failed to delete source file: {FilePath}",
@@ -283,28 +220,20 @@ public sealed class FileExportOrchestrator(
     public async Task<FileExportJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
         const string jobKey = "jottacloud_timeline";
-
-        var job = GetFileTransferJob(jobKey);
-        if (job == null)
-        {
-            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
-        }
-
-        var result = FileTransferJobPreValidation(job);
-        if (result.PreValidationFailed)
+        var result = _fileExportJobValidator.GooglePhotosUploadJobPreValidation(jobKey);
+        if (result.PreValidationFailed && result.Job != null)
         {
             _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
             return result;
         }
 
-        result = FileExportJobResult.StartJob(job);
+        result.StartJob();
 
-        foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
+        foreach (var file in _fileStorage.EnumerateFiles(result.Job.SourceDirectoryPath))
         {
             result.PrepareOperation(file);
             var timestamp = _fileStorage.GetImageDate(file);
-            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, timestamp);
+            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(result.Job.TargetDirectoryPath, timestamp);
 
             result.StartOperation();
             
@@ -331,7 +260,7 @@ public sealed class FileExportOrchestrator(
                 return result.FailOperation($"Mismatched file metadata");
             }
 
-            if (job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
+            if (result.Job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
             {
                 _logger.LogError(
                     "File was copied, but failed to delete source file: {FilePath}",
@@ -362,15 +291,5 @@ public sealed class FileExportOrchestrator(
         string capitalizedMonthName = char.ToUpper(monthName[0]) + monthName[1..];
 
         return $"{monthIndex + 1:D2} {capitalizedMonthName}";
-    }
-
-    public FileTransferJob? GetFileTransferJob(string key)
-    {
-        return _fileExportSettings.FileTransferJobs.FirstOrDefault(j => j.Key == key);
-    }
-
-    public GooglePhotosUploadJob? GetGooglePhotosUploadJob(string key)
-    {
-        return _fileExportSettings.GooglePhotosUploadJobs.FirstOrDefault(j => j.Key == key);
     }
 }
