@@ -15,6 +15,7 @@ public enum FileExportJobStatus
 public record FileExportJobResult(string Key)
 {
     public string Key { get; init; } = Key;
+    public FileExportJob? Job { get; private set; }
     public FileExportJobStatus Status { get; private set; } = FileExportJobStatus.Ready;
     public string? SourceDirectoryPath { get; private set; }
     public string? TargetDirectoryPath { get; private set; }
@@ -51,6 +52,8 @@ public record FileExportJobResult(string Key)
     {
         return CreateFromStatus(job.Key, FileExportJobStatus.Ready) with
         {
+            Job = job,
+            Key = job.Key,
             SourceDirectoryPath = job.SourceDirectoryPath,
             //TargetDirectoryPath = job.TargetDirectoryPath
         };
