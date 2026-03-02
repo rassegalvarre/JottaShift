@@ -108,18 +108,11 @@ public sealed class FileStorageService(
             using var fileStream = _fileSystem.File.OpenRead(fileFullPath);
             var directories = ImageMetadataReader.ReadMetadata(fileStream, fileFullPath);
 
-            var tags = directories.Where(d => d.Name == "Exif" || d.Name == "JPEG").SelectMany(d => d.Tags);
-            if (!tags.Any())
-                return string.Empty;
-
-            // Look for image width and height
-            var widthTag = tags.FirstOrDefault(t => t.Name == "Image Width");
-            var heightTag = tags.FirstOrDefault(t => t.Name == "Image Height");
-
-            if (widthTag?.Description != null && heightTag?.Description != null)
+            if (TryGetTagValue(directories, "Image Width", out string width) &&
+                TryGetTagValue(directories, "Image Height", out string height))
             {
-                string widthStr = widthTag.Description.Split(' ')[0];
-                string heightStr = heightTag.Description.Split(' ')[0];
+                string widthStr = width.Split(' ')[0];
+                string heightStr = height.Split(' ')[0];
                 return $"{widthStr}x{heightStr}";
             }
         }
@@ -401,5 +394,27 @@ public sealed class FileStorageService(
         }
 
         return map;
+    }
+
+    private bool TryGetTagValue(
+        IEnumerable<MetadataExtractor.Directory> directories,
+        string tagName,
+        out string tagValue)
+    {
+        bool hasValue = false;
+        tagValue = string.Empty;
+
+        var tag = directories
+                  .SelectMany(d => d.Tags)
+                  .FirstOrDefault(t => t.Name == tagName &&
+                      !string.IsNullOrEmpty(t.Description));
+
+        if (tag != null && !string.IsNullOrEmpty(tag.Description))
+        {
+            tagValue = tag.Description;
+            hasValue = true;
+        }
+
+        return hasValue;
     }
 }
