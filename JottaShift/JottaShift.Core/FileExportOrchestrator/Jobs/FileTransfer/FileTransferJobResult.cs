@@ -7,7 +7,7 @@ public record FileTransferJobResult(string Key) : FileExportJobResult(Key)
 {
     public string? TargetDirectoryPath { get; init; }
 
-    private List<FileTransferOperationResult> Operations { get; init; } = [];
+    public List<FileTransferOperationResult> Operations { get; init; } = [];
 
     private FileTransferOperationResult? CurrentOperation { get; set; }
 

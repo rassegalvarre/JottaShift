@@ -35,7 +35,7 @@ public class FileExportJobValidator(
         return wasFound;
     }
 
-    public bool TryGetGooglePhotosUploadJob(string key, GooglePhotosUploadJob job)
+    public bool TryGetGooglePhotosUploadJob(string key, out GooglePhotosUploadJob job)
     {
         bool wasFound = false;
         var foundJob = _fileExportSettings.GooglePhotosUploadJobs.FirstOrDefault(j => j.Key == key);
@@ -58,11 +58,6 @@ public class FileExportJobValidator(
         }
 
         return wasFound;
-    }
-
-    public bool TryGetGooglePhotosUploadJob(string key, out GooglePhotosUploadJob? job)
-    {
-        throw new NotImplementedException();
     }
 
     public FileTransferJobResult ValidateFileTransferJob(FileTransferJob job)
