@@ -56,15 +56,20 @@ if (doExportFlag)
         .Build();
 
     Console.WriteLine("Starting timeline export...");
+    var timelineExportResult = await exporter.ExportJottacloudTimelineAsync(new CancellationToken());
+    Console.WriteLine("Timeline export finished with result {Status}", timelineExportResult.Status);
 
-    // Export and re-strucuture the timeline-staging to storage folder
-    await exporter.ExportJottacloudTimelineAsync(new CancellationToken());
-    // TODO: Delete contents in staging after export
+    Console.WriteLine("Starting Chromecast upload...");
+    var chromecastUploadResult = await exporter.ExportChromecastPhotosAsync(new CancellationToken());
+    Console.WriteLine("Chromecast upload finished with result {Status}", chromecastUploadResult.Status);
 
-    Console.WriteLine("Timeline export finished");
+    Console.WriteLine("Starting Steam screenshort export...");
+    var steamExportResult = await exporter.ExportSteamScreenshotsAsync(new CancellationToken());
+    Console.WriteLine("Steam screenshot export finished with result {Status}", steamExportResult.Status);
 
-    // TODO: Read from Chromecast-staging and upload to Google Photos
-    // Delete contents in staging after successfull upload
+    Console.WriteLine("Starting wallpaper export...");
+    var wallpaperExportResult = await exporter.ExportDesktopWallpapersAsync(new CancellationToken());
+    Console.WriteLine("Wallpaper export finished with result {Status}", wallpaperExportResult.Status);
 }
 
 await host.StopAsync();
