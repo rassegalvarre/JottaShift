@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.IO.Abstractions;
 using JottaShift.Core.Configuration;
+using JottaShift.Core.FileExportOrchestrator.Jobs;
 
 Console.WriteLine("JottaShift initiating..");
 
@@ -22,6 +23,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
         services.AddScoped<ISteamRepository, SteamRepository>();
+        services.AddScoped<IFileExportJobValidator, FileExportJobValidator>();
         services.AddScoped<IFileExportOrchestrator, FileExportOrchestrator>();
     })
     .ConfigureLogging(logging =>

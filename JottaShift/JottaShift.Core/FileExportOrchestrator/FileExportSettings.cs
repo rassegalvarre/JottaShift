@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
+using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
+using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.FileExportOrchestrator;
 
@@ -9,31 +11,4 @@ public class FileExportSettings
 
     [JsonPropertyName("google_photos_upload_jobs")]
     public IEnumerable<GooglePhotosUploadJob> GooglePhotosUploadJobs { get; init; } = [];
-}
-
-public abstract record FileExportJob()
-{
-    [JsonPropertyName("key")]
-    public required string Key { get; init; }
-
-    [JsonPropertyName("source_directory_path")]
-    public required string SourceDirectoryPath { get; init; }
-
-    [JsonPropertyName("delete_source_files")]
-    public required bool DeleteSourceFiles { get; init; }
-
-    [JsonPropertyName("enabled")]
-    public required bool Enabled { get; init; }
-}
-
-public record FileTransferJob : FileExportJob
-{
-    [JsonPropertyName("target_directory_path")]
-    public required string TargetDirectoryPath { get; init; }
-}
-
-public record GooglePhotosUploadJob : FileExportJob
-{
-    [JsonPropertyName("album_name")]
-    public required string AlbumName { get; init; }
 }

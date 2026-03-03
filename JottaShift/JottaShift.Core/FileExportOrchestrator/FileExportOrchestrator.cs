@@ -1,4 +1,7 @@
-﻿using JottaShift.Core.FileStorage;
+﻿using JottaShift.Core.FileExportOrchestrator.Jobs;
+using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
+using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
+using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Logging;
@@ -7,9 +10,9 @@ using System.Globalization;
 namespace JottaShift.Core.FileExportOrchestrator;
 
 public sealed class FileExportOrchestrator(
-    FileExportSettings _fileExportSettings,
     ILogger<FileExportOrchestrator> _logger,
     IFileStorage _fileStorage,
+    IFileExportJobValidator _fileExportJobValidator,
     IGooglePhotosRepository _googlePhotosRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator
 {
@@ -21,93 +24,74 @@ public sealed class FileExportOrchestrator(
     }
 
     // Todo: Handle (Conflict) files and dirs. Ignore?
-    public async Task<FileExportJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
+    public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         const string jobKey = "chromecast_photos";
-        var job = GetGooglePhotosUploadJob(jobKey);
-        if (job == null)
+        GooglePhotosUploadJobResult result;
+
+        if (!_fileExportJobValidator.TryGetGooglePhotosUploadJob(jobKey, out var job))
         {
-            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
+            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+            result = new GooglePhotosUploadJobResult(jobKey);
+            result.Invalid();
+            return result;
         }
 
-        if (!job.Enabled)
+        result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(job);
+        if (result.PreValidationFailed)
         {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
-            return FileExportJobResult.Disabled(job.Key);
+            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+            return result;
         }
 
-        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
-        {
-            _logger.LogError(
-                "Source directory with name @{DirectoryName} does not exist",
-                job.SourceDirectoryPath);
-
-            return FileExportJobResult.Invalid(jobKey, "Missing source directory");
-        }
-
-        var result = FileExportJobResult.StartJob(job);
+        result.Start();
 
         List<string> filePathsToUpload = [.. _fileStorage.EnumerateFiles(job.SourceDirectoryPath)];
         if (filePathsToUpload.Count == 0)
         {
             _logger.LogInformation("No images staged for upload to Google Photos");
-            return result.CompleteJob();
+            return result.Complete();
         }
 
         var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(filePathsToUpload, job.AlbumName);
 
         if (filesUploaded == 0)
         {
-            return result.FailOperation($"No files were uploaded to Google");
+            return result.Fail($"No files were uploaded to Google");
         }
 
-        if (filePathsToUpload.Count() != filesUploaded)
+        if (filePathsToUpload.Count != filesUploaded)
         {
             _logger.LogError(
                 "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
-                filesUploaded, filePathsToUpload.Count());
-            return result.FailOperation($"Missing files");
+                filesUploaded, filePathsToUpload.Count);
+            return result.Fail($"Missing files");
         }
 
-        return result.CompleteJob();
+        return result.Complete();
     }
 
-    public async Task<FileExportJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
+    public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
     {
         const string jobKey = "desktop_wallpapers";
+        FileTransferJobResult result;
 
-        var job = GetFileTransferJob(jobKey);
-        if (job == null)
+        if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
         {
-            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
+            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+            result = new FileTransferJobResult(jobKey);
+            result.Invalid();
+            return result;
         }
 
-        if (!job.Enabled)
+        result = _fileExportJobValidator.ValidateFileTransferJob(job);
+        if (result.PreValidationFailed)
         {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
-            return FileExportJobResult.Disabled(job.Key);
+            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+            return result;
         }
 
-        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
-        {
-            _logger.LogError(
-                "Source directory with name @{DirectoryName} does not exist",
-                job.SourceDirectoryPath);
-
-            return FileExportJobResult.Invalid(jobKey, "Missing source directory");
-        }
-        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
-        {
-            _logger.LogError(
-                "Could not create target directory with name @{DirectoryName}",
-                job.TargetDirectoryPath);
-
-            return FileExportJobResult.Invalid(jobKey, "Missing target directory");
-        }
-
-        var result = FileExportJobResult.StartJob(job);
+        result.Start();
 
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
@@ -169,36 +153,31 @@ public sealed class FileExportOrchestrator(
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
 
-        return result.CompleteJob();
+        return result.Complete();
     }
 
-    public async Task<FileExportJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
+    public async Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
     {
         const string jobKey = "steam_screenshots";
 
-        var job = GetFileTransferJob(jobKey);
-        if (job == null)
+        FileTransferJobResult result;
+
+        if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
         {
-            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
+            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+            result = new FileTransferJobResult(jobKey);
+            result.Invalid();
+            return result;
         }
 
-        if (!job.Enabled)
+        result = _fileExportJobValidator.ValidateFileTransferJob(job);
+        if (result.PreValidationFailed)
         {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
-            return FileExportJobResult.Disabled(job.Key);
+            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+            return result;
         }
 
-        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
-        {
-            _logger.LogError(
-                "Source directory with name @{DirectoryName} does not exist",
-                job.SourceDirectoryPath);
-
-            return FileExportJobResult.Invalid(jobKey, "Missing source directory");
-        }
-
-        var result = FileExportJobResult.StartJob(job);
+        result.Start();
         foreach (var directory in _fileStorage.EnumerateDirectories(job.SourceDirectoryPath))
         {
             var directoryNameToCharArray = Path.GetFileName(directory)?.ToCharArray();
@@ -266,47 +245,33 @@ public sealed class FileExportOrchestrator(
             _logger.LogInformation("Processed Steam-directory {Directory}", directory);
         }
 
-        return result.CompleteJob();
+        return result.Complete();
     }
 
 // Todo: Handle (Conflict) files and dirs. Ignore?
-    public async Task<FileExportJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
+    public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
         const string jobKey = "jottacloud_timeline";
+        FileTransferJobResult result;
 
-        var job = GetFileTransferJob(jobKey);
-        if (job == null)
+        if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
         {
-            _logger.LogError("No file transfer job setting found with key: {JobKey}", jobKey);
-            return FileExportJobResult.Invalid(jobKey, "Missing job setting");
+            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+            result = new FileTransferJobResult(jobKey);
+            result.Invalid();
+            return result;
         }
 
-        if (!job.Enabled)
+        result = _fileExportJobValidator.ValidateFileTransferJob(job);
+        if (result.PreValidationFailed)
         {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", jobKey);
-            return FileExportJobResult.Disabled(job.Key);
+            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+            return result;
         }
 
-        if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
-        {
-            _logger.LogError(
-                "Source directory with name @{DirectoryName} does not exist",
-                job.SourceDirectoryPath);
+        result.Start();
 
-            return FileExportJobResult.Invalid(jobKey, "Missing source directory");
-        }
-        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
-        {
-            _logger.LogError(
-                "Could not create target directory with name @{DirectoryName}",
-                job.TargetDirectoryPath);
-
-            return FileExportJobResult.Invalid(jobKey, "Missing target directory");
-        }
-
-        var result = FileExportJobResult.StartJob(job);
-
-        foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
+        foreach (var file in _fileStorage.EnumerateFiles(result.SourceDirectoryPath))
         {
             result.PrepareOperation(file);
             var timestamp = _fileStorage.GetImageDate(file);
@@ -347,7 +312,7 @@ public sealed class FileExportOrchestrator(
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
 
-        return result.CompleteJob();
+        return result.Complete();
     }
 
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, DateTime fileCreationTime)
@@ -368,15 +333,5 @@ public sealed class FileExportOrchestrator(
         string capitalizedMonthName = char.ToUpper(monthName[0]) + monthName[1..];
 
         return $"{monthIndex + 1:D2} {capitalizedMonthName}";
-    }
-
-    public FileTransferJob? GetFileTransferJob(string key)
-    {
-        return _fileExportSettings.FileTransferJobs.FirstOrDefault(j => j.Key == key);
-    }
-
-    public GooglePhotosUploadJob? GetGooglePhotosUploadJob(string key)
-    {
-        return _fileExportSettings.GooglePhotosUploadJobs.FirstOrDefault(j => j.Key == key);
-    }
+    }   
 }

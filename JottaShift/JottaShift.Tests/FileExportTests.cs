@@ -1,4 +1,7 @@
 ﻿using JottaShift.Core.FileExportOrchestrator;
+using JottaShift.Core.FileExportOrchestrator.Jobs;
+using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
+using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
@@ -19,9 +22,12 @@ public class FileExportTests
         string destinationDirectory = AppContext.BaseDirectory;
 
         var timelineExportService = new FileExportOrchestrator(
-            new FileExportSettings(),
             new Mock<ILogger<FileExportOrchestrator>>().Object,
             new Mock<IFileStorage>().Object,
+            new FileExportJobValidator(
+                new Mock<ILogger<FileExportJobValidator>>().Object,
+                new FileExportSettings(),
+                new Mock<IFileStorage>().Object),
             new Mock<IGooglePhotosRepository>().Object,
             new Mock<ISteamRepository>().Object);
 
@@ -90,9 +96,12 @@ public class FileExportTests
             new Mock<ILogger<FileStorageService>>().Object);
 
         var timelineExportService = new FileExportOrchestrator(
-            settings,
             new Mock<ILogger<FileExportOrchestrator>>().Object,
             fileStorageService,
+            new FileExportJobValidator(
+                new Mock<ILogger<FileExportJobValidator>>().Object,
+                settings,
+                fileStorageService),
             new Mock<IGooglePhotosRepository>().Object,
             new Mock<ISteamRepository>().Object);
 
@@ -148,15 +157,18 @@ public class FileExportTests
 
 
         var fileExportOrchestrator = new FileExportOrchestrator(
-            new FileExportSettings()
-            {
-                FileTransferJobs = new List<FileTransferJob>()
-                {
-                    jobSettings
-                }
-            },
             new Mock<ILogger<FileExportOrchestrator>>().Object,
             fileStorageService,
+            new FileExportJobValidator(
+                new Mock<ILogger<FileExportJobValidator>>().Object,
+                new FileExportSettings()
+                {
+                    FileTransferJobs = new List<FileTransferJob>()
+                    {
+                        jobSettings
+                    }
+                },
+                fileStorageService),
             new Mock<IGooglePhotosRepository>().Object,
             steamRepositoryMock.Object);
 
@@ -183,9 +195,13 @@ public class FileExportTests
         var googlePhotosRepositoryMock = new GooglePhotosRepository(fileSystem);
 
         var fileExportOrchestrator = new FileExportOrchestrator(
-            new FileExportSettings()
-            {
-                GooglePhotosUploadJobs = new List<GooglePhotosUploadJob>()
+            new Mock<ILogger<FileExportOrchestrator>>().Object,
+            fileStorageService,
+            new FileExportJobValidator(
+                new Mock<ILogger<FileExportJobValidator>>().Object,
+                new FileExportSettings()
+                {
+                    GooglePhotosUploadJobs = new List<GooglePhotosUploadJob>()
                     {
                         new GooglePhotosUploadJob()
                         {
@@ -196,9 +212,9 @@ public class FileExportTests
                             DeleteSourceFiles = false
                         }
                     }
-            },
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
+                },
+                fileStorageService
+            ),
             googlePhotosRepositoryMock,
             new Mock<ISteamRepository>().Object);
 
@@ -230,29 +246,33 @@ public class FileExportTests
             new Mock<ILogger<FileStorageService>>().Object);
 
         var fileExportOrchestrator = new FileExportOrchestrator(
-            new FileExportSettings()
-            {
-                FileTransferJobs = [
-                    new FileTransferJob()
-                    {
-                        Key = "desktop_wallpapers",
-                        SourceDirectoryPath = sourceDirectory,
-                        TargetDirectoryPath = targetDirectory,
-                        Enabled = true,
-                        DeleteSourceFiles = false
-                    }
-                ]
-            },
             new Mock<ILogger<FileExportOrchestrator>>().Object,
             fileStorageService,
+            new FileExportJobValidator(
+                new Mock<ILogger<FileExportJobValidator>>().Object,
+                new FileExportSettings()
+                {
+                    FileTransferJobs = [
+                        new FileTransferJob()
+                        {
+                            Key = "desktop_wallpapers",
+                            SourceDirectoryPath = sourceDirectory,
+                            TargetDirectoryPath = targetDirectory,
+                            Enabled = true,
+                            DeleteSourceFiles = false
+                        }
+                    ]
+                },
+                fileStorageService
+            ),
             new Mock<IGooglePhotosRepository>().Object,
             new Mock<ISteamRepository>().Object);
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
-        var operation = result.FileTransferOperationResults.FirstOrDefault();
+        var operation = result.Operations.FirstOrDefault();
         Assert.True(result.Success,
             "Result did not have status Success");
-        Assert.True(result.FileTransferOperationResults.Count > 0,
+        Assert.True(result.Operations.Count > 0,
             "No operation in job was executed");
         Assert.True(operation?.Success == true,
             "Operation was not successfull");
