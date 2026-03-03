@@ -10,51 +10,75 @@ public class FileExportJobValidator(
     FileExportSettings _fileExportSettings,
     IFileStorage _fileStorage) : IFileExportJobValidator
 {
-    public FileTransferJob? GetFileTransferJob(string key)
+    public bool TryGetFileTransferJob(string key, out FileTransferJob job)
     {
-        return _fileExportSettings.FileTransferJobs.FirstOrDefault(j => j.Key == key);
+        bool wasFound = false;
+        var foundJob = _fileExportSettings.FileTransferJobs.FirstOrDefault(j => j.Key == key);
+        
+        if (foundJob != null)
+        {
+            wasFound = true;
+            job = foundJob;
+        }
+        else 
+        {
+            job = new FileTransferJob()
+            {
+                Key = string.Empty,
+                SourceDirectoryPath = string.Empty,
+                TargetDirectoryPath = string.Empty,
+                DeleteSourceFiles = false,
+                Enabled = false,
+            };
+        }   
+
+        return wasFound;
     }
 
-    private GooglePhotosUploadJob? GetGooglePhotosUploadJob(string key)
+    public bool TryGetGooglePhotosUploadJob(string key, GooglePhotosUploadJob job)
     {
-        return _fileExportSettings.GooglePhotosUploadJobs.FirstOrDefault(j => j.Key == key);
+        bool wasFound = false;
+        var foundJob = _fileExportSettings.GooglePhotosUploadJobs.FirstOrDefault(j => j.Key == key);
+
+        if (foundJob != null)
+        {
+            wasFound = true;
+            job = foundJob;
+        }
+        else
+        {
+            job = new GooglePhotosUploadJob()
+            {
+                Key = string.Empty,
+                SourceDirectoryPath = string.Empty,
+                AlbumName = string.Empty,
+                DeleteSourceFiles = false,
+                Enabled = false,
+            };
+        }
+
+        return wasFound;
     }
 
-    private FileExportJobResult FileExportJobPreValidation(FileExportJob job)
+    public bool TryGetGooglePhotosUploadJob(string key, out GooglePhotosUploadJob? job)
     {
-        FileExportJobResult result;
+        throw new NotImplementedException();
+    }
+
+    public FileTransferJobResult ValidateFileTransferJob(FileTransferJob job)
+    {
+        var result = FileTransferJobResult.CreateFromJob(job);
         if (!job.Enabled)
         {
             _logger.LogError("Job with key {JobKey} is diabled and will not be started", job.Key);
-            result = FileExportJobResult.Disabled(job.Key);
+            result.Disabled();
         }
         else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
         {
             _logger.LogError(
                 "Source directory with name @{DirectoryName} does not exist",
                 job.SourceDirectoryPath);
-            result = FileExportJobResult.Invalid(job.Key, "Missing source directory");
-        }
-        else
-        {
-            result = FileExportJobResult.Ready(job);
-        }
-
-        return result;
-    }
-
-    public FileTransferJobResult ValidateFileTransferJob(string jobKey)
-    {
-        var job = GetFileTransferJob(jobKey);
-        if (job == null)
-        {
-            return FileExportJobResult.Invalid(jobKey, "Job not found");
-        }
-
-        var preValidation = FileExportJobPreValidation(job);
-        if (preValidation.PreValidationFailed)
-        {
-            return preValidation;
+            result.Invalid();
         }
         else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
         {
@@ -62,20 +86,36 @@ public class FileExportJobValidator(
                 "Could not create target directory with name @{DirectoryName}",
                 job.TargetDirectoryPath);
 
-            return FileExportJobResult.Invalid(job.Key, "Missing target directory");
+            result.Invalid();
+        }
+        else
+        {
+            result.Ready(job);
         }
 
-        return FileExportJobResult.Ready(job);
+        return result;
     }
 
-    public GooglePhotosUploadJobResult ValidateGooglePhotosUploadJob(string jobKey)
+    public GooglePhotosUploadJobResult ValidateGooglePhotosUploadJob(GooglePhotosUploadJob job)
     {
-        var job = GetGooglePhotosUploadJob(jobKey);
-        if (job == null)
+        var result = GooglePhotosUploadJobResult.CreateFromJob(job);
+        if (!job.Enabled)
         {
-            return GooglePhotosUploadJobResult.Invalid(jobKey, "Job not found");
+            _logger.LogError("Job with key {JobKey} is diabled and will not be started", job.Key);
+            result.Disabled();
+        }
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        {
+            _logger.LogError(
+                "Source directory with name @{DirectoryName} does not exist",
+                job.SourceDirectoryPath);
+            result.Invalid();
+        }       
+        else
+        {
+            result.Ready(job);
         }
 
-        return FileExportJobPreValidation(job);
+        return result;
     }
 }

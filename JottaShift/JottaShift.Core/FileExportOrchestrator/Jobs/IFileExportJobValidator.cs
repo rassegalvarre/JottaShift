@@ -5,7 +5,10 @@ namespace JottaShift.Core.FileExportOrchestrator.Jobs;
 
 public interface IFileExportJobValidator
 {
-    FileTransferJobResult ValidateFileTransferJob(string jobKey);
+    bool TryGetFileTransferJob(string key, out FileTransferJob job);
+    bool TryGetGooglePhotosUploadJob(string key, out GooglePhotosUploadJob job);
 
-    GooglePhotosUploadJobResult ValidateGooglePhotosUploadJob(string jobKey);
+    FileTransferJobResult ValidateFileTransferJob(FileTransferJob job);
+
+    GooglePhotosUploadJobResult ValidateGooglePhotosUploadJob(GooglePhotosUploadJob job);
 }
