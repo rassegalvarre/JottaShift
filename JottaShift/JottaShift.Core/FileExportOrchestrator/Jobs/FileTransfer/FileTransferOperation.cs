@@ -1,6 +1,4 @@
-﻿//namespace JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
-
-using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
+﻿using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
 
 public record FileTransferOperationResult(string SourceFilePath)
 {
