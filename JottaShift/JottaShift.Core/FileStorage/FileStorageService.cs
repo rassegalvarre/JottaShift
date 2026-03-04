@@ -38,6 +38,7 @@ public sealed class FileStorageService(
             return new CopyAsyncResult(false, newFileName);
         }
 
+        // TODO: Check if target already exists
         try
         {
             
