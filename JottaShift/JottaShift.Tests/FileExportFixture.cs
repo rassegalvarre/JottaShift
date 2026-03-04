@@ -1,4 +1,7 @@
-﻿using System;
+﻿using JottaShift.Core.FileExportOrchestrator;
+using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
+using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
@@ -7,6 +10,62 @@ namespace JottaShift.Tests;
 
 public class FileExportFixture : IDisposable
 {
+    public readonly string SourceDirectoryRoot = @"C:\source";
+    public readonly string TargetDirectoryRoot = @"C:\backup";
+
+    public FileExportSettings DefaultFileExportSettings => new()
+    {
+        FileTransferJobs = [
+            new FileTransferJob()
+            {
+                Key = "desktop_wallpapers",
+                SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "wallpapers"),
+                TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "wallpapers"),
+                Enabled = true,
+                DeleteSourceFiles = false
+            },
+            new FileTransferJob()
+            {
+                Key = "steam_screenshots",
+                SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "steam"),
+                TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "steam"),
+                Enabled = true,
+                DeleteSourceFiles = true
+            },
+            new FileTransferJob()
+            {
+                Key = "jottacloud_timeline",
+                SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "timeline"),
+                TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "timeline"),
+                Enabled = true,
+                DeleteSourceFiles = true
+            }
+        ],
+        GooglePhotosUploadJobs = new List<GooglePhotosUploadJob>()
+        {
+            new GooglePhotosUploadJob()
+            {
+                Key = "chromecast_photos",
+                SourceDirectoryPath = TestData.TestDataPath,
+                AlbumName = "JottaSync.UnitTests.FileExport",
+                Enabled = true,
+                DeleteSourceFiles = false
+            }
+        }
+    };
+
+    public FileTransferJob DesktopWallpapersJob => DefaultFileExportSettings.FileTransferJobs
+        .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.DesktopWallpapers);
+
+    public FileTransferJob JottacloudTimelineJob => DefaultFileExportSettings.FileTransferJobs
+        .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.JottacloudTimeline);
+
+    public FileTransferJob SteamScreenshotsJob => DefaultFileExportSettings.FileTransferJobs
+        .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.SteamScreenshots);
+
+    public GooglePhotosUploadJob ChromecastUploadJob => DefaultFileExportSettings.GooglePhotosUploadJobs
+        .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.ChromecastPhotos);
+
     public void Dispose()
     {
 
