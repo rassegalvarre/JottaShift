@@ -1,7 +1,5 @@
 ﻿using JottaShift.Core.FileExportOrchestrator;
 using JottaShift.Core.FileExportOrchestrator.Jobs;
-using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
-using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
@@ -28,8 +26,8 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
                 new Mock<ILogger<FileExportJobValidator>>().Object,
                 new FileExportSettings(),
                 new Mock<IFileStorage>().Object),
-            new Mock<IGooglePhotosRepository>().Object,
-            new Mock<ISteamRepository>().Object);
+            _fixture.GooglePhotosRepositoryMock.Object,
+            _fixture.SteamRepositoryMock.Object);
 
         var culture = CultureInfo.GetCultureInfo("en-GB");
         timelineExportService.SetCulture(culture);
@@ -88,8 +86,8 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
                 new Mock<ILogger<FileExportJobValidator>>().Object,
                 _fixture.DefaultFileExportSettings,
                 fileStorageService),
-            new Mock<IGooglePhotosRepository>().Object,
-            new Mock<ISteamRepository>().Object);
+            _fixture.GooglePhotosRepositoryMock.Object,
+            _fixture.SteamRepositoryMock.Object);
 
         var culture = CultureInfo.GetCultureInfo("en-GB");
         timelineExportService.SetCulture(culture);
@@ -142,7 +140,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
                 new Mock<ILogger<FileExportJobValidator>>().Object,
                 _fixture.DefaultFileExportSettings,
                 fileStorageService),
-            new Mock<IGooglePhotosRepository>().Object,
+            _fixture.GooglePhotosRepositoryMock.Object,
             steamRepositoryMock.Object);
 
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
@@ -176,7 +174,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
                 fileStorageService
             ),
             googlePhotosRepositoryMock,
-            new Mock<ISteamRepository>().Object);
+            _fixture.SteamRepositoryMock.Object);
 
         var result = await fileExportOrchestrator.ExportChromecastPhotosAsync();
 
@@ -212,8 +210,8 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
                 _fixture.DefaultFileExportSettings,
                 fileStorageService
             ),
-            new Mock<IGooglePhotosRepository>().Object,
-            new Mock<ISteamRepository>().Object);
+            _fixture.GooglePhotosRepositoryMock.Object,
+            _fixture.SteamRepositoryMock.Object);
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
         var operation = result.Operations.FirstOrDefault();
