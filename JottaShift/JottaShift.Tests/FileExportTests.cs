@@ -19,15 +19,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
         var creationDate = new DateTime(2026, 5, 31);
         string destinationDirectory = AppContext.BaseDirectory;
 
-        var timelineExportService = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            new Mock<IFileStorage>().Object,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                new FileExportSettings(),
-                new Mock<IFileStorage>().Object),
-            _fixture.GooglePhotosRepositoryMock.Object,
-            _fixture.SteamRepositoryMock.Object);
+        var timelineExportService = _fixture.CreateFileExportOrchestrator();
 
         var culture = CultureInfo.GetCultureInfo("en-GB");
         timelineExportService.SetCulture(culture);
@@ -78,15 +70,8 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timelineExportService = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                _fixture.DefaultFileExportSettings,
-                fileStorageService),
-            _fixture.GooglePhotosRepositoryMock.Object,
-            _fixture.SteamRepositoryMock.Object);
+        var timelineExportService = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService);
 
         var culture = CultureInfo.GetCultureInfo("en-GB");
         timelineExportService.SetCulture(culture);
