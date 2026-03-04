@@ -331,7 +331,7 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var result = await fileStorageService.CopyAsync(sourceFileName, destinationFileName, false);
+        var result = await fileStorageService.CopyAsync(sourceFileName, destinationFileName);
 
         var copied = fileSystemMock.File.Exists(destination);
 
@@ -360,7 +360,7 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var result = await fileStorageService.CopyAsync(sourceFileName, destination, false);
+        var result = await fileStorageService.CopyAsync(sourceFileName, destination);
         
         var sourceExists = fileSystemMock.File.Exists(sourceFileName);
         var copied = fileSystemMock.File.Exists(destinationFileName);
@@ -391,7 +391,7 @@ public class FileStorageTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var result = await fileStorageService.CopyAsync(sourceFileName, destination, true);
+        var result = await fileStorageService.CopyAsync(sourceFileName, destination);
 
         var sourceExists = fileSystemMock.File.Exists(sourceFileName);
         var copied = fileSystemMock.File.Exists(destinationFileName);

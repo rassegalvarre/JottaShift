@@ -134,7 +134,7 @@ public sealed class FileExportOrchestrator(
             string fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
 
             result.StartOperation();
-            var copyResult = await _fileStorage.CopyAsync(file, fullTargetDirectoryPath, false, ct);
+            var copyResult = await _fileStorage.CopyAsync(file, fullTargetDirectoryPath, ct);
             if (!copyResult.Success)
             {
                 return result.FailOperation($"File transfer failed for file {file}");
@@ -230,7 +230,7 @@ public sealed class FileExportOrchestrator(
                 }
 
                 result.PrepareOperation(file);
-                var copyResult = await _fileStorage.CopyAsync(file, targetDirectoryForApp, false, ct);
+                var copyResult = await _fileStorage.CopyAsync(file, targetDirectoryForApp, ct);
                 if (!copyResult.Success)
                 {
                     return result.FailOperation($"File transfer failed for file {file}");
@@ -295,7 +295,7 @@ public sealed class FileExportOrchestrator(
 
             result.StartOperation();
             
-            var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, false, ct);
+            var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, ct);
 
             if (!copyResult.Success)
             {

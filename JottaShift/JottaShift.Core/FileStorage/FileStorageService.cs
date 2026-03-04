@@ -59,7 +59,7 @@ public sealed class FileStorageService(
         return isEmpty;
     }
 
-    public async Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default)
+    public async Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, CancellationToken ct = default)
     {
         string fileName = Path.GetFileName(sourceFileFullPath);
         string newFileName = Path.Combine(targetDirectory, fileName);
