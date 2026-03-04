@@ -371,7 +371,7 @@ public class FileStorageTests
     }
 
     [Fact]
-    public async Task CopyFile_ShouldCopyAndDeleteSource_WhenValidSourceAndDestination()
+    public async Task CopyFile_ShouldCopySource_WhenValidSourceAndDestination()
     {
         var source = AppContext.BaseDirectory;
         var destination = Path.Combine(AppContext.BaseDirectory, Path.GetRandomFileName());
@@ -397,7 +397,7 @@ public class FileStorageTests
         var copied = fileSystemMock.File.Exists(destinationFileName);
 
         Assert.True(result.Success);
-        Assert.False(sourceExists);
+        Assert.True(sourceExists);
         Assert.True(copied);
     }
 
