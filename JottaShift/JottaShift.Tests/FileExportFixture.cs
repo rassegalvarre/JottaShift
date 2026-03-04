@@ -13,9 +13,7 @@ namespace JottaShift.Tests;
 public class FileExportFixture : IDisposable
 {
     public readonly string SourceDirectoryRoot = @"C:\source";
-    public readonly string TargetDirectoryRoot = @"C:\backup";
-    
-
+    public readonly string TargetDirectoryRoot = @"C:\backup";   
     public Mock<IFileStorage> FileStorageMock => new();
     public Mock<IGooglePhotosRepository> GooglePhotosRepositoryMock => new();
     public Mock<ISteamRepository> SteamRepositoryMock => new();
@@ -29,7 +27,7 @@ public class FileExportFixture : IDisposable
                 SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "wallpapers"),
                 TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "wallpapers"),
                 Enabled = true,
-                DeleteSourceFiles = false
+                DeleteSourceFiles = true
             },
             new FileTransferJob()
             {

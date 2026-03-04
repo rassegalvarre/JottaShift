@@ -76,6 +76,8 @@ public sealed class FileExportOrchestrator(
             return result.Fail($"Missing files");
         }
 
+        // TODO: Check and delete batch
+
         return result.Complete();
     }
 
@@ -151,12 +153,9 @@ public sealed class FileExportOrchestrator(
                     copyResult.targetFileFullPath);
                 return result.FailOperation($"Mismatched file metadata for file {file}");
             }
-            if (job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
-            {
-                _logger.LogError(
-                    "File was copied, but failed to delete source file: {FilePath}",
-                    file);
-            }
+
+            DeleteSourceFile(file, job);
+
             result.CompleteOperation(copyResult.targetFileFullPath);
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
@@ -224,6 +223,7 @@ public sealed class FileExportOrchestrator(
             {
                 if (file.Contains("thumbnails"))
                 {
+                    DeleteSourceFile(file, job);
                     continue;
                 }
 
@@ -248,12 +248,7 @@ public sealed class FileExportOrchestrator(
                     return result.FailOperation($"Mismatched file metadata for file {file}");
                 }
 
-                if(job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
-                {
-                    _logger.LogError(
-                        "File was copied, but failed to delete source file: {FilePath}",
-                        file);
-                }
+                DeleteSourceFile(file, job);
 
                 result.CompleteOperation(copyResult.targetFileFullPath);
                 _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
@@ -319,12 +314,8 @@ public sealed class FileExportOrchestrator(
                 return result.FailOperation($"Mismatched file metadata");
             }
 
-            if (job.DeleteSourceFiles && !_fileStorage.DeleteFile(file))
-            {
-                _logger.LogError(
-                    "File was copied, but failed to delete source file: {FilePath}",
-                    file);
-            }
+            DeleteSourceFile(file, job);
+
             result.CompleteOperation(copyResult.targetFileFullPath);
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
@@ -380,7 +371,7 @@ public sealed class FileExportOrchestrator(
         return Path.Combine(destinationRootPath, year, monthDirectoryName);
     }
 
-    private string GetMonthDirectoryName(int monthIndex)
+    public string GetMonthDirectoryName(int monthIndex)
     {
         if (monthIndex < 0 || monthIndex > 11)
             throw new ArgumentOutOfRangeException(nameof(monthIndex), "Month index must be between 0 and 11");
@@ -389,5 +380,19 @@ public sealed class FileExportOrchestrator(
         string capitalizedMonthName = char.ToUpper(monthName[0]) + monthName[1..];
 
         return $"{monthIndex + 1:D2} {capitalizedMonthName}";
-    }   
+    }
+
+    private void DeleteSourceFile(string sourceFilePath, FileExportJob job)
+    {
+        if (job.DeleteSourceFiles)
+        {
+            bool deleted = _fileStorage.DeleteFile(sourceFilePath);
+            if (!deleted)
+            {
+                _logger.LogError(
+                    "Failed to delete source file: {FilePath}",
+                    sourceFilePath);
+            }
+        }
+    }
 }

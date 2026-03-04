@@ -83,7 +83,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             "02",
             "21",
             Path.GetFileName(TestData.Duck));
-        var duckTarget = Path.Combine( // TODO: Fix path when target-dir from metadata is fixed
+        var duckTarget = Path.Combine(
             job.TargetDirectoryPath,
             "2025",
             "05 May",
@@ -95,7 +95,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             "lorem ipsum",
             "dolor lamet",
             Path.GetFileName(TestData.Waterfall));
-        var waterfallTarget = Path.Combine( // TODO: Fix path when target-dir from metadata is fixed
+        var waterfallTarget = Path.Combine(
             job.TargetDirectoryPath,
             "2025",
             "05 May",
@@ -124,6 +124,8 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
         Assert.True(result.Success);
         Assert.True(fileSystemMock.File.Exists(duckTarget));
         Assert.True(fileSystemMock.File.Exists(waterfallTarget));
+        Assert.False(fileSystemMock.File.Exists(duckSource));
+        Assert.False(fileSystemMock.File.Exists(waterfallSource));
     }
 
     [Theory]
@@ -141,10 +143,8 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
         var steamRepositoryMock = new Mock<ISteamRepository>();
 
         var fileByteContent = File.ReadAllBytes(TestData.Duck);
-
-        mockFileData.Add(
-            Path.Combine(jobSettings.SourceDirectoryPath, appId.ToString(), "image.png"),
-            new MockFileData(fileByteContent));
+        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, appId.ToString(), "image.png");
+        mockFileData.Add(sourceFilePath, new MockFileData(fileByteContent));
 
         steamRepositoryMock
             .Setup(repo => repo.GetAppNameFromId(appId))
@@ -164,6 +164,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
         var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, "image.png");
 
         Assert.True(result.Success);
+        Assert.False(fileSystemMock.File.Exists(sourceFilePath));
         Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
             $"Expected file at path {expectedTargetPath} was not found.");
     }
@@ -194,8 +195,8 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
         var imageBytes = await File.ReadAllBytesAsync(TestData.Egypt);
 
         var job = _fixture.DesktopWallpapersJob;
-        var sourceFilePath = Path.Combine(job.SourceDirectoryPath, Path.GetFileName(TestData.Egypt));
-        string expectedTarget = Path.Combine(job.TargetDirectoryPath, "4K", "egypt.jpg");
+        string sourceFilePath = Path.Combine(job.SourceDirectoryPath, Path.GetFileName(TestData.Egypt));
+        string expectedTargetPath = Path.Combine(job.TargetDirectoryPath, "4K", "egypt.jpg");
 
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
@@ -212,12 +213,11 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
         var operation = result.Operations.FirstOrDefault();
-        Assert.True(result.Success,
-            "Result did not have status Success");
-        Assert.True(result.Operations.Count > 0,
-            "No operation in job was executed");
-        Assert.True(operation?.Success == true,
-            "Operation was not successfull");
-        Assert.Equal(expectedTarget, operation.TargetFilePath);          
+        Assert.True(result.Success);
+        Assert.True(result.Operations.Count > 0);
+        Assert.True(operation?.Success == true);
+        Assert.Equal(expectedTargetPath, operation.TargetFilePath);
+        Assert.True(fileSystem.File.Exists(expectedTargetPath));
+        Assert.False(fileSystem.File.Exists(sourceFilePath));
     }
 }

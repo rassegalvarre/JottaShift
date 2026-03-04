@@ -16,7 +16,12 @@ public sealed class FileStorageService(
         {
             _fileSystem.File.Delete(fileFullPath);
         }
-        catch (Exception) { }
+        catch (Exception ex)
+        {
+            _logger.LogError("Could not delete file {FilePath}. Exception: {ExceptionMessage}",
+                fileFullPath,
+                ex.Message);
+        }
 
         return _fileSystem.File.Exists(fileFullPath) == false;
     }
