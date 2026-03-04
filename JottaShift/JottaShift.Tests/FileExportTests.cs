@@ -13,7 +13,7 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests;
 
-public class FileExportTests
+public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExportFixture>
 {
     [Fact]
     public void GetTargetDirectoryNameFromFileTimestamp_CreatesPathBasedOnFileCreationTime()
