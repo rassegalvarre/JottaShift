@@ -222,6 +222,11 @@ public sealed class FileExportOrchestrator(
 
             foreach (var file in _fileStorage.EnumerateFiles(directory))
             {
+                if (file.Contains("thumbnails"))
+                {
+                    continue;
+                }
+
                 result.PrepareOperation(file);
                 var copyResult = await _fileStorage.CopyAsync(file, targetDirectoryForApp, false, ct);
                 if (!copyResult.Success)

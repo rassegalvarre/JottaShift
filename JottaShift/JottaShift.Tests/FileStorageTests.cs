@@ -302,7 +302,7 @@ public class FileStorageTests
 
         Assert.False(result.Success);        
         Assert.False(copied);        
-    }  
+    }
 
     [Fact]
     public async Task CopyFile_ShouldCopy_WhenValidSourceAndDestination()
