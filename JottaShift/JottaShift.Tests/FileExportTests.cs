@@ -126,32 +126,29 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
         Assert.True(fileSystemMock.File.Exists(waterfallTarget));
     }
 
-    [Fact]
-    public async Task ExportSteamScreenshotsAsync_ShouldExportSteamScreenshots_ToDirectoryWithAppName()
+    [Theory]
+    [InlineData(1, "Pung", "P - Papa")]
+    [InlineData(12345, "Duum", "D - Delta")]
+    [InlineData(987653, "Super Mawio", "S - Sierra")]
+    public async Task ExportSteamScreenshotsAsync_ShouldExportSteamScreenshots_ToDirectoryWithAppName(
+        uint appId,
+        string appName,
+        string parentDirectoryName)
     {
-        var appIdAndNamePair = new Dictionary<uint, string>
-        {
-            { 1, "Pung" },
-            { 12345, "Duum" },
-            { 987653, "Super Mawio" }
-        };
-
         var jobSettings = _fixture.SteamScreenshotsJob;
 
         var mockFileData = new Dictionary<string, MockFileData>();
         var steamRepositoryMock = new Mock<ISteamRepository>();
 
         var fileByteContent = File.ReadAllBytes(TestData.Duck);
-        foreach (var app in appIdAndNamePair)
-        {
-            mockFileData.Add(
-                Path.Combine(jobSettings.SourceDirectoryPath, app.Key.ToString(), "image.png"),
-                new MockFileData(fileByteContent));
 
-            steamRepositoryMock
-                .Setup(repo => repo.GetAppNameFromId(app.Key))
-                .ReturnsAsync(app.Value);
-        }
+        mockFileData.Add(
+            Path.Combine(jobSettings.SourceDirectoryPath, appId.ToString(), "image.png"),
+            new MockFileData(fileByteContent));
+
+        steamRepositoryMock
+            .Setup(repo => repo.GetAppNameFromId(appId))
+            .ReturnsAsync(appName);
 
         var fileSystemMock = new MockFileSystem(mockFileData);
 
@@ -164,14 +161,11 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             steamRepository: steamRepositoryMock.Object);
 
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
+        var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, "image.png");
 
         Assert.True(result.Success);
-
-        foreach (var app in appIdAndNamePair)
-        {
-            var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, app.Value, "image.png");
-            Assert.True(fileSystemMock.File.Exists(expectedTargetPath), $"Expected file at path {expectedTargetPath} was not found.");
-        }
+        Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
+            $"Expected file at path {expectedTargetPath} was not found.");
     }
 
     [Fact]

@@ -205,7 +205,11 @@ public sealed class FileExportOrchestrator(
                 continue;
             }
 
-            string targetDirectoryForApp = Path.Combine(job.TargetDirectoryPath, appName);
+            string parentDirectory = GetAlphabeticParentDirectoryName(appName);
+            string targetDirectoryForApp = Path.Combine(
+                job.TargetDirectoryPath,
+                parentDirectory,
+                appName);
 
             if (!_fileStorage.ValidateDirectory(new DirectoryOptions(targetDirectoryForApp, true)))
             {
