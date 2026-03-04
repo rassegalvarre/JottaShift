@@ -1,14 +1,15 @@
-﻿using JottaShift.Core.FileStorage;
+﻿using JottaShift.Core.Configuration;
 using JottaShift.Core.FileExportOrchestrator;
+using JottaShift.Core.FileExportOrchestrator.Jobs;
+using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.IO.Abstractions;
-using JottaShift.Core.Configuration;
-using JottaShift.Core.FileExportOrchestrator.Jobs;
 
 Console.WriteLine("JottaShift initiating..");
 
@@ -19,6 +20,12 @@ var host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((hostContext, services) =>
     {
+        services.Configure<AppSettings>(
+            hostContext.Configuration);
+
+        services.AddSingleton(resolver =>
+            resolver.GetRequiredService<IOptions<AppSettings>>().Value.FileExportSettings);
+
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
@@ -44,12 +51,13 @@ await host.StartAsync();
 EnvironmentVariableManager.InitializeEnvironmentVariables(@"C:\<path>\api_credentials.json");
 
 using var scope = host.Services.CreateScope();
+var exportSettings = scope.ServiceProvider.GetRequiredService<FileExportSettings>();
 var exportOrchestrator = scope.ServiceProvider.GetRequiredService<IFileExportOrchestrator>();
 
-var config = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory()) 
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .Build();
+//var config = new ConfigurationBuilder()
+//    .SetBasePath(Directory.GetCurrentDirectory()) 
+//    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+//    .Build();
 
 Console.WriteLine("Starting timeline export...");
 var timelineExportResult = await exportOrchestrator.ExportJottacloudTimelineAsync(new CancellationToken());
