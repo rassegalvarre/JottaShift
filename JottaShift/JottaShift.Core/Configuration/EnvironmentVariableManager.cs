@@ -27,7 +27,8 @@ public class EnvironmentVariableManager()
 
         if (!fileSystem.File.Exists(filePath))
         {
-            throw new FileNotFoundException($"File not found");
+            // Do nothing. If variables are missing, it will be detected by services later.
+            return;
         }
 
         var file = fileSystem.File.ReadAllText(filePath);

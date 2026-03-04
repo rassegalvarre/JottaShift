@@ -43,33 +43,29 @@ await host.StartAsync();
 // TODO: Improve
 EnvironmentVariableManager.InitializeEnvironmentVariables(@"C:\<path>\api_credentials.json");
 
-bool doExportFlag = false;
+using var scope = host.Services.CreateScope();
+var exportOrchestrator = scope.ServiceProvider.GetRequiredService<IFileExportOrchestrator>();
 
-if (doExportFlag)
-{
-    using var scope = host.Services.CreateScope();
-    var exporter = scope.ServiceProvider.GetRequiredService<IFileExportOrchestrator>();
+var config = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory()) 
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
 
-    var config = new ConfigurationBuilder()
-        .SetBasePath(Directory.GetCurrentDirectory()) 
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .Build();
+Console.WriteLine("Starting timeline export...");
+var timelineExportResult = await exportOrchestrator.ExportJottacloudTimelineAsync(new CancellationToken());
+Console.WriteLine("Timeline export finished with result {Status}", timelineExportResult.Status);
 
-    Console.WriteLine("Starting timeline export...");
-    var timelineExportResult = await exporter.ExportJottacloudTimelineAsync(new CancellationToken());
-    Console.WriteLine("Timeline export finished with result {Status}", timelineExportResult.Status);
+Console.WriteLine("Starting Chromecast upload...");
+var chromecastUploadResult = await exportOrchestrator.ExportChromecastPhotosAsync(new CancellationToken());
+Console.WriteLine("Chromecast upload finished with result {Status}", chromecastUploadResult.Status);
 
-    Console.WriteLine("Starting Chromecast upload...");
-    var chromecastUploadResult = await exporter.ExportChromecastPhotosAsync(new CancellationToken());
-    Console.WriteLine("Chromecast upload finished with result {Status}", chromecastUploadResult.Status);
+Console.WriteLine("Starting Steam screenshort export...");
+var steamExportResult = await exportOrchestrator.ExportSteamScreenshotsAsync(new CancellationToken());
+Console.WriteLine("Steam screenshot export finished with result {Status}", steamExportResult.Status);
 
-    Console.WriteLine("Starting Steam screenshort export...");
-    var steamExportResult = await exporter.ExportSteamScreenshotsAsync(new CancellationToken());
-    Console.WriteLine("Steam screenshot export finished with result {Status}", steamExportResult.Status);
+Console.WriteLine("Starting wallpaper export...");
+var wallpaperExportResult = await exportOrchestrator.ExportDesktopWallpapersAsync(new CancellationToken());
+Console.WriteLine("Wallpaper export finished with result {Status}", wallpaperExportResult.Status);
 
-    Console.WriteLine("Starting wallpaper export...");
-    var wallpaperExportResult = await exporter.ExportDesktopWallpapersAsync(new CancellationToken());
-    Console.WriteLine("Wallpaper export finished with result {Status}", wallpaperExportResult.Status);
-}
 
 await host.StopAsync();
