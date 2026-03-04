@@ -72,7 +72,6 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             { job.SourceDirectoryPath, new MockDirectoryData() },
             { duckSource, new MockFileData(duckContent) },
             { waterfallSource, new MockFileData(waterfallContent) },
-
         });
 
         var fileStorageService = new FileStorageService(
@@ -132,16 +131,9 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-
-        var fileExportOrchestrator = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                _fixture.DefaultFileExportSettings,
-                fileStorageService),
-            _fixture.GooglePhotosRepositoryMock.Object,
-            steamRepositoryMock.Object);
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService,
+            steamRepository: steamRepositoryMock.Object);
 
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
 
@@ -158,23 +150,15 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
     [Trait("API", "Google")]
     public async Task ExportChromecastPhotosAsync_ShouldExportPhots_ToAlbumName()
     {
-
         var fileSystem = new FileSystem();
         var fileStorageService = new FileStorageService(
             fileSystem,
             new Mock<ILogger<FileStorageService>>().Object);
-        var googlePhotosRepositoryMock = new GooglePhotosRepository(fileSystem);
+        var googlePhotosRepository = new GooglePhotosRepository(fileSystem);
 
-        var fileExportOrchestrator = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                _fixture.DefaultFileExportSettings,
-                fileStorageService
-            ),
-            googlePhotosRepositoryMock,
-            _fixture.SteamRepositoryMock.Object);
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService,
+            googlePhotosRepository: googlePhotosRepository);
 
         var result = await fileExportOrchestrator.ExportChromecastPhotosAsync();
 
@@ -202,16 +186,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             fileSystem,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var fileExportOrchestrator = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                _fixture.DefaultFileExportSettings,
-                fileStorageService
-            ),
-            _fixture.GooglePhotosRepositoryMock.Object,
-            _fixture.SteamRepositoryMock.Object);
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(fileStorage: fileStorageService);
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
         var operation = result.Operations.FirstOrDefault();

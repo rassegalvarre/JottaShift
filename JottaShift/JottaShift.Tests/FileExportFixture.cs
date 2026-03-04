@@ -1,8 +1,11 @@
 ﻿using JottaShift.Core.FileExportOrchestrator;
+using JottaShift.Core.FileExportOrchestrator.Jobs;
 using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
 using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
+using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace JottaShift.Tests;
@@ -13,6 +16,7 @@ public class FileExportFixture : IDisposable
     public readonly string TargetDirectoryRoot = @"C:\backup";
     
 
+    public Mock<IFileStorage> FileStorageMock => new();
     public Mock<IGooglePhotosRepository> GooglePhotosRepositoryMock => new();
     public Mock<ISteamRepository> SteamRepositoryMock => new();
 
@@ -68,6 +72,29 @@ public class FileExportFixture : IDisposable
 
     public GooglePhotosUploadJob ChromecastUploadJob => DefaultFileExportSettings.GooglePhotosUploadJobs
         .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.ChromecastPhotos);
+
+    public FileExportOrchestrator CreateFileExportOrchestrator(
+        IFileStorage? fileStorage = null,
+        IGooglePhotosRepository? googlePhotosRepository = null,
+        ISteamRepository? steamRepository = null
+        )
+    {
+        fileStorage ??= FileStorageMock.Object;
+        googlePhotosRepository ??= GooglePhotosRepositoryMock.Object;
+        steamRepository ??= SteamRepositoryMock.Object;
+
+        var jobValidator = new FileExportJobValidator(
+            new Mock<ILogger<FileExportJobValidator>>().Object,
+            DefaultFileExportSettings,
+            fileStorage);
+
+        return new FileExportOrchestrator(
+            new Mock<ILogger<FileExportOrchestrator>>().Object,
+            fileStorage,
+            jobValidator,
+            googlePhotosRepository, 
+            steamRepository);
+    }
 
     public void Dispose()
     {
