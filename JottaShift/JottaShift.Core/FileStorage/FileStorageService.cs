@@ -26,6 +26,39 @@ public sealed class FileStorageService(
         return _fileSystem.File.Exists(fileFullPath) == false;
     }
 
+    public bool DeleteDirectoryContent(string directoryFullPath)
+    {
+        try
+        {
+            foreach (var file in _fileSystem.Directory.EnumerateFiles(directoryFullPath))
+            {
+                var path = Path.GetDirectoryName(file);
+                _fileSystem.File.Delete(file);                
+            }
+            
+            foreach (var dir in _fileSystem.Directory.EnumerateDirectories(directoryFullPath))
+            {
+                _fileSystem.Directory.Delete(dir, recursive: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Could not delete directory {DirectoryPath}. Exception: {ExceptionMessage}",
+                directoryFullPath,
+                ex.Message);
+        }
+
+        bool isEmpty = !_fileSystem.Directory.EnumerateFileSystemEntries(directoryFullPath).Any();
+
+        if (!isEmpty)
+        {
+            _logger.LogWarning("Did not succeed in deleting all the content of directory {Directory}",
+                directoryFullPath);
+        }
+
+        return isEmpty;
+    }
+
     public async Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, bool deleteSource, CancellationToken ct = default)
     {
         string fileName = Path.GetFileName(sourceFileFullPath);
@@ -43,7 +76,12 @@ public sealed class FileStorageService(
             return new CopyAsyncResult(false, newFileName);
         }
 
-        // TODO: Check if target already exists
+        if (_fileSystem.File.Exists(newFileName))
+        {
+            _logger.LogInformation("Target file already exists: {TargeFile}", newFileName);
+            return new CopyAsyncResult(true, newFileName);
+        }
+
         try
         {
             
@@ -52,20 +90,7 @@ public sealed class FileStorageService(
         catch(Exception ex)
         {
             _logger.LogError("Exception when copying file: {ExceptionMessage}", ex.Message);
-        }
-
-        if (deleteSource)
-        {
-            try
-            {
-                _fileSystem.File.Delete(sourceFileFullPath);
-                _logger.LogInformation("Deleted source file: {SourceFile}", sourceFileFullPath);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Exception when deleting source file: {ExceptionMessage}", ex.Message);
-                return new CopyAsyncResult(false, newFileName);
-            }
+            return new CopyAsyncResult(false, newFileName);
         }
 
         await Task.FromResult(true);

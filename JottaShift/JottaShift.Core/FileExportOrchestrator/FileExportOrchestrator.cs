@@ -76,7 +76,7 @@ public sealed class FileExportOrchestrator(
             return result.Fail($"Missing files");
         }
 
-        // TODO: Check and delete batch
+        DeleteSourceDirectory(job, result);
 
         return result.Complete();
     }
@@ -159,6 +159,8 @@ public sealed class FileExportOrchestrator(
             result.CompleteOperation(copyResult.targetFileFullPath);
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
+
+        DeleteSourceDirectory(job, result);
 
         return result.Complete();
     }
@@ -256,6 +258,8 @@ public sealed class FileExportOrchestrator(
 
             _logger.LogInformation("Processed Steam-directory {Directory}", directory);
         }
+        
+        DeleteSourceDirectory(job, result);
 
         return result.Complete();
     }
@@ -319,6 +323,8 @@ public sealed class FileExportOrchestrator(
             result.CompleteOperation(copyResult.targetFileFullPath);
             _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
         }
+
+        DeleteSourceDirectory(job, result);
 
         return result.Complete();
     }
@@ -392,6 +398,20 @@ public sealed class FileExportOrchestrator(
                 _logger.LogError(
                     "Failed to delete source file: {FilePath}",
                     sourceFilePath);
+            }
+        }
+    }
+
+    private void DeleteSourceDirectory(FileExportJob job, FileExportJobResult result)
+    {
+        if (job.DeleteSourceFiles && result.Success)
+        {
+            bool deleted = _fileStorage.DeleteDirectoryContent(job.SourceDirectoryPath);
+            if (!deleted)
+            {
+                _logger.LogError(
+                    "Failed to delete source directory contents: {FilePath}",
+                    job.SourceDirectoryPath);
             }
         }
     }

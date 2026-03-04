@@ -9,6 +9,41 @@ namespace JottaShift.Tests;
 public class FileStorageTests
 {
     [Fact]
+    public void DeleteDirectoryContent_ShouldDeleteContent_KeepRoot()
+    {
+        var directory = @"C:\archive";
+        var firstSubDirectory = Path.Combine(directory, "lorem");
+        var secondSubDirectory = Path.Combine(directory, "ipsum");
+        var thirdSubDirectory = Path.Combine(directory, "dolor");
+        var fourthSubDirectory = Path.Combine(directory, "lamet");
+
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { directory, new MockDirectoryData() },
+            { firstSubDirectory, new MockDirectoryData() },
+            { secondSubDirectory, new MockDirectoryData() },
+            { Path.Combine(thirdSubDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(fourthSubDirectory, Path.GetRandomFileName()), new MockFileData([]) }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var result = fileStorageService.DeleteDirectoryContent(directory);
+        
+        Assert.True(result);
+        Assert.Empty(fileSystemMock.AllFiles);       
+
+        Assert.True(fileSystemMock.Directory.Exists(directory));
+        Assert.False(fileSystemMock.Directory.Exists(firstSubDirectory));
+        Assert.False(fileSystemMock.Directory.Exists(secondSubDirectory));
+        Assert.False(fileSystemMock.Directory.Exists(thirdSubDirectory));
+        Assert.False(fileSystemMock.Directory.Exists(fourthSubDirectory));   
+    }
+
+    [Fact]
     public void ValidateDirectory_ShouldBeValidated_WhenFolderExists()
     {
         var directory = AppContext.BaseDirectory;
