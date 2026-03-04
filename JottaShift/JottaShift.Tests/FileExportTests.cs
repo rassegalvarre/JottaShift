@@ -1,7 +1,5 @@
 ﻿using JottaShift.Core.FileExportOrchestrator;
 using JottaShift.Core.FileExportOrchestrator.Jobs;
-using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
-using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.SteamRepository;
@@ -13,7 +11,7 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests;
 
-public class FileExportTests
+public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExportFixture>
 {
     [Fact]
     public void GetTargetDirectoryNameFromFileTimestamp_CreatesPathBasedOnFileCreationTime()
@@ -21,15 +19,7 @@ public class FileExportTests
         var creationDate = new DateTime(2026, 5, 31);
         string destinationDirectory = AppContext.BaseDirectory;
 
-        var timelineExportService = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            new Mock<IFileStorage>().Object,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                new FileExportSettings(),
-                new Mock<IFileStorage>().Object),
-            new Mock<IGooglePhotosRepository>().Object,
-            new Mock<ISteamRepository>().Object);
+        var timelineExportService = _fixture.CreateFileExportOrchestrator();
 
         var culture = CultureInfo.GetCultureInfo("en-GB");
         timelineExportService.SetCulture(culture);
@@ -43,21 +33,7 @@ public class FileExportTests
     [Fact]
     public async Task ExportAsync_ShouldExportAndRestrucutureTimeline()
     {
-        var job = new FileTransferJob()
-        {
-            Key = "jottacloud_timeline",
-            SourceDirectoryPath = @"C:\timeline",
-            TargetDirectoryPath = @"C:\backup",
-            Enabled = true,
-            DeleteSourceFiles = true
-        };
-        var settings = new FileExportSettings()
-        {
-            FileTransferJobs = new List<FileTransferJob>() {
-                job
-            }
-        };
-
+        var job = _fixture.JottacloudTimelineJob;
         var duckSource = Path.Combine(
             job.SourceDirectoryPath,
             "2025",
@@ -88,22 +64,14 @@ public class FileExportTests
             { job.SourceDirectoryPath, new MockDirectoryData() },
             { duckSource, new MockFileData(duckContent) },
             { waterfallSource, new MockFileData(waterfallContent) },
-
         });
 
         var fileStorageService = new FileStorageService(
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timelineExportService = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                settings,
-                fileStorageService),
-            new Mock<IGooglePhotosRepository>().Object,
-            new Mock<ISteamRepository>().Object);
+        var timelineExportService = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService);
 
         var culture = CultureInfo.GetCultureInfo("en-GB");
         timelineExportService.SetCulture(culture);
@@ -125,14 +93,7 @@ public class FileExportTests
             { 987653, "Super Mawio" }
         };
 
-        var jobSettings = new FileTransferJob()
-        {
-            Key = "steam_screenshots",
-            SourceDirectoryPath = @"C:\steam",
-            TargetDirectoryPath = @"C:\backup\steam",
-            Enabled = true,
-            DeleteSourceFiles = true
-        };
+        var jobSettings = _fixture.SteamScreenshotsJob;
 
         var mockFileData = new Dictionary<string, MockFileData>();
         var steamRepositoryMock = new Mock<ISteamRepository>();
@@ -141,7 +102,7 @@ public class FileExportTests
         foreach (var app in appIdAndNamePair)
         {
             mockFileData.Add(
-                Path.Combine(@"C:\steam", app.Key.ToString(), "image.png"),
+                Path.Combine(jobSettings.SourceDirectoryPath, app.Key.ToString(), "image.png"),
                 new MockFileData(fileByteContent));
 
             steamRepositoryMock
@@ -155,22 +116,9 @@ public class FileExportTests
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-
-        var fileExportOrchestrator = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                new FileExportSettings()
-                {
-                    FileTransferJobs = new List<FileTransferJob>()
-                    {
-                        jobSettings
-                    }
-                },
-                fileStorageService),
-            new Mock<IGooglePhotosRepository>().Object,
-            steamRepositoryMock.Object);
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService,
+            steamRepository: steamRepositoryMock.Object);
 
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
 
@@ -187,36 +135,15 @@ public class FileExportTests
     [Trait("API", "Google")]
     public async Task ExportChromecastPhotosAsync_ShouldExportPhots_ToAlbumName()
     {
-
         var fileSystem = new FileSystem();
         var fileStorageService = new FileStorageService(
             fileSystem,
             new Mock<ILogger<FileStorageService>>().Object);
-        var googlePhotosRepositoryMock = new GooglePhotosRepository(fileSystem);
+        var googlePhotosRepository = new GooglePhotosRepository(fileSystem);
 
-        var fileExportOrchestrator = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                new FileExportSettings()
-                {
-                    GooglePhotosUploadJobs = new List<GooglePhotosUploadJob>()
-                    {
-                        new GooglePhotosUploadJob()
-                        {
-                            Key = "chromecast_photos",
-                            SourceDirectoryPath = TestData.TestDataPath,
-                            AlbumName = "JottaSync.UnitTests.FileExport",
-                            Enabled = true,
-                            DeleteSourceFiles = false
-                        }
-                    }
-                },
-                fileStorageService
-            ),
-            googlePhotosRepositoryMock,
-            new Mock<ISteamRepository>().Object);
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService,
+            googlePhotosRepository: googlePhotosRepository);
 
         var result = await fileExportOrchestrator.ExportChromecastPhotosAsync();
 
@@ -229,15 +156,14 @@ public class FileExportTests
     {
         var imageBytes = await File.ReadAllBytesAsync(TestData.Egypt);
 
-        string sourceDirectory = @"C:\games";
-        var sourceFilePath = Path.Combine(sourceDirectory, Path.GetFileName(TestData.Egypt));
-        string targetDirectory = @"C:\wallpapers";
-        string expectedTarget = Path.Combine(targetDirectory, "4K", "egypt.jpg");
+        var job = _fixture.DesktopWallpapersJob;
+        var sourceFilePath = Path.Combine(job.SourceDirectoryPath, Path.GetFileName(TestData.Egypt));
+        string expectedTarget = Path.Combine(job.TargetDirectoryPath, "4K", "egypt.jpg");
 
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
-            { sourceDirectory, new MockDirectoryData() },
-            { targetDirectory, new MockDirectoryData() },
+            { job.SourceDirectoryPath, new MockDirectoryData() },
+            { job.TargetDirectoryPath, new MockDirectoryData() },
             { sourceFilePath, new MockFileData(imageBytes) },
         });
 
@@ -245,28 +171,7 @@ public class FileExportTests
             fileSystem,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var fileExportOrchestrator = new FileExportOrchestrator(
-            new Mock<ILogger<FileExportOrchestrator>>().Object,
-            fileStorageService,
-            new FileExportJobValidator(
-                new Mock<ILogger<FileExportJobValidator>>().Object,
-                new FileExportSettings()
-                {
-                    FileTransferJobs = [
-                        new FileTransferJob()
-                        {
-                            Key = "desktop_wallpapers",
-                            SourceDirectoryPath = sourceDirectory,
-                            TargetDirectoryPath = targetDirectory,
-                            Enabled = true,
-                            DeleteSourceFiles = false
-                        }
-                    ]
-                },
-                fileStorageService
-            ),
-            new Mock<IGooglePhotosRepository>().Object,
-            new Mock<ISteamRepository>().Object);
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(fileStorage: fileStorageService);
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
         var operation = result.Operations.FirstOrDefault();

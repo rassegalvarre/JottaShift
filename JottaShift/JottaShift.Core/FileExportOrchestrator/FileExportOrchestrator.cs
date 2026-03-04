@@ -18,6 +18,14 @@ public sealed class FileExportOrchestrator(
 {
     private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;
 
+    public static class DefaultJobKeys
+    {
+        public const string ChromecastPhotos = "chromecast_photos";
+        public const string DesktopWallpapers = "desktop_wallpapers";
+        public const string SteamScreenshots = "steam_screenshots";
+        public const string JottacloudTimeline = "jottacloud_timeline";
+    }
+
     public void SetCulture(CultureInfo culture)
     {
         _culture = culture;
@@ -26,7 +34,7 @@ public sealed class FileExportOrchestrator(
     // Todo: Handle (Conflict) files and dirs. Ignore?
     public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
-        const string jobKey = "chromecast_photos";
+        const string jobKey = DefaultJobKeys.ChromecastPhotos;
         GooglePhotosUploadJobResult result;
 
         if (!_fileExportJobValidator.TryGetGooglePhotosUploadJob(jobKey, out var job))
@@ -73,7 +81,7 @@ public sealed class FileExportOrchestrator(
 
     public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
     {
-        const string jobKey = "desktop_wallpapers";
+        const string jobKey = DefaultJobKeys.DesktopWallpapers;
         FileTransferJobResult result;
 
         if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
@@ -158,7 +166,7 @@ public sealed class FileExportOrchestrator(
 
     public async Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
     {
-        const string jobKey = "steam_screenshots";
+        const string jobKey = DefaultJobKeys.SteamScreenshots;
 
         FileTransferJobResult result;
 
@@ -251,7 +259,7 @@ public sealed class FileExportOrchestrator(
 // Todo: Handle (Conflict) files and dirs. Ignore?
     public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
-        const string jobKey = "jottacloud_timeline";
+        const string jobKey = DefaultJobKeys.JottacloudTimeline;
         FileTransferJobResult result;
 
         if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
