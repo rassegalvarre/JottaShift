@@ -8,7 +8,7 @@ public abstract record FileExportJobResult(string Key)
     public string Key { get; init; } = Key;
 
     public FileExportJobStatus Status { get; private set; } = FileExportJobStatus.Ready;
-    
+
     public string SourceDirectoryPath { get; protected set; } = string.Empty;
     
     public string? ErrorMessage { get; private set; }

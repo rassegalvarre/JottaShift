@@ -65,7 +65,7 @@ public class FileExportJobValidator(
         var result = FileTransferJobResult.CreateFromJob(job);
         if (!job.Enabled)
         {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", job.Key);
+            _logger.LogInformation("Job with key {JobKey} is diabled and will not be started", job.Key);
             result.Disabled();
         }
         else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
@@ -96,7 +96,7 @@ public class FileExportJobValidator(
         var result = GooglePhotosUploadJobResult.CreateFromJob(job);
         if (!job.Enabled)
         {
-            _logger.LogError("Job with key {JobKey} is diabled and will not be started", job.Key);
+            _logger.LogInformation("Job with key {JobKey} is diabled and will not be started", job.Key);
             result.Disabled();
         }
         else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))

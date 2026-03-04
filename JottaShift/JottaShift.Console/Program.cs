@@ -61,19 +61,19 @@ var exportOrchestrator = scope.ServiceProvider.GetRequiredService<IFileExportOrc
 
 Console.WriteLine("Starting timeline export...");
 var timelineExportResult = await exportOrchestrator.ExportJottacloudTimelineAsync(new CancellationToken());
-Console.WriteLine("Timeline export finished with result {Status}", timelineExportResult.Status);
+Console.WriteLine("Timeline export finished with result {0}", timelineExportResult.Status);
 
 Console.WriteLine("Starting Chromecast upload...");
 var chromecastUploadResult = await exportOrchestrator.ExportChromecastPhotosAsync(new CancellationToken());
-Console.WriteLine("Chromecast upload finished with result {Status}", chromecastUploadResult.Status);
+Console.WriteLine("Chromecast upload finished with result {0}", chromecastUploadResult.Status);
 
 Console.WriteLine("Starting Steam screenshort export...");
 var steamExportResult = await exportOrchestrator.ExportSteamScreenshotsAsync(new CancellationToken());
-Console.WriteLine("Steam screenshot export finished with result {Status}", steamExportResult.Status);
+Console.WriteLine("Steam screenshot export finished with result {0}", steamExportResult.Status);
 
 Console.WriteLine("Starting wallpaper export...");
 var wallpaperExportResult = await exportOrchestrator.ExportDesktopWallpapersAsync(new CancellationToken());
-Console.WriteLine("Wallpaper export finished with result {Status}", wallpaperExportResult.Status);
+Console.WriteLine("Wallpaper export finished with result {0}", wallpaperExportResult.Status);
 
 
 await host.StopAsync();
