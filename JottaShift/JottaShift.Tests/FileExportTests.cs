@@ -13,6 +13,49 @@ namespace JottaShift.Tests;
 
 public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExportFixture>
 {
+    public static List<object[]> GetAlphabeticParentDirectoryNameTestData() => new()
+    {
+        new[] { "?Æ:;(", "0 - Numerisk" },
+        new[] { "007", "0 - Numerisk" },
+        new[] { "Apple","A - Alpha" },
+        new[] { "Banana", "B - Bravo" },
+        new[] { "Cherry", "C - Charlie" },
+        new[] { "Date", "D - Delta" },
+        new[] { "Elderberry", "E - Echo" },
+        new[] { "Fig", "F - Foxtrot" },
+        new[] { "Grape", "G - Golf" },
+        new[] { "Honeydew", "H - Hotel" },
+        new[] { "Iceberg lettuce" ,"I - India"},
+        new[] { "Jackfruit", "J - Juliett" },
+        new[] { "Kiwi", "K - Kilo" },
+        new[] { "Lemon","L - Lima" },
+        new[] { "Mango", "M - Mike" },
+        new[] { "Nectarine", "N - November"},
+        new[] { "Orange", "O - Oscar" },
+        new[] { "Papaya", "P - Papa" },
+        new[] { "Quince", "Q - Quebec" },
+        new[] { "Raspberry", "R - Romeo" },
+        new[] { "Strawberry","S - Sierra" },
+        new[] { "Tomato", "T - Tango" },
+        new[] { "Ugli fruit", "U - Uniform" },
+        new[] { "Vanilla bean", "V - Victor"},
+        new[] { "Watermelon", "W - Whiskey" },
+        new[] { "Xigua", "X - X‑ray" },
+        new[] { "Yellow pepper","Y - Yankee"},
+        new[] { "Zucchini",  "Z - Zulu" }
+    };
+
+    [Theory]
+    [MemberData(nameof(GetAlphabeticParentDirectoryNameTestData))]
+    public void GetAlphabeticParentDirectoryName(string directoryName, string expected)
+    {
+        var orchestrator = _fixture.CreateFileExportOrchestrator();
+
+        var alphabeticParentDirectoryName = orchestrator.GetAlphabeticParentDirectoryName(directoryName);
+
+        Assert.Equal(expected, alphabeticParentDirectoryName);
+    }
+
     [Fact]
     public void GetTargetDirectoryNameFromFileTimestamp_CreatesPathBasedOnFileCreationTime()
     {
