@@ -43,21 +43,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
     [Fact]
     public async Task ExportAsync_ShouldExportAndRestrucutureTimeline()
     {
-        var job = new FileTransferJob()
-        {
-            Key = "jottacloud_timeline",
-            SourceDirectoryPath = @"C:\timeline",
-            TargetDirectoryPath = @"C:\backup",
-            Enabled = true,
-            DeleteSourceFiles = true
-        };
-        var settings = new FileExportSettings()
-        {
-            FileTransferJobs = new List<FileTransferJob>() {
-                job
-            }
-        };
-
+        var job = _fixture.JottacloudTimelineJob;
         var duckSource = Path.Combine(
             job.SourceDirectoryPath,
             "2025",
@@ -100,7 +86,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             fileStorageService,
             new FileExportJobValidator(
                 new Mock<ILogger<FileExportJobValidator>>().Object,
-                settings,
+                _fixture.DefaultFileExportSettings,
                 fileStorageService),
             new Mock<IGooglePhotosRepository>().Object,
             new Mock<ISteamRepository>().Object);
@@ -125,14 +111,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             { 987653, "Super Mawio" }
         };
 
-        var jobSettings = new FileTransferJob()
-        {
-            Key = "steam_screenshots",
-            SourceDirectoryPath = @"C:\steam",
-            TargetDirectoryPath = @"C:\backup\steam",
-            Enabled = true,
-            DeleteSourceFiles = true
-        };
+        var jobSettings = _fixture.SteamScreenshotsJob;
 
         var mockFileData = new Dictionary<string, MockFileData>();
         var steamRepositoryMock = new Mock<ISteamRepository>();
@@ -141,7 +120,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
         foreach (var app in appIdAndNamePair)
         {
             mockFileData.Add(
-                Path.Combine(@"C:\steam", app.Key.ToString(), "image.png"),
+                Path.Combine(jobSettings.SourceDirectoryPath, app.Key.ToString(), "image.png"),
                 new MockFileData(fileByteContent));
 
             steamRepositoryMock
@@ -161,13 +140,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             fileStorageService,
             new FileExportJobValidator(
                 new Mock<ILogger<FileExportJobValidator>>().Object,
-                new FileExportSettings()
-                {
-                    FileTransferJobs = new List<FileTransferJob>()
-                    {
-                        jobSettings
-                    }
-                },
+                _fixture.DefaultFileExportSettings,
                 fileStorageService),
             new Mock<IGooglePhotosRepository>().Object,
             steamRepositoryMock.Object);
@@ -199,20 +172,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             fileStorageService,
             new FileExportJobValidator(
                 new Mock<ILogger<FileExportJobValidator>>().Object,
-                new FileExportSettings()
-                {
-                    GooglePhotosUploadJobs = new List<GooglePhotosUploadJob>()
-                    {
-                        new GooglePhotosUploadJob()
-                        {
-                            Key = "chromecast_photos",
-                            SourceDirectoryPath = TestData.TestDataPath,
-                            AlbumName = "JottaSync.UnitTests.FileExport",
-                            Enabled = true,
-                            DeleteSourceFiles = false
-                        }
-                    }
-                },
+                _fixture.DefaultFileExportSettings,
                 fileStorageService
             ),
             googlePhotosRepositoryMock,
@@ -229,15 +189,14 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
     {
         var imageBytes = await File.ReadAllBytesAsync(TestData.Egypt);
 
-        string sourceDirectory = @"C:\games";
-        var sourceFilePath = Path.Combine(sourceDirectory, Path.GetFileName(TestData.Egypt));
-        string targetDirectory = @"C:\wallpapers";
-        string expectedTarget = Path.Combine(targetDirectory, "4K", "egypt.jpg");
+        var job = _fixture.DesktopWallpapersJob;
+        var sourceFilePath = Path.Combine(job.SourceDirectoryPath, Path.GetFileName(TestData.Egypt));
+        string expectedTarget = Path.Combine(job.TargetDirectoryPath, "4K", "egypt.jpg");
 
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
-            { sourceDirectory, new MockDirectoryData() },
-            { targetDirectory, new MockDirectoryData() },
+            { job.SourceDirectoryPath, new MockDirectoryData() },
+            { job.TargetDirectoryPath, new MockDirectoryData() },
             { sourceFilePath, new MockFileData(imageBytes) },
         });
 
@@ -250,19 +209,7 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             fileStorageService,
             new FileExportJobValidator(
                 new Mock<ILogger<FileExportJobValidator>>().Object,
-                new FileExportSettings()
-                {
-                    FileTransferJobs = [
-                        new FileTransferJob()
-                        {
-                            Key = "desktop_wallpapers",
-                            SourceDirectoryPath = sourceDirectory,
-                            TargetDirectoryPath = targetDirectory,
-                            Enabled = true,
-                            DeleteSourceFiles = false
-                        }
-                    ]
-                },
+                _fixture.DefaultFileExportSettings,
                 fileStorageService
             ),
             new Mock<IGooglePhotosRepository>().Object,
