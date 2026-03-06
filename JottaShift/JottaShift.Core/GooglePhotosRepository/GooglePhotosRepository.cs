@@ -4,13 +4,15 @@ using Google.Apis.PhotosLibrary.v1.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using JottaShift.Core.Configuration;
+using Microsoft.Extensions.Logging;
 using System.IO.Abstractions;
 using System.Text.Json;
 
 namespace JottaShift.Core.GooglePhotos;
 
-// TODO: Add logger and logs
-public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepository
+public class GooglePhotosRepository(
+    ILogger<GooglePhotosRepository> _logger,
+    IFileSystem _fileSystem) : IGooglePhotosRepository
 {
     private readonly string[] _scopes = [
         PhotosLibraryService.Scope.PhotoslibraryAppendonly,
@@ -138,6 +140,8 @@ public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepo
             }
         };
         var newAlbum = await photosLibraryService.Albums.Create(request).ExecuteAsync();
+        _logger.LogInformation("Created new Google Photos album {AlbumName}", albumName);
+        
         return newAlbum;
     }
 
@@ -170,6 +174,9 @@ public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepo
             })],
             AlbumId = albumId
         }).ExecuteAsync();
+
+        _logger.LogInformation("Uploaded {ItemCount} items to Google Photos album with id {AlbumId}",
+            created.NewMediaItemResults, albumId);
 
         return created;
     }

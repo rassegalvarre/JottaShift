@@ -1,4 +1,7 @@
-﻿using JottaShift.Core.GooglePhotos;
+﻿using Castle.Core.Logging;
+using JottaShift.Core.GooglePhotos;
+using Microsoft.Extensions.Logging;
+using Moq;
 using System.IO.Abstractions;
 
 namespace JottaShift.Tests;
@@ -12,7 +15,9 @@ public class GooglePhotosTests
     [Fact]
     public async Task GetOrCreateAlbum_CreateOrGetsAlbum_WithAlbumName()
     {
-        var googlePhotosRepository = new GooglePhotosRepository(new FileSystem());
+        var googlePhotosRepository = new GooglePhotosRepository(
+            new Mock<ILogger<GooglePhotosRepository>>().Object,
+            new FileSystem());
 
         var album = await googlePhotosRepository.GetOrCreateAlbum(TestAlbumName);
         Assert.NotNull(album);
@@ -26,7 +31,9 @@ public class GooglePhotosTests
             TestData.Waterfall
         };
 
-        var googlePhotosRepository = new GooglePhotosRepository(new FileSystem());
+        var googlePhotosRepository = new GooglePhotosRepository(
+            new Mock<ILogger<GooglePhotosRepository>>().Object, 
+            new FileSystem());
 
         var uploadedItems = await googlePhotosRepository.UploadImagesToAlbum(images, TestAlbumName);
 

@@ -177,7 +177,9 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
         var fileStorageService = new FileStorageService(
             fileSystem,
             new Mock<ILogger<FileStorageService>>().Object);
-        var googlePhotosRepository = new GooglePhotosRepository(fileSystem);
+        var googlePhotosRepository = new GooglePhotosRepository(
+            new Mock<ILogger<GooglePhotosRepository>>().Object,
+            fileSystem);
 
         var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
             fileStorage: fileStorageService,
