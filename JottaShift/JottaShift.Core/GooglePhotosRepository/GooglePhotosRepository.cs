@@ -12,9 +12,6 @@ namespace JottaShift.Core.GooglePhotos;
 // TODO: Add logger and logs
 public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepository
 {
-    // TODO: Move to settings-file
-    public const string DefaultAlbumName = "Chromecast";    
-
     private readonly string[] _scopes = [
         PhotosLibraryService.Scope.PhotoslibraryAppendonly,
         PhotosLibraryService.Scope.PhotoslibraryReadonlyAppcreateddata

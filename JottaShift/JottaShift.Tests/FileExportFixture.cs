@@ -60,16 +60,16 @@ public class FileExportFixture : IDisposable
     };
 
     public FileTransferJob DesktopWallpapersJob => DefaultFileExportSettings.FileTransferJobs
-        .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.DesktopWallpapers);
+        .First(j => j.Key == DefaultJobKeys.DesktopWallpapers);
 
     public FileTransferJob JottacloudTimelineJob => DefaultFileExportSettings.FileTransferJobs
-        .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.JottacloudTimeline);
+        .First(j => j.Key == DefaultJobKeys.JottacloudTimeline);
 
     public FileTransferJob SteamScreenshotsJob => DefaultFileExportSettings.FileTransferJobs
-        .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.SteamScreenshots);
+        .First(j => j.Key == DefaultJobKeys.SteamScreenshots);
 
     public GooglePhotosUploadJob ChromecastUploadJob => DefaultFileExportSettings.GooglePhotosUploadJobs
-        .First(j => j.Key == FileExportOrchestrator.DefaultJobKeys.ChromecastPhotos);
+        .First(j => j.Key == DefaultJobKeys.ChromecastPhotos);
 
     public FileExportOrchestrator CreateFileExportOrchestrator(
         IFileStorage? fileStorage = null,
