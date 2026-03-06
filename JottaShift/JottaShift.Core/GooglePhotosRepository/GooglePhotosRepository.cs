@@ -38,6 +38,7 @@ public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepo
 
     private async Task<GoogleClientSecrets> GetGoogleClientSecretsAsync()
     {
+        // TODO: Improve this
         string credentialsPath = Path.Combine(AppContext.BaseDirectory, "google-api-credentials.json");
         if (!_fileSystem.File.Exists(credentialsPath))
             throw new FileNotFoundException("google-api-credentials not found");
@@ -65,6 +66,7 @@ public class GooglePhotosRepository(IFileSystem _fileSystem) : IGooglePhotosRepo
         return secretsResult;
     }
 
+    // TODO: This does not work optimally. Permissions needs to be re-given to often.
     private async Task<UserCredential> GetUserCredential()
     {
         if (_userCredential != null)
