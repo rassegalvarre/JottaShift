@@ -26,6 +26,13 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton(resolver =>
             resolver.GetRequiredService<IOptions<AppSettings>>().Value.FileExportSettings);
 
+        services.AddSingleton(resolver =>
+            resolver.GetRequiredService<IOptions<AppSettings>>().Value.GooglePhotosLibraryApiCredentials);
+
+        services.AddSingleton(resolver =>
+           resolver.GetRequiredService<IOptions<AppSettings>>().Value.SteamWebApiCredentials);
+
+
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
@@ -47,11 +54,10 @@ var host = Host.CreateDefaultBuilder(args)
 
 await host.StartAsync();
 
-// TODO: Improve
-EnvironmentVariableManager.InitializeEnvironmentVariables(@"C:\<path>\api_credentials.json");
-
 using var scope = host.Services.CreateScope();
 var exportSettings = scope.ServiceProvider.GetRequiredService<FileExportSettings>();
+var creds = scope.ServiceProvider.GetRequiredService<GooglePhotosLibraryApiCredentials>();
+var credsSteam = scope.ServiceProvider.GetRequiredService<SteamWebApiCredentials>();
 var exportOrchestrator = scope.ServiceProvider.GetRequiredService<IFileExportOrchestrator>();
 
 //var config = new ConfigurationBuilder()

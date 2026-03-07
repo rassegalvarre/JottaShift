@@ -5,12 +5,14 @@ using Moq;
 namespace JottaShift.Tests;
 
 [Trait("API", "Google")]
-public class SteamRepositoryTests
+public class SteamRepositoryTests(SteamFixture _fixture) : IClassFixture<SteamFixture>
 {
     [Fact]
     public async Task GetAppNameFromId_ReturnsName_WhenValidId()
     {
-        var steamRepository = new SteamRepository(new Mock<ILogger<SteamRepository>>().Object);
+        var steamRepository = new SteamRepository(
+            new Mock<ILogger<SteamRepository>>().Object,
+            _fixture.SteamWebApiCredentialsMock);
 
         const uint appId = 990080;
         const string appName = "Hogwarts Legacy";
@@ -23,7 +25,9 @@ public class SteamRepositoryTests
     [Fact]
     public async Task GetGameName_ReturnsEmptyString_WhenInvalidId()
     {
-        var steamRepository = new SteamRepository(new Mock<ILogger<SteamRepository>>().Object);
+        var steamRepository = new SteamRepository(
+            new Mock<ILogger<SteamRepository>>().Object,
+            _fixture.SteamWebApiCredentialsMock);
 
         const uint appId = 0;
 

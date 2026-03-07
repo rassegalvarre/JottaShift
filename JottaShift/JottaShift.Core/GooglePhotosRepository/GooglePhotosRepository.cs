@@ -5,14 +5,13 @@ using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using JottaShift.Core.Configuration;
 using Microsoft.Extensions.Logging;
-using System.IO.Abstractions;
 using System.Text.Json;
 
 namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosRepository(
-    ILogger<GooglePhotosRepository> _logger,
-    IFileSystem _fileSystem) : IGooglePhotosRepository
+    GooglePhotosLibraryApiCredentials apiCredentials,
+    ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
     private readonly string[] _scopes = [
         PhotosLibraryService.Scope.PhotoslibraryAppendonly,
@@ -40,16 +39,6 @@ public class GooglePhotosRepository(
 
     private async Task<GoogleClientSecrets> GetGoogleClientSecretsAsync()
     {
-        // TODO: Improve this
-        string credentialsPath = Path.Combine(AppContext.BaseDirectory, "google-api-credentials.json");
-        if (!_fileSystem.File.Exists(credentialsPath))
-            throw new FileNotFoundException("google-api-credentials not found");
-
-        string fileContent = await _fileSystem.File.ReadAllTextAsync(credentialsPath);
-
-        var apiCredentials = JsonSerializer.Deserialize<GooglePhotosLibraryApi>(fileContent) ??
-            throw new InvalidOperationException("Failed to deserialize Google API credentials.");
-
         if (EnvironmentVariableManager.GooglePhotosLibraryApiProjectId == null ||
             EnvironmentVariableManager.GooglePhotosLibraryApiClientId == null ||
             EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret == null)
@@ -57,9 +46,9 @@ public class GooglePhotosRepository(
             throw new InvalidOperationException("Required environment variables for Google Photos API are not set.");
         }
 
-        apiCredentials.Installed.ProjectId = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
-        apiCredentials.Installed.ClientId = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
-        apiCredentials.Installed.ClientSecret = EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
+        apiCredentials.installed.project_id = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
+        apiCredentials.installed.client_id = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
+        apiCredentials.installed.client_secret= EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
 
         var json = JsonSerializer.Serialize(apiCredentials);
         using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));

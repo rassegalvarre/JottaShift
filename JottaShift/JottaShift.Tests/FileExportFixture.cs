@@ -57,7 +57,7 @@ public class FileExportFixture : IDisposable
                 DeleteSourceFiles = false
             }
         }
-    };
+    };   
 
     public FileTransferJob DesktopWallpapersJob => DefaultFileExportSettings.FileTransferJobs
         .First(j => j.Key == DefaultJobKeys.DesktopWallpapers);
@@ -96,6 +96,6 @@ public class FileExportFixture : IDisposable
 
     public void Dispose()
     {
-
+        GC.SuppressFinalize(this);
     }
 }

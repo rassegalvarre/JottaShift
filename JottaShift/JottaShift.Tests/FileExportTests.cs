@@ -11,7 +11,11 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests;
 
-public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExportFixture>
+public class FileExportTests(
+    FileExportFixture _fixture,
+    GooglePhotosFixture _googlePhotosFixture
+    ) : IClassFixture<FileExportFixture>, 
+        IClassFixture<GooglePhotosFixture>
 {
     public static List<object[]> GetAlphabeticParentDirectoryNameTestData() => new()
     {
@@ -178,8 +182,8 @@ public class FileExportTests(FileExportFixture _fixture) : IClassFixture<FileExp
             fileSystem,
             new Mock<ILogger<FileStorageService>>().Object);
         var googlePhotosRepository = new GooglePhotosRepository(
-            new Mock<ILogger<GooglePhotosRepository>>().Object,
-            fileSystem);
+            _googlePhotosFixture.MockGooglePhotosLibraryApiCredentials,
+            new Mock<ILogger<GooglePhotosRepository>>().Object);
 
         var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
             fileStorage: fileStorageService,
