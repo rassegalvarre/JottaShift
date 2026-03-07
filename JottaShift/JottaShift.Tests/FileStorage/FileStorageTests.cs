@@ -34,14 +34,14 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
            new Mock<ILogger<FileStorageService>>().Object);
 
         // Find file when searched recursivley
-        var recursiveResult = fileStorageService.FindFile(
+        var recursiveResult = fileStorageService.SearchFileByExactName(
             baseDirectory,
             fileName,
             searchRecursively: true);
         Assert.Equal(expectedFullPath, recursiveResult);
 
         // Return null when only top directory is searched
-        var topDirectoryresult = fileStorageService.FindFile(
+        var topDirectoryresult = fileStorageService.SearchFileByExactName(
             baseDirectory,
             fileName,
             searchRecursively: false);

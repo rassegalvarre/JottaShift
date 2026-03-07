@@ -5,7 +5,8 @@ namespace JottaShift.Core.Jottacloud;
 
 public class JottacloudRepository(
     ILogger<JottacloudRepository> _logger,
-    IFileStorage _fileStorage) : IJottacloudRepository
+    IFileStorage _fileStorage,
+    JottacloudSettings _settings) : IJottacloudRepository
 {
     public async Task<IEnumerable<string>> GetImagesInAlbumAsync(string albumId)
     {
@@ -21,9 +22,19 @@ public class JottacloudRepository(
             return string.Empty;
         }
 
+        // TODO: Need to handle "01 - <monthname>". Move from Orchestrator
+        string searchDirectory = Path.Combine(
+            _settings.ImageStoragePath,
+            imageDate.Year.ToString(),
+            imageDate.Month.ToString());
 
+        var imageFullPath = _fileStorage.SearchFileByExactName(searchDirectory, imageFileName);
+        if (string.IsNullOrEmpty(imageFullPath))
+        {
+            _logger.LogWarning("Could not find path for image {ImageName}", imageFileName);
+            return string.Empty;
+        }
 
-        await Task.CompletedTask;
-        return string.Empty;
+        return imageFullPath;
     }
 }

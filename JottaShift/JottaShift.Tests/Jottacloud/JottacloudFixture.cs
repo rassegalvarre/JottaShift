@@ -7,6 +7,12 @@ namespace JottaShift.Tests.Jottacloud;
 
 public class JottacloudFixture : IDisposable
 {
+    public static JottacloudSettings Settings => new()
+    {
+        SyncFolderFullPath = @"C:\\Jottacloud",
+        ImageStoragePath = @"C:\\Jottacloud\\Images"
+    };
+
     public JottacloudRepository CreateJottacloudRepository(
         IFileStorage? fileStorage = null)
     {
@@ -14,7 +20,8 @@ public class JottacloudFixture : IDisposable
 
         return new JottacloudRepository(
             new Mock<ILogger<JottacloudRepository>>().Object,
-            fileStorage);
+            fileStorage,
+            Settings);
     }
 
     public void Dispose()
