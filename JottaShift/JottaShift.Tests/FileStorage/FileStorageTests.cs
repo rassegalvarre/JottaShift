@@ -10,6 +10,45 @@ namespace JottaShift.Tests.FileStorage;
 public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
 {
     [Fact]
+    public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
+    {
+        string baseDirectory = @"C:\storage";
+        string fileName = Path.GetRandomFileName();        
+
+        string directoryWithFile = Path.Combine(baseDirectory, "documents", "reports");
+        string expectedFullPath = Path.Combine(directoryWithFile, fileName);
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { baseDirectory, new MockDirectoryData() },
+            { Path.Combine(baseDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(directoryWithFile, Path.GetRandomFileName()), new MockFileData([]) },
+            { expectedFullPath, new MockFileData([]) },
+            
+            // Duplicate filename in deeper sub-folder
+            { Path.Combine(directoryWithFile, "2010", fileName), new MockFileData([]) },
+        });
+
+        var fileStorageService = new FileStorageService(
+           fileSystemMock,
+           new Mock<ILogger<FileStorageService>>().Object);
+
+        // Find file when searched recursivley
+        var recursiveResult = fileStorageService.FindFile(
+            baseDirectory,
+            fileName,
+            searchRecursively: true);
+        Assert.Equal(expectedFullPath, recursiveResult);
+
+        // Return null when only top directory is searched
+        var topDirectoryresult = fileStorageService.FindFile(
+            baseDirectory,
+            fileName,
+            searchRecursively: false);
+        Assert.Null(topDirectoryresult);
+    }
+
+    [Fact]
     public void DeleteDirectoryContent_ShouldDeleteContent_KeepRoot()
     {
         var directory = @"C:\archive";
