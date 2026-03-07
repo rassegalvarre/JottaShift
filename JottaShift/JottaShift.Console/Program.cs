@@ -3,7 +3,7 @@ using JottaShift.Core.FileExport;
 using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
-using JottaShift.Core.JottacloudRepository;
+using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

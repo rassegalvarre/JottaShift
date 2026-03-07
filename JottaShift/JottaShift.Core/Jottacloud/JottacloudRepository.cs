@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace JottaShift.Core.JottacloudRepository;
+namespace JottaShift.Core.Jottacloud;
 
 public class JottacloudRepository : IJottacloudRepository
 {

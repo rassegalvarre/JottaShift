@@ -1,4 +1,4 @@
-﻿namespace JottaShift.Tests;
+﻿namespace JottaShift.Tests.Jottacloud;
 
 public class JottacloudFixture : IDisposable
 {

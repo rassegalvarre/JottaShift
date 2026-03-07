@@ -4,7 +4,7 @@ using JottaShift.Core.FileExport.Jobs.FileTransfer;
 using JottaShift.Core.FileExport.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
-using JottaShift.Core.JottacloudRepository;
+using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using JottaShift.Tests.TestData;
 using Microsoft.Extensions.Logging;
