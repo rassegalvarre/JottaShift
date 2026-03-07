@@ -3,6 +3,7 @@ using JottaShift.Core.FileExportOrchestrator;
 using JottaShift.Core.FileExportOrchestrator.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.JottacloudRepository;
 using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
+        services.AddScoped<IJottacloudRepository, JottacloudRepository>();
         services.AddScoped<ISteamRepository, SteamRepository>();
         services.AddScoped<IFileExportJobValidator, FileExportJobValidator>();
         services.AddScoped<IFileExportOrchestrator, FileExportOrchestrator>();

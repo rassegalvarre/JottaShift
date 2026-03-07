@@ -3,6 +3,7 @@ using JottaShift.Core.FileExportOrchestrator.Jobs.FileTransfer;
 using JottaShift.Core.FileExportOrchestrator.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.JottacloudRepository;
 using JottaShift.Core.SteamRepository;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
@@ -14,6 +15,7 @@ public sealed class FileExportOrchestrator(
     IFileStorage _fileStorage,
     IFileExportJobValidator _fileExportJobValidator,
     IGooglePhotosRepository _googlePhotosRepository,
+    IJottacloudRepository _jottacloudRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator
 {
     private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;
