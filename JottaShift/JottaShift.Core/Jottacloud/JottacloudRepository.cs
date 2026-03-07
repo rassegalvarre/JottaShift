@@ -22,7 +22,7 @@ public class JottacloudRepository(
             return string.Empty;
         }
 
-        // TODO: Need to handle "01 - <monthname>". Move from Orchestrator
+        // TODO: Need to handle "01 - <monthname>". Move that logic from Orchestrator
         string searchDirectory = Path.Combine(
             _settings.ImageStoragePath,
             imageDate.Year.ToString(),
