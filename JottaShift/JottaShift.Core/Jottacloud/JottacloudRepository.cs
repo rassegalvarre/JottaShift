@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JottaShift.Core.FileStorage;
+using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.Jottacloud;
 
-public class JottacloudRepository(ILogger<JottacloudRepository> _logger) : IJottacloudRepository
+public class JottacloudRepository(
+    ILogger<JottacloudRepository> _logger,
+    IFileStorage fileStorage) : IJottacloudRepository
 {
     public async Task<IEnumerable<string>> GetImagesInAlbumAsync(string albumId)
     {
