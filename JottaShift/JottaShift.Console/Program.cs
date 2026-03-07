@@ -55,15 +55,7 @@ var host = Host.CreateDefaultBuilder(args)
 await host.StartAsync();
 
 using var scope = host.Services.CreateScope();
-var exportSettings = scope.ServiceProvider.GetRequiredService<FileExportSettings>();
-var creds = scope.ServiceProvider.GetRequiredService<GooglePhotosLibraryApiCredentials>();
-var credsSteam = scope.ServiceProvider.GetRequiredService<SteamWebApiCredentials>();
 var exportOrchestrator = scope.ServiceProvider.GetRequiredService<IFileExportOrchestrator>();
-
-//var config = new ConfigurationBuilder()
-//    .SetBasePath(Directory.GetCurrentDirectory()) 
-//    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-//    .Build();
 
 Console.WriteLine("Starting timeline export...");
 var timelineExportResult = await exportOrchestrator.ExportJottacloudTimelineAsync(new CancellationToken());
@@ -80,6 +72,5 @@ Console.WriteLine("Steam screenshot export finished with result {0}", steamExpor
 Console.WriteLine("Starting wallpaper export...");
 var wallpaperExportResult = await exportOrchestrator.ExportDesktopWallpapersAsync(new CancellationToken());
 Console.WriteLine("Wallpaper export finished with result {0}", wallpaperExportResult.Status);
-
 
 await host.StopAsync();
