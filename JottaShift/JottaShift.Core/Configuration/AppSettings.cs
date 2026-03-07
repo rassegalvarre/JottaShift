@@ -1,6 +1,6 @@
-﻿using JottaShift.Core.FileExportOrchestrator;
+﻿using JottaShift.Core.FileExport;
 using JottaShift.Core.GooglePhotos;
-using JottaShift.Core.SteamRepository;
+using JottaShift.Core.Steam;
 
 namespace JottaShift.Core.Configuration;
 

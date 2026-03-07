@@ -1,9 +1,9 @@
 ﻿using JottaShift.Core.Configuration;
-using JottaShift.Core.FileExportOrchestrator;
-using JottaShift.Core.FileExportOrchestrator.Jobs;
+using JottaShift.Core.FileExport;
+using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
-using JottaShift.Core.SteamRepository;
+using JottaShift.Core.Steam;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
