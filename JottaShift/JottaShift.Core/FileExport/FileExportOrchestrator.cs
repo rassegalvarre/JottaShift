@@ -26,6 +26,7 @@ public sealed class FileExportOrchestrator(
     }
 
     // Todo: Handle (Conflict) files and dirs. Ignore?
+    // TODO: Get images from Jottacloud album. Then read from disk
     public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         const string jobKey = DefaultJobKeys.ChromecastPhotos;
