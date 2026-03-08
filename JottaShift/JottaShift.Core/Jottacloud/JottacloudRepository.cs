@@ -1,5 +1,6 @@
 ﻿using JottaShift.Core.FileStorage;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text.Json;
 
 namespace JottaShift.Core.Jottacloud;
@@ -12,6 +13,13 @@ public class JottacloudRepository(
     private readonly Uri BaseApiUrl = new Uri("https://api.jottacloud.com/");
 
     private const int DefaultLimit = 100;
+
+    private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;
+
+    public void SetCulture(CultureInfo culture)
+    {
+        _culture = culture;
+    }
 
     public async Task<GetAlbumResponse> GetAlbum(string albumId)
     {
@@ -103,17 +111,41 @@ public class JottacloudRepository(
 
         foreach (var photo in album.Photos)
         {
-            string searchFolder = string.Empty; // TOOD: Calculate
+            var photoDto = new PhotoDto(photo);
+            string searchFolder = PhotoStorageDirectoryPath(photoDto.CapturedDate);
+            
             var localFilePath = _fileStorage.SearchFileByExactName(searchFolder, photo.Filename);
-            var photoDto = new PhotoDto(photo, localFilePath);
+            photoDto.LocalFilePath = localFilePath;
+
             photoDtos.Add(photoDto);
         }
 
         return photoDtos;
     }
 
-    public string PredictPhotoDirectory(Photo photo)
+    public string PhotoStorageDirectoryPath(DateTimeOffset photoCaputedDato)
     {
-        return string.Empty;
+        string year = photoCaputedDato.Year.ToString();
+        string monthDirectoryName = GetMonthDirectoryName(photoCaputedDato.Month);
+
+        string predictedDirectory = Path.Combine(
+            _settings.ImageStoragePath,
+            year,
+            monthDirectoryName);
+
+        return Path.Combine(_settings.ImageStoragePath, predictedDirectory);
+    }
+
+    public string GetMonthDirectoryName(int month)
+    {
+        if (month < 1 || month > 12)
+            throw new ArgumentOutOfRangeException(nameof(month), "Month must be between 1 and 12");
+
+        int monthIndex = month - 1;
+
+        string monthName = _culture.DateTimeFormat.MonthNames[monthIndex];
+        string capitalizedMonthName = char.ToUpper(monthName[0]) + monthName[1..];
+
+        return $"{monthIndex + 1:D2} {capitalizedMonthName}";
     }
 }
