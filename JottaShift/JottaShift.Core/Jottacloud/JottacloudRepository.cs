@@ -13,9 +13,7 @@ public class JottacloudRepository(
 
     private const int DefaultLimit = 100;
 
-    // Return DTO containg imagename and creation-date
-    // Return local path here?
-    public async Task<IEnumerable<string>> GetImagesInAlbumAsync(string albumId)
+    public async Task<GetAlbumResponse> GetAlbum(string albumId)
     {
         string requestUri = $"/photos/v1/public/{albumId}/?order=ASC&limit={DefaultLimit}";
         
@@ -26,50 +24,53 @@ public class JottacloudRepository(
         };
 
         var response = await httpClient.GetAsync(requestUri);
+        if (response.StatusCode is not System.Net.HttpStatusCode.OK)
+        {
+            _logger.LogError("Requesting album with id {AlbumId} resulted in status {HttpStatus}",
+                albumId, response.StatusCode);
+            response.EnsureSuccessStatusCode();
+        }
 
-        response.EnsureSuccessStatusCode();
-
-        var contentJson = await response.Content.ReadAsStreamAsync();
-
-        var album = await JsonSerializer.DeserializeAsync<GetAlbumResponse>(contentJson);
+        var responseContentStream = await response.Content.ReadAsStreamAsync();
+        var album = await JsonSerializer.DeserializeAsync<GetAlbumResponse>(responseContentStream);
         if (album == null)
         {
-            _logger.LogError("Response content is empty");
-            return Enumerable.Empty<string>();
+            _logger.LogError("Could not deserialize response to the expected schema");
+            throw new NotSupportedException("Unexpected response content");
         }
 
-        List<string> fileNames = [];
+        //List<string> fileNames = [];
 
-        foreach (var item in album.Photos)
-        {
-            var imageDate = item.CapturedDate; // Use this to determine image location on disk.
-            fileNames.Add(item.Filename);
-        }
+        //foreach (var item in album.Photos)
+        //{
+        //    var imageDate = item.CapturedDate; // Use this to determine image location on disk.
+        //    fileNames.Add(item.Filename);
+        //}
 
-        return fileNames;
+        return album;
     }
     
-    public async Task<IEnumerable<string>> GetLocalPathForImagesInAlbumAsync(string albumId)
-    {
-        List<string> localFilePaths = [];
+    //public async Task<IEnumerable<string>> GetLocalPathForImagesInAlbumAsync(string albumId)
+    //{
+    //    List<string> localFilePaths = [];
 
-        var images = await GetImagesInAlbumAsync(albumId);
+    //    var images = await GetAlbum(albumId);
 
-        foreach (var image in images)
-        {
-            string localPath = await GetImageFilePathFromFileName(image);
-            if (string.IsNullOrEmpty(localPath))
-            {
-                _logger.LogWarning("Local path for image {ImageName} from album {AlbumId} could not be determined",
-                    image, albumId);
-                continue;
-            }
+    //    foreach (var image in images)
+    //    {
+    //        string localPath = await GetImageFilePathFromFileName(image);
+    //        if (string.IsNullOrEmpty(localPath))
+    //        {
+    //            _logger.LogWarning("Local path for image {ImageName} from album {AlbumId} could not be determined",
+    //                image, albumId);
+    //            continue;
+    //        }
 
-            localFilePaths.Add(localPath);
-        }
+    //        localFilePaths.Add(localPath);
+    //    }
 
-        return localFilePaths;
-    }
+    //    return localFilePaths;
+    //}
 
     public async Task<string> GetImageFilePathFromFileName(string imageFileName)
     {
@@ -93,5 +94,12 @@ public class JottacloudRepository(
         }
 
         return imageFullPath;
+    }
+
+    public  async Task<IEnumerable<AlbumItem>> GetAlbumImages(string albumId)
+    {
+        // var album = GetAlbum(albumId);
+        await Task.CompletedTask;
+        return Enumerable.Empty<AlbumItem>();
     }
 }
