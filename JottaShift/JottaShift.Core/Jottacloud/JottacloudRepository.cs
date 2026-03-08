@@ -96,10 +96,19 @@ public class JottacloudRepository(
         return imageFullPath;
     }
 
-    public  async Task<IEnumerable<AlbumItem>> GetAlbumImages(string albumId)
+    public async Task<IEnumerable<PhotoDto>> GetAlbumImages(string albumId)
     {
-        // var album = GetAlbum(albumId);
-        await Task.CompletedTask;
-        return Enumerable.Empty<AlbumItem>();
+        var album = await GetAlbum(albumId);
+        List<PhotoDto> photoDtos = [];
+
+        foreach (var photo in album.Photos)
+        {
+            string searchFolder = string.Empty; // TOOD: Calculate
+            var localFilePath = _fileStorage.SearchFileByExactName(searchFolder, photo.Filename);
+            var photoDto = new PhotoDto(photo, localFilePath);
+            photoDtos.Add(photoDto);
+        }
+
+        return photoDtos;
     }
 }

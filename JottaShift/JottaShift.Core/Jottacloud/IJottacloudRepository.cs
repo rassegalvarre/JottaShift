@@ -2,5 +2,5 @@
 
 public interface IJottacloudRepository
 {
-    Task<IEnumerable<AlbumItem>> GetAlbumImages(string albumId);
+    Task<IEnumerable<PhotoDto>> GetAlbumImages(string albumId);
 }
