@@ -13,6 +13,8 @@ public class JottacloudRepository(
 
     private const int DefaultLimit = 100;
 
+    // Return DTO containg imagename and creation-date
+    // Return local path here?
     public async Task<IEnumerable<string>> GetImagesInAlbumAsync(string albumId)
     {
         string requestUri = $"/photos/v1/public/{albumId}/?order=ASC&limit={DefaultLimit}";
@@ -40,6 +42,7 @@ public class JottacloudRepository(
 
         foreach (var item in album.Photos)
         {
+            var imageDate = item.CapturedDate; // Use this to determine image location on disk.
             fileNames.Add(item.Filename);
         }
 
@@ -48,8 +51,24 @@ public class JottacloudRepository(
     
     public async Task<IEnumerable<string>> GetLocalPathForImagesInAlbumAsync(string albumId)
     {
-        await Task.CompletedTask;
-        return Enumerable.Empty<string>();
+        List<string> localFilePaths = [];
+
+        var images = await GetImagesInAlbumAsync(albumId);
+
+        foreach (var image in images)
+        {
+            string localPath = await GetImageFilePathFromFileName(image);
+            if (string.IsNullOrEmpty(localPath))
+            {
+                _logger.LogWarning("Local path for image {ImageName} from album {AlbumId} could not be determined",
+                    image, albumId);
+                continue;
+            }
+
+            localFilePaths.Add(localPath);
+        }
+
+        return localFilePaths;
     }
 
     public async Task<string> GetImageFilePathFromFileName(string imageFileName)
