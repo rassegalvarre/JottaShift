@@ -1,7 +1,6 @@
 ﻿using JottaShift.Core.FileStorage;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
-using System.Text.Json;
 
 namespace JottaShift.Core.Jottacloud;
 
@@ -11,10 +10,6 @@ public class JottacloudRepository(
     JottacloudClient _client,
     JottacloudSettings _settings) : IJottacloudRepository
 {
-    private readonly Uri BaseApiUrl = new Uri("https://api.jottacloud.com/");
-
-    private const int DefaultLimit = 100;
-
     private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;
 
     public void SetCulture(CultureInfo culture)
