@@ -36,7 +36,10 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton(resolver =>
            resolver.GetRequiredService<IOptions<AppSettings>>().Value.SteamWebApiCredentials);
 
-        services.   ();
+        services.AddHttpClient<JottacloudClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();

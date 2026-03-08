@@ -22,6 +22,7 @@ public class JottacloudFixture : IDisposable
         return new JottacloudRepository(
             new Mock<ILogger<JottacloudRepository>>().Object,
             fileStorage,
+            new Mock<JottacloudClient>().Object,
             Settings);
     }
 

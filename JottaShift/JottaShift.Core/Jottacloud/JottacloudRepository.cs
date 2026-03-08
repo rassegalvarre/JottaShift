@@ -8,6 +8,7 @@ namespace JottaShift.Core.Jottacloud;
 public class JottacloudRepository(
     ILogger<JottacloudRepository> _logger,
     IFileStorage _fileStorage,
+    JottacloudClient _client,
     JottacloudSettings _settings) : IJottacloudRepository
 {
     private readonly Uri BaseApiUrl = new Uri("https://api.jottacloud.com/");
@@ -19,36 +20,7 @@ public class JottacloudRepository(
     public void SetCulture(CultureInfo culture)
     {
         _culture = culture;
-    }
-
-    public async Task<GetAlbumResponse> GetAlbum(string albumId)
-    {
-        string requestUri = $"/photos/v1/public/{albumId}/?order=ASC&limit={DefaultLimit}";
-        
-        // TODO: Inject
-        var httpClient = new HttpClient()
-        {
-            BaseAddress = BaseApiUrl
-        };
-
-        var response = await httpClient.GetAsync(requestUri);
-        if (response.StatusCode is not System.Net.HttpStatusCode.OK)
-        {
-            _logger.LogError("Requesting album with id {AlbumId} resulted in status {HttpStatus}",
-                albumId, response.StatusCode);
-            response.EnsureSuccessStatusCode();
-        }
-
-        var responseContentStream = await response.Content.ReadAsStreamAsync();
-        var album = await JsonSerializer.DeserializeAsync<GetAlbumResponse>(responseContentStream);
-        if (album == null)
-        {
-            _logger.LogError("Could not deserialize response to the expected schema");
-            throw new NotSupportedException("Unexpected response content");
-        }     
-
-        return album;
-    }
+    }   
 
     public async Task<string> GetImageFilePathFromFileName(string imageFileName)
     {
@@ -76,7 +48,7 @@ public class JottacloudRepository(
 
     public async Task<IEnumerable<PhotoDto>> GetAlbumImages(string albumId)
     {
-        var album = await GetAlbum(albumId);
+        var album = await _client.GetAlbumAsync(albumId);
         List<PhotoDto> photoDtos = [];
 
         foreach (var photo in album.Photos)
