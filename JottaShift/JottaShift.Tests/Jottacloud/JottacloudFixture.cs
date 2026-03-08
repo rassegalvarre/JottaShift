@@ -10,7 +10,8 @@ public class JottacloudFixture : IDisposable
     public static JottacloudSettings Settings => new()
     {
         SyncFolderFullPath = @"C:\\Jottacloud",
-        ImageStoragePath = @"C:\\Jottacloud\\Images"
+        ImageStoragePath = @"C:\\Jottacloud\\Images",
+        TestAlbumId = "imjg7a52t61g"
     };
 
     public JottacloudRepository CreateJottacloudRepository(

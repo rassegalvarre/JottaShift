@@ -46,11 +46,9 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
     [Trait("API", "Jottacloud")]
     public async Task GetImagesInAlbumAsync_ReturnsAllImages()
     {
-        const string albumId = "";
-
         var repository = _fixture.CreateJottacloudRepository();
 
-        var images = await repository.GetImagesInAlbumAsync(albumId);
+        var images = await repository.GetImagesInAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
 
         Assert.NotEmpty(images);
     }

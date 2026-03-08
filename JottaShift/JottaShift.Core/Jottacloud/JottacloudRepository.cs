@@ -45,6 +45,12 @@ public class JottacloudRepository(
 
         return fileNames;
     }
+    
+    public async Task<IEnumerable<string>> GetLocalPathForImagesInAlbumAsync(string albumId)
+    {
+        await Task.CompletedTask;
+        return Enumerable.Empty<string>();
+    }
 
     public async Task<string> GetImageFilePathFromFileName(string imageFileName)
     {
