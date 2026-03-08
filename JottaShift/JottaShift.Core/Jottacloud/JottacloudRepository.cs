@@ -111,4 +111,9 @@ public class JottacloudRepository(
 
         return photoDtos;
     }
+
+    public string PredictPhotoDirectory(Photo photo)
+    {
+        return string.Empty;
+    }
 }
