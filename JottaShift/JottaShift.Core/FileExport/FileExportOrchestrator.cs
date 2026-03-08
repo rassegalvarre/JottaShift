@@ -363,6 +363,7 @@ public sealed class FileExportOrchestrator(
             .FirstOrDefault(n => n.StartsWith(firstLetter)) ?? alphabeticParentDirectoryNames[0];
     }
 
+    [Obsolete("Is not implemented in JottacloudRepository. Will be removed")]
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, DateTime fileCreationTime)
     {
         string year = fileCreationTime.Year.ToString();
@@ -372,6 +373,7 @@ public sealed class FileExportOrchestrator(
         return Path.Combine(destinationRootPath, year, monthDirectoryName);
     }
 
+    [Obsolete("Is not implemented in JottacloudRepository. Will be removed")]
     public string GetMonthDirectoryName(int monthIndex)
     {
         if (monthIndex < 0 || monthIndex > 11)

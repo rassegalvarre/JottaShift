@@ -36,6 +36,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton(resolver =>
            resolver.GetRequiredService<IOptions<AppSettings>>().Value.SteamWebApiCredentials);
 
+        services.   ();
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
