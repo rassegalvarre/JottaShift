@@ -32,7 +32,7 @@ public class GetAlbumResponse
     public long MinCapturedDate { get; set; }
 
     [JsonPropertyName("photos")]
-    public List<Photo> Photos { get; set; } = new();
+    public IEnumerable<Photo> Photos { get; set; } = Enumerable.Empty<Photo>();
 
     [JsonPropertyName("shareInfo")]
     public ShareInfo ShareInfo { get; set; } = new();
@@ -247,7 +247,7 @@ public class ShareInfo
     public long ShareDate { get; set; }
 
     [JsonPropertyName("subscribers")]
-    public List<object> Subscribers { get; set; } = new();   // empty array in sample – adjust type if you know the shape
+    public IEnumerable<object> Subscribers { get; set; } = Enumerable.Empty<object>();
 
     [JsonPropertyName("subscriptionDate")]
     public long SubscriptionDate { get; set; }
