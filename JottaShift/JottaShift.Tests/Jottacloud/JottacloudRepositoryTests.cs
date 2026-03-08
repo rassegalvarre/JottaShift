@@ -9,10 +9,10 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 {
     public static List<object[]> ImageNameAndFullFilePath() => new()
     {
-        new[] { "img_20100612_163249", Path.Combine(JottacloudFixture.Settings.ImageStoragePath, "2010", "6") },
-        new[] { "p_20100612_163249", Path.Combine(JottacloudFixture.Settings.ImageStoragePath, "2010", "06") },
-        new[] { "v_20100612_163249", Path.Combine(JottacloudFixture.Settings.ImageStoragePath, "2010", "June") },
-        new[] { "20100612_163249", Path.Combine(JottacloudFixture.Settings.ImageStoragePath, "2010", "06 - June") }
+        new[] { "img_20100612_163249", Path.Combine(JottacloudFixture.Settings.PhotoStoragePath, "2010", "6") },
+        new[] { "p_20100612_163249", Path.Combine(JottacloudFixture.Settings.PhotoStoragePath, "2010", "06") },
+        new[] { "v_20100612_163249", Path.Combine(JottacloudFixture.Settings.PhotoStoragePath, "2010", "June") },
+        new[] { "20100612_163249", Path.Combine(JottacloudFixture.Settings.PhotoStoragePath, "2010", "06 - June") }
     };
 
     [Theory]
@@ -21,7 +21,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
     {
         var imageDate = new DateTime(2010, 6, 12, 16, 32, 49, DateTimeKind.Local);
         string expectedSearchDirectory = Path.Combine(
-            JottacloudFixture.Settings.ImageStoragePath,
+            JottacloudFixture.Settings.PhotoStoragePath,
             "2010",
             "6");
         string imageFullPath = Path.Combine(directoryFullPath, imageName);

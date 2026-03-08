@@ -90,7 +90,7 @@ public class JottacloudRepository(
 
         // TODO: Need to handle "01 - <monthname>". Move that logic from Orchestrator
         string searchDirectory = Path.Combine(
-            _settings.ImageStoragePath,
+            _settings.PhotoStoragePath,
             imageDate.Year.ToString(),
             imageDate.Month.ToString());
 
@@ -136,11 +136,11 @@ public class JottacloudRepository(
         string monthDirectoryName = GetMonthDirectoryName(photoCaputedDato.Month);
 
         string predictedDirectory = Path.Combine(
-            _settings.ImageStoragePath,
+            _settings.PhotoStoragePath,
             year,
             monthDirectoryName);
 
-        return Path.Combine(_settings.ImageStoragePath, predictedDirectory);
+        return Path.Combine(_settings.PhotoStoragePath, predictedDirectory);
     }
 
     public string GetMonthDirectoryName(int month)
