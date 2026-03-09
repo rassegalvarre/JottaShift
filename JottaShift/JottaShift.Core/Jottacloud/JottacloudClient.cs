@@ -15,20 +15,20 @@ public class JottacloudClient
         _logger = logger;
     }
 
-    public async Task<Album> GetAlbumAsync(string albumId, int limit = 100)
+    public async Task<Result<Album>> GetAlbumAsync(string albumId, int limit = 100)
     {
         var requestUri = $"/photos/v1/public/{albumId}/?order=ASC&limit={limit}";
 
         var result = _http.GetAsync<Album>(requestUri).Result;
 
-        if (result.Success && result.Data != null)
+        if (result.Success && result.Content != null)
         {
-            return result.Data;
+            return new Result<Album>(true, result.Content);
         }
         else
         {
             _logger.LogError("Failed to get album with id {AlbumId}", albumId);
-            throw new Exception("Failed to get album");
+            return new Result<Album>(false);
         }
     }
 }

@@ -43,10 +43,15 @@ public class JottacloudRepository(
 
     public async Task<IEnumerable<PhotoDto>> GetAlbumImages(string albumId)
     {
-        var album = await _client.GetAlbumAsync(albumId);
-        List<PhotoDto> photoDtos = [];
+        var albumResult = await _client.GetAlbumAsync(albumId);
+        if (!albumResult.Success || albumResult.Value == null)
+        {
+            _logger.LogWarning("Fetching album with id {AlbumId} failed", albumId);
+            return [];
+        }
 
-        foreach (var photo in album.Photos)
+        List<PhotoDto> photoDtos = [];
+        foreach (var photo in albumResult.Value.Photos)
         {
             var photoDto = new PhotoDto(photo);
             string predicatedSearchFolder = PhotoStorageDirectoryPath(photoDto.CapturedDate);

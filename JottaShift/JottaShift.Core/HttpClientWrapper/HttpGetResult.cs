@@ -4,7 +4,7 @@ namespace JottaShift.Core.HttpClientWrapper;
 
 public record HttpGetResult<T> : BaseHttpResult
 {
-    public T? Data { get; init; }
+    public T? Content { get; init; }
 
     public HttpGetResult(HttpStatusCode statusCode) : base(statusCode) { }
 
@@ -13,6 +13,6 @@ public record HttpGetResult<T> : BaseHttpResult
     public HttpGetResult(HttpStatusCode statusCode, T data) : base(statusCode)
     {
         StatusCode = statusCode;
-        Data = data;
+        Content = data;
     }
 }

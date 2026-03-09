@@ -18,10 +18,11 @@ public class JottacloudClientTests(
         var httpClientWrapper = _httpClientFixture.CreateHttpClientWrapper();
         var client = _fixture.CreateJottacloudClient(httpClientWrapper);
         
-        var albumResponse = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
+        var albumResult = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
 
-        Assert.NotNull(albumResponse);
-        Assert.NotEmpty(albumResponse.Photos);
+        Assert.True(albumResult.Success);
+        Assert.NotNull(albumResult.Value);
+        Assert.NotEmpty(albumResult.Value.Photos);
     }
 
     [Fact]
@@ -41,9 +42,11 @@ public class JottacloudClientTests(
 
         var client = _fixture.CreateJottacloudClient(httpClientWrapper.Object);
 
-        var albumResponse = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
+        var albumResult = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
 
-        Assert.Equal(expectedAlbumResponse.Id, albumResponse.Id);
+        Assert.True(albumResult.Success);
+        Assert.NotNull(albumResult.Value);
+        Assert.Equal(expectedAlbumResponse.Id, albumResult.Value.Id);
         Assert.Equal(expectedPhoto, expectedAlbumResponse.Photos.Single());
     }
 
@@ -61,6 +64,9 @@ public class JottacloudClientTests(
             new Mock<ILogger<JottacloudClient>>().Object);
 
 
-        await Assert.ThrowsAsync<Exception>(async () => await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId));
+        var albumResult = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
+
+        Assert.False(albumResult.Success);
+        Assert.Null(albumResult.Value);
     }
 }
