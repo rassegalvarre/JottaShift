@@ -13,7 +13,7 @@ public class JottacloudClientTests(
 {
     [Fact]
     [Trait("API", "Jottacloud")]
-    public async Task GetAlbumAsync_ReturnsAlbum_WhenValidAlbumId()
+    public async Task GetAlbumAsync_WithImplementedHttpClient_ReturnsAlbum_WhenValidAlbumIdUsingHttpClient()
     {
         var httpClientWrapper = _httpClientFixture.CreateHttpClientWrapper();
         var client = _fixture.CreateJottacloudClient(httpClientWrapper);
@@ -22,6 +22,29 @@ public class JottacloudClientTests(
 
         Assert.NotNull(albumResponse);
         Assert.NotEmpty(albumResponse.Photos);
+    }
+
+    [Fact]
+    public async Task GetAlbumAsync_WithMockedHttpClient_ReturnsAlbum_WhenValidAlbumId()
+    {
+        var expectedPhoto = new Photo() { Filename = Path.GetRandomFileName() };
+        var expectedAlbumResponse = new Album()
+        {
+            Id = Guid.NewGuid().ToString(),
+            Photos = [expectedPhoto]
+        };
+
+        var httpClientWrapper = new Mock<IHttpClientWrapper>();
+        httpClientWrapper.Setup(w => w.GetAsync<Album>(It.IsAny<string>()))
+            .ReturnsAsync(new HttpGetResult<Album>(
+                System.Net.HttpStatusCode.OK, expectedAlbumResponse));
+
+        var client = _fixture.CreateJottacloudClient(httpClientWrapper.Object);
+
+        var albumResponse = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
+
+        Assert.Equal(expectedAlbumResponse.Id, albumResponse.Id);
+        Assert.Equal(expectedPhoto, expectedAlbumResponse.Photos.Single());
     }
 
     [Fact]
