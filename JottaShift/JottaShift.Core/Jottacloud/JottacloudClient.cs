@@ -18,23 +18,39 @@ public class JottacloudClient
     public async Task<GetAlbumResponse> GetAlbumAsync(string albumId, int limit = 100)
     {
         string requestUri = $"/photos/v1/public/{albumId}/?order=ASC&limit={limit}";
-        var response = await _http.GetAsync(requestUri);
 
-        if (response.StatusCode is not System.Net.HttpStatusCode.OK)
+        HttpResponseMessage response;
+        Album? album;
+
+        try
         {
-            _logger.LogError("Requesting album with id {AlbumId} resulted in status {HttpStatus}",
-                albumId, response.StatusCode);
-            response.EnsureSuccessStatusCode();
+            response = await _http.GetAsync(requestUri);
+
+            if (response.StatusCode is not System.Net.HttpStatusCode.OK)
+            {
+                _logger.LogError("Requesting album with id {AlbumId} resulted in status {HttpStatus}",
+                    albumId, response.StatusCode);
+
+                return new GetAlbumResponse(false);
+            }
+            var responseContentStream = await response.Content.ReadAsStreamAsync();
+            album = await JsonSerializer.DeserializeAsync<Album?>(responseContentStream);
+
+            if (album == null)
+            {
+                _logger.LogError("Could not deserialize response to the expected schema");
+                return new GetAlbumResponse(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while requesting album with id {AlbumId}", albumId);
+            return new GetAlbumResponse(false);
         }
 
-        var responseContentStream = await response.Content.ReadAsStreamAsync();
-        var album = await JsonSerializer.DeserializeAsync<GetAlbumResponse>(responseContentStream);
-        if (album == null)
+        return new GetAlbumResponse(true) with
         {
-            _logger.LogError("Could not deserialize response to the expected schema");
-            throw new NotSupportedException("Unexpected response content");
-        }
-
-        return album;
+            Album = album,
+        };
     }
 }

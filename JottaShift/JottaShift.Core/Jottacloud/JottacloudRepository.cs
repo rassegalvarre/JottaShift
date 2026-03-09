@@ -46,7 +46,7 @@ public class JottacloudRepository(
         var album = await _client.GetAlbumAsync(albumId);
         List<PhotoDto> photoDtos = [];
 
-        foreach (var photo in album.Photos)
+        foreach (var photo in album.Album.Photos)
         {
             var photoDto = new PhotoDto(photo);
             string predicatedSearchFolder = PhotoStorageDirectoryPath(photoDto.CapturedDate);
