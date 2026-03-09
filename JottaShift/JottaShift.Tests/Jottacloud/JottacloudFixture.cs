@@ -8,7 +8,7 @@ namespace JottaShift.Tests.Jottacloud;
 
 public class JottacloudFixture : IDisposable
 {
-    public static JottacloudSettings Settings => new()
+    public JottacloudSettings Settings => new()
     {
         ApiUri = "https://api.jottacloud.com/",
         SyncFolderFullPath = @"C:\\Jottacloud",
