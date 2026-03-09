@@ -44,6 +44,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
+        services.AddScoped<IJottacloudClient, JottacloudClient>();
         services.AddScoped<IJottacloudRepository, JottacloudRepository>();
         services.AddScoped<ISteamRepository, SteamRepository>();
         services.AddScoped<IFileExportJobValidator, FileExportJobValidator>();

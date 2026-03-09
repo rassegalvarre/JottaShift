@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.Jottacloud;
 
-public class JottacloudClient
+public class JottacloudClient : IJottacloudClient
 {
     private readonly ILogger<JottacloudClient> _logger;
     private readonly IHttpClientWrapper _http;

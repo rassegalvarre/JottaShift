@@ -7,7 +7,7 @@ namespace JottaShift.Core.Jottacloud;
 public class JottacloudRepository(
     ILogger<JottacloudRepository> _logger,
     IFileStorage _fileStorage,
-    JottacloudClient _client,
+    IJottacloudClient _client,
     JottacloudSettings _settings) : IJottacloudRepository
 {
     private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;
@@ -15,30 +15,6 @@ public class JottacloudRepository(
     public void SetCulture(CultureInfo culture)
     {
         _culture = culture;
-    }   
-
-    public async Task<string> GetImageFilePathFromFileName(string imageFileName)
-    {
-        var imageDate = _fileStorage.GetImageDate(imageFileName);
-        if (imageDate == default)
-        {
-            return string.Empty;
-        }
-
-        // TODO: Need to handle "01 - <monthname>". Move that logic from Orchestrator
-        string searchDirectory = Path.Combine(
-            _settings.PhotoStoragePath,
-            imageDate.Year.ToString(),
-            imageDate.Month.ToString());
-
-        var imageFullPath = _fileStorage.SearchFileByExactName(searchDirectory, imageFileName);
-        if (string.IsNullOrEmpty(imageFullPath))
-        {
-            _logger.LogWarning("Could not find path for image {ImageName}", imageFileName);
-            return string.Empty;
-        }
-
-        return imageFullPath;
     }
 
     public async Task<IEnumerable<PhotoDto>> GetAlbumImages(string albumId)
