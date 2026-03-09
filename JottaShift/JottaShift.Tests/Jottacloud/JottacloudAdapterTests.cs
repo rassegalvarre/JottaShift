@@ -30,4 +30,36 @@ public class JottacloudAdapterTests
 
         Assert.Equal(expectedLocalDateTime.Date, result.Date);
     }
+
+    [Theory]
+    [InlineData(1, "01 January")]
+    [InlineData(2, "02 February")]
+    [InlineData(3, "03 March")]
+    [InlineData(4, "04 April")]
+    [InlineData(5, "05 May")]
+    [InlineData(6, "06 June")]
+    [InlineData(7, "07 July")]
+    [InlineData(8, "08 August")]
+    [InlineData(9, "09 September")]
+    [InlineData(10, "10 October")]
+    [InlineData(11, "11 November")]
+    [InlineData(12, "12 December")]
+    public void GetMonthDirectoryName_GetsMonthOrderAndName(int month, string expected)
+    {
+        var culture = JottacloudAdapter.DefaultCulture;
+        var directoryName = JottacloudAdapter.GetMonthDirectoryName(month, culture);
+
+        Assert.Equal(expected, directoryName);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(13)]
+    public void GetMonthDirectoryName_ThrowsWhenInvalidMotn(int month)
+    {
+        var culture = JottacloudAdapter.DefaultCulture;
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => JottacloudAdapter.GetMonthDirectoryName(month, culture));
+
+    }
 }
