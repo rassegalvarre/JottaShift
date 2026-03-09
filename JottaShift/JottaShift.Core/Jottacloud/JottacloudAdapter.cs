@@ -17,18 +17,21 @@ public static class JottacloudAdapter
         return DateTimeOffset.FromUnixTimeMilliseconds(photo.CapturedDate);
     }
 
-    //public string PhotoStorageDirectoryPath(DateTimeOffset photoCaputedDato)
-    //{
-    //    string year = photoCaputedDato.Year.ToString();
-    //    string monthDirectoryName = GetMonthDirectoryName(photoCaputedDato.Month);
+    public static string PhotoStorageStructuredDirectoryPath(
+        DateTimeOffset photoCaputedDato,
+        string storagePath,
+        CultureInfo cultureInfo)
+    {
+        string year = photoCaputedDato.Year.ToString();
+        string monthDirectoryName = GetMonthDirectoryName(photoCaputedDato.Month, cultureInfo);
 
-    //    string predictedDirectory = Path.Combine(
-    //        _settings.PhotoStoragePath,
-    //        year,
-    //        monthDirectoryName);
+        string structuredDirectory = Path.Combine(
+            storagePath,
+            year,
+            monthDirectoryName);
 
-    //    return Path.Combine(_settings.PhotoStoragePath, predictedDirectory);
-    //}
+        return Path.Combine(storagePath, structuredDirectory);
+    }
 
     public static string GetMonthDirectoryName(int month, CultureInfo cultureInfo)
     {

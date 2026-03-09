@@ -54,7 +54,10 @@ public class JottacloudRepository(
         foreach (var photo in albumResult.Value.Photos)
         {
             var photoDto = new PhotoDto(photo);
-            string predicatedSearchFolder = PhotoStorageDirectoryPath(photoDto.CapturedDate);
+            string predicatedSearchFolder = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(
+                photoDto.CapturedDate,
+                _settings.PhotoStoragePath,
+                _culture);
             var localFilePath = _fileStorage.SearchFileByExactName(predicatedSearchFolder, photo.Filename);
             
             if (string.IsNullOrEmpty(localFilePath))
@@ -71,18 +74,4 @@ public class JottacloudRepository(
 
         return photoDtos;
     }
-
-    [Obsolete("Moved to Adapter")]
-    public string PhotoStorageDirectoryPath(DateTimeOffset photoCaputedDato)
-    {
-        string year = photoCaputedDato.Year.ToString();
-        string monthDirectoryName = JottacloudAdapter.GetMonthDirectoryName(photoCaputedDato.Month, _culture);
-
-        string predictedDirectory = Path.Combine(
-            _settings.PhotoStoragePath,
-            year,
-            monthDirectoryName);
-
-        return Path.Combine(_settings.PhotoStoragePath, predictedDirectory);
-    }   
 }

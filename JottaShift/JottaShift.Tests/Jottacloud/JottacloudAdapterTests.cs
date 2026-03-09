@@ -2,7 +2,8 @@
 
 namespace JottaShift.Tests.Jottacloud;
 
-public class JottacloudAdapterTests
+public class JottacloudAdapterTests(JottacloudFixture _fixture)
+    : IClassFixture<JottacloudFixture>
 {
     [Fact]
     public void AlbumIdFromSharedUri_ReturnsAlbumId()
@@ -60,6 +61,27 @@ public class JottacloudAdapterTests
         var culture = JottacloudAdapter.DefaultCulture;
         Assert.Throws<ArgumentOutOfRangeException>(
             () => JottacloudAdapter.GetMonthDirectoryName(month, culture));
+    }
 
+    [Theory]
+    [InlineData(2011, 1, 1, @"2011\01 January")]
+    [InlineData(2012, 5, 17, @"2012\05 May")]
+    [InlineData(2013, 12, 31, @"2013\12 December")]
+    public void PhotoStorageStructuredDirectoryPath_CreatesStructuredPath(
+        int year,
+        int month,
+        int day,
+        string expectedStructuredDirectory)
+    {
+        var caputuredDate = new DateTimeOffset(year, month, day, 12, 12, 12, TimeSpan.Zero);
+        string storagePath = JottacloudFixture.Settings.PhotoStoragePath;
+        var cultureInfo = JottacloudAdapter.DefaultCulture;
+
+        var directory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(
+            caputuredDate, 
+            storagePath,
+            cultureInfo);
+
+        Assert.EndsWith(expectedStructuredDirectory, directory);
     }
 }
