@@ -17,7 +17,7 @@ public class JottacloudClient
 
     public async Task<Album> GetAlbumAsync(string albumId, int limit = 100)
     {
-        var requestUri = new Uri($"/photos/v1/public/{albumId}/?order=ASC&limit={limit}");
+        var requestUri = $"/photos/v1/public/{albumId}/?order=ASC&limit={limit}";
 
         var result = _http.GetAsync<Album>(requestUri).Result;
 

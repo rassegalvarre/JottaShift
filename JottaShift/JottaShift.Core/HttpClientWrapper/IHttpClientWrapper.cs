@@ -4,5 +4,5 @@ public interface IHttpClientWrapper
 {
     Uri? BaseAddress { get; set; }
     Task<HttpSendResult<T>> SendAsync<T>(HttpRequestMessage request);
-    Task<HttpGetResult<T>> GetAsync<T>(Uri uri);
+    Task<HttpGetResult<T>> GetAsync<T>(string uri);
 }

@@ -23,21 +23,19 @@ public class JottacloudClientTests(JottacloudFixture _fixture) : IClassFixture<J
     }
 
     [Fact]
-    [Trait("API", "Jottacloud")]
     public async Task GetAlbumAsync_ReturnsUnsuccessfullResult_WhenRequestThrowsException()
     {
         var mockHttpWrapper = new Mock<IHttpClientWrapper>();
 
         mockHttpWrapper
-            .Setup(h => h.GetAsync<Album>(It.IsAny<Uri>()))
+            .Setup(h => h.GetAsync<Album>(It.IsAny<string>()))
             .ReturnsAsync(new HttpGetResult<Album>(System.Net.HttpStatusCode.BadRequest));
 
         var client = new JottacloudClient(
             mockHttpWrapper.Object,
             new Mock<ILogger<JottacloudClient>>().Object);
 
-        var albumResponse = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
 
-        Assert.Null(albumResponse);
+        await Assert.ThrowsAsync<Exception>(async () => await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId));
     }
 }

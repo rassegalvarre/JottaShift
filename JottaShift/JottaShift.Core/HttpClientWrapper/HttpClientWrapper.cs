@@ -48,14 +48,14 @@ public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _log
         return new HttpSendResult<T>(response.StatusCode, data);
     }
 
-    public async Task<HttpGetResult<T>> GetAsync<T>(Uri requestUri)
+    public async Task<HttpGetResult<T>> GetAsync<T>(string requestUri)
     {
         HttpResponseMessage response;
         T? data;
 
         if (BaseAddress != null)
         {
-            requestUri = new Uri(BaseAddress, requestUri);
+            requestUri = new Uri(BaseAddress, requestUri).ToString();
         }
 
         try
