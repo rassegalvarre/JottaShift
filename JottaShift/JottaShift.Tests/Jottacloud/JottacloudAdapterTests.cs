@@ -74,7 +74,7 @@ public class JottacloudAdapterTests(JottacloudFixture _fixture)
         string expectedStructuredDirectory)
     {
         var caputuredDate = new DateTimeOffset(year, month, day, 12, 12, 12, TimeSpan.Zero);
-        string storagePath = JottacloudFixture.Settings.PhotoStoragePath;
+        string storagePath = _fixture.Settings.PhotoStoragePath;
         var cultureInfo = JottacloudAdapter.DefaultCulture;
 
         var directory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(

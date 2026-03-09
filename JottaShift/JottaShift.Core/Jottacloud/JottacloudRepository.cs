@@ -17,7 +17,7 @@ public class JottacloudRepository(
         _culture = culture;
     }
 
-    public async Task<IEnumerable<PhotoDto>> GetAlbumImages(string albumId)
+    public async Task<IEnumerable<PhotoDto>> GetAlbumPhotos(string albumId)
     {
         var albumResult = await _client.GetAlbumAsync(albumId);
         if (!albumResult.Success || albumResult.Value == null)
