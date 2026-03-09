@@ -1,9 +1,7 @@
-﻿using Castle.Core.Logging;
-using JottaShift.Core.HttpClientWrapper;
+﻿using JottaShift.Core.HttpClientWrapper;
 using JottaShift.Core.Jottacloud;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Moq.Protected;
 
 namespace JottaShift.Tests.Jottacloud;
 
