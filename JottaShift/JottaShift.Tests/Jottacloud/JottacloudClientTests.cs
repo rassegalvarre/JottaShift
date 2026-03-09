@@ -5,19 +5,23 @@ using Moq;
 
 namespace JottaShift.Tests.Jottacloud;
 
-public class JottacloudClientTests(JottacloudFixture _fixture) : IClassFixture<JottacloudFixture>
+public class JottacloudClientTests(
+    JottacloudFixture _fixture,
+    HttpClientWrapperFixture _httpClientFixture) :
+    IClassFixture<JottacloudFixture>,
+    IClassFixture<HttpClientWrapperFixture>
 {
     [Fact]
     [Trait("API", "Jottacloud")]
     public async Task GetAlbumAsync_ReturnsAlbum_WhenValidAlbumId()
     {
-        //var client = _fixture.CreateJottacloudClient();
+        var httpClientWrapper = _httpClientFixture.CreateHttpClientWrapper();
+        var client = _fixture.CreateJottacloudClient(httpClientWrapper);
         
-        //var albumResponse = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
-                
-        //Assert.True(albumResponse.Success);
-        //Assert.NotNull(albumResponse.Album);
-        //Assert.NotEmpty(albumResponse.Album.Photos);
+        var albumResponse = await client.GetAlbumAsync(JottacloudFixture.Settings.TestAlbumId);
+
+        Assert.NotNull(albumResponse);
+        Assert.NotEmpty(albumResponse.Photos);
     }
 
     [Fact]
