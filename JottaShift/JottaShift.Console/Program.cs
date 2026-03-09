@@ -3,6 +3,7 @@ using JottaShift.Core.FileExport;
 using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.HttpClientWrapper;
 using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using Microsoft.Extensions.Configuration;
@@ -36,7 +37,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton(resolver =>
            resolver.GetRequiredService<IOptions<AppSettings>>().Value.SteamWebApiCredentials);
 
-        services.AddHttpClient<JottacloudClient>(client =>
+        services.AddHttpClient<IHttpClientWrapper, JottaShift.Core.HttpClientWrapper.HttpClientWrapper>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         });

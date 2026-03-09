@@ -170,7 +170,7 @@ public class GooglePhotosRepository(
         return created;
     }
 
-    // AI-generated. Should be tested and probably refactored.
+    // TODO: Implement using IHttpClientWrapper, and test with mocked responses.
     private async Task<string> UploadFileToGoogleStorage(string filePath)
     {
         const string uploadUrl = "https://photoslibrary.googleapis.com/v1/uploads";

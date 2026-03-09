@@ -1,4 +1,5 @@
 ﻿using JottaShift.Core.FileStorage;
+using JottaShift.Core.HttpClientWrapper;
 using JottaShift.Core.Jottacloud;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -9,6 +10,7 @@ public class JottacloudFixture : IDisposable
 {
     public static JottacloudSettings Settings => new()
     {
+        ApiUri = "https://api.jottacloud.com/",
         SyncFolderFullPath = @"C:\\Jottacloud",
         PhotoStoragePath = @"C:\\Jottacloud\\Images",
         TestAlbumId = "imjg7a52t61g"
@@ -17,7 +19,7 @@ public class JottacloudFixture : IDisposable
     public JottacloudClient CreateJottacloudClient()
     {
         return new JottacloudClient(
-            new HttpClient(),
+            new Mock<IHttpClientWrapper>().Object,
             new Mock<ILogger<JottacloudClient>>().Object);
     }
 

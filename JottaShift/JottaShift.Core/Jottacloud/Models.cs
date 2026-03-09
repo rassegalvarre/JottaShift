@@ -5,12 +5,6 @@ namespace JottaShift.Core.Jottacloud;
 
 // Response from "https://api.jottacloud.com/photos/v1/public/<ALBUM_ID>/?order=ASC&limit=<LIMIT>"
 #region Root object
-public record GetAlbumResponse(bool Success)
-{
-    public bool Success { get; init; } = Success;
-    public Album? Album { get; init; }
-}
-
 public class Album
 {
     [JsonPropertyName("collectionType")]
