@@ -11,6 +11,7 @@ namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosRepository(
     GooglePhotosLibraryApiCredentials _apiCredentials,
+    IGooglePhotosLibraryFacade photosLibraryFacade,
     IGooglePhotosHttpClient _googlePhotosClient,
     ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
