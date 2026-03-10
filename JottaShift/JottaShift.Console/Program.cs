@@ -1,6 +1,5 @@
 ﻿using JottaShift.Core.Configuration;
 using JottaShift.Core.FileExport;
-using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.HttpClientWrapper;
