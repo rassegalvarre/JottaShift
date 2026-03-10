@@ -2,6 +2,8 @@
 
 public interface IFileStorage
 {
+    Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true);
+
     bool DeleteFile(string fileFullPath);
     bool DeleteDirectoryContent(string directoryFullPath);
     Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, CancellationToken ct = default);

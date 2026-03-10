@@ -4,6 +4,7 @@ using JottaShift.Core.FileExport.Jobs.FileTransfer;
 using JottaShift.Core.FileExport.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using JottaShift.Tests.TestData;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,8 @@ public class FileExportFixture : IDisposable
     public readonly string TargetDirectoryRoot = @"C:\backup";   
     public Mock<IFileStorage> FileStorageMock => new();
     public Mock<IGooglePhotosRepository> GooglePhotosRepositoryMock => new();
+    public Mock<IJottacloudRepository> JottacloudRepositoryMock => new();
+
     public Mock<ISteamRepository> SteamRepositoryMock => new();
 
     public FileExportSettings DefaultFileExportSettings => new()
@@ -75,6 +78,7 @@ public class FileExportFixture : IDisposable
     public FileExportOrchestrator CreateFileExportOrchestrator(
         IFileStorage? fileStorage = null,
         IGooglePhotosRepository? googlePhotosRepository = null,
+        IJottacloudRepository? jottacoudRepository = null,
         ISteamRepository? steamRepository = null
         )
     {
@@ -92,6 +96,7 @@ public class FileExportFixture : IDisposable
             fileStorage,
             jobValidator,
             googlePhotosRepository, 
+            jottacoudRepository,
             steamRepository);
     }
 

@@ -10,6 +10,46 @@ namespace JottaShift.Tests.FileStorage;
 public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
 {
     [Fact]
+    public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
+    {
+        string fileName = Path.GetRandomFileName();        
+
+        string directoryWithFile = Path.Combine(_fixture.BaseDirectory, "documents", "reports");
+        string expectedFullPath = Path.Combine(directoryWithFile, fileName);
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.BaseDirectory, new MockDirectoryData() },
+            { Path.Combine(_fixture.BaseDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(directoryWithFile, Path.GetRandomFileName()), new MockFileData([]) },
+            { expectedFullPath, new MockFileData([]) },
+            
+            // Duplicate filename in deeper sub-folder
+            { Path.Combine(directoryWithFile, "2010", fileName), new MockFileData([]) },
+        });
+
+        var fileStorageService = new FileStorageService(
+           fileSystemMock,
+           new Mock<ILogger<FileStorageService>>().Object);
+
+        // Find file when searched recursivley
+        var recursiveResult = fileStorageService.SearchFileByExactName(
+            _fixture.BaseDirectory,
+            fileName,
+            searchRecursively: true);
+        Assert.True(recursiveResult.Succeeded);
+        Assert.Equal(expectedFullPath, recursiveResult.Value);
+
+        // Return null when only top directory is searched
+        var topDirectoryresult = fileStorageService.SearchFileByExactName(
+            _fixture.BaseDirectory,
+            fileName,
+            searchRecursively: false);
+        Assert.False(topDirectoryresult.Succeeded);
+        Assert.Null(topDirectoryresult.Value);
+    }
+
+    [Fact]
     public void DeleteDirectoryContent_ShouldDeleteContent_KeepRoot()
     {
         var directory = @"C:\archive";

@@ -3,6 +3,8 @@ using JottaShift.Core.FileExport;
 using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.HttpClientWrapper;
+using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,12 +32,20 @@ var host = Host.CreateDefaultBuilder(args)
             resolver.GetRequiredService<IOptions<AppSettings>>().Value.GooglePhotosLibraryApiCredentials);
 
         services.AddSingleton(resolver =>
+            resolver.GetRequiredService<IOptions<AppSettings>>().Value.JottacloudSettings);
+
+        services.AddSingleton(resolver =>
            resolver.GetRequiredService<IOptions<AppSettings>>().Value.SteamWebApiCredentials);
 
-
+        services.AddHttpClient<IHttpClientWrapper, JottaShift.Core.HttpClientWrapper.HttpClientWrapper>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
+        services.AddScoped<IJottacloudClient, JottacloudClient>();
+        services.AddScoped<IJottacloudRepository, JottacloudRepository>();
         services.AddScoped<ISteamRepository, SteamRepository>();
         services.AddScoped<IFileExportJobValidator, FileExportJobValidator>();
         services.AddScoped<IFileExportOrchestrator, FileExportOrchestrator>();

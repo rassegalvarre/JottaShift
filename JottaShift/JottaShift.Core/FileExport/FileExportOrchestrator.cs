@@ -3,6 +3,7 @@ using JottaShift.Core.FileExport.Jobs.FileTransfer;
 using JottaShift.Core.FileExport.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
@@ -14,6 +15,7 @@ public sealed class FileExportOrchestrator(
     IFileStorage _fileStorage,
     IFileExportJobValidator _fileExportJobValidator,
     IGooglePhotosRepository _googlePhotosRepository,
+    IJottacloudRepository _jottacloudRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator
 {
     private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;
@@ -24,6 +26,7 @@ public sealed class FileExportOrchestrator(
     }
 
     // Todo: Handle (Conflict) files and dirs. Ignore?
+    // TODO: Get images from Jottacloud album. Then read from disk
     public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         const string jobKey = DefaultJobKeys.ChromecastPhotos;
@@ -283,7 +286,7 @@ public sealed class FileExportOrchestrator(
         {
             result.PrepareOperation(file);
             var timestamp = _fileStorage.GetImageDate(file);
-            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, timestamp);
+            var structuredDestinationDirectory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(timestamp, job.TargetDirectoryPath, CultureInfo.CurrentCulture);
 
             result.StartOperation();
             
@@ -360,6 +363,7 @@ public sealed class FileExportOrchestrator(
             .FirstOrDefault(n => n.StartsWith(firstLetter)) ?? alphabeticParentDirectoryNames[0];
     }
 
+    [Obsolete("Is not implemented in JottacloudRepository. Will be removed")]
     public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, DateTime fileCreationTime)
     {
         string year = fileCreationTime.Year.ToString();
@@ -369,6 +373,7 @@ public sealed class FileExportOrchestrator(
         return Path.Combine(destinationRootPath, year, monthDirectoryName);
     }
 
+    [Obsolete("Is not implemented in JottacloudRepository. Will be removed")]
     public string GetMonthDirectoryName(int monthIndex)
     {
         if (monthIndex < 0 || monthIndex > 11)

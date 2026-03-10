@@ -61,23 +61,6 @@ public class FileExportTests(
     }
 
     [Fact]
-    public void GetTargetDirectoryNameFromFileTimestamp_CreatesPathBasedOnFileCreationTime()
-    {
-        var creationDate = new DateTime(2026, 5, 31);
-        string destinationDirectory = AppContext.BaseDirectory;
-
-        var timelineExportService = _fixture.CreateFileExportOrchestrator();
-
-        var culture = CultureInfo.GetCultureInfo("en-GB");
-        timelineExportService.SetCulture(culture);
-
-        string directoryNameResult = timelineExportService.GetTargetDirectoryNameFromFileTimestamp(destinationDirectory, creationDate);
-        string expectedDirectoryName = Path.Combine(destinationDirectory, "2026", "05 May");
-
-        Assert.Equal(expectedDirectoryName, directoryNameResult);
-    }
-
-    [Fact]
     public async Task ExportAsync_ShouldExportAndRestrucutureTimeline()
     {
         var job = _fixture.JottacloudTimelineJob;
