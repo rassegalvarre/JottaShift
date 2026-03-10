@@ -15,4 +15,16 @@ public record HttpGetResult<T> : BaseHttpResult
         StatusCode = statusCode;
         Content = data;
     }
+
+    public Result<T> ToResult()
+    {
+        if (Success && Content != null)
+        {
+            return Result<T>.Success(Content);
+        }
+        else
+        {
+            return Result<T>.Failure(ErrorMessage ?? $"HTTP request failed with status code {StatusCode}");
+        }
+    }
 }

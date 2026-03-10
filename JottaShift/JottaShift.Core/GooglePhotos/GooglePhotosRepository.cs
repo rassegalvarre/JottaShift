@@ -10,7 +10,8 @@ using System.Text.Json;
 namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosRepository(
-    GooglePhotosLibraryApiCredentials apiCredentials,
+    GooglePhotosLibraryApiCredentials _apiCredentials,
+    IGooglePhotosHttpClient _googlePhotosClient,
     ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
     private readonly string[] _scopes = [
@@ -29,8 +30,20 @@ public class GooglePhotosRepository(
         var tokens = new List<string>();
         foreach (var image in imagesFullPath)
         {
-            var token = await UploadFileToGoogleStorage(image);
-            tokens.Add(token);
+            string fileName = Path.GetFileName(image);
+            var fileData = await File.ReadAllBytesAsync(image);
+
+            var tokenResult = await _googlePhotosClient.UploadPhoto(_userCredential, fileName, fileData);
+
+            if (tokenResult.Succeeded && tokenResult.Value is not null)
+            {
+                tokens.Add(tokenResult.Value);
+            }
+            else
+            {
+                _logger.LogError("Failed to upload image {ImagePath} to Google Photos. Error: {ErrorMessage}",
+                    image, tokenResult.ErrorMessage);
+            }
         }
 
         var uploaded = await UploadImages(tokens, album.Id);
@@ -46,11 +59,11 @@ public class GooglePhotosRepository(
             throw new InvalidOperationException("Required environment variables for Google Photos API are not set.");
         }
 
-        apiCredentials.installed.project_id = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
-        apiCredentials.installed.client_id = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
-        apiCredentials.installed.client_secret= EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
+        _apiCredentials.installed.project_id = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
+        _apiCredentials.installed.client_id = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
+        _apiCredentials.installed.client_secret= EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
 
-        var json = JsonSerializer.Serialize(apiCredentials);
+        var json = JsonSerializer.Serialize(_apiCredentials);
         using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
         
         var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
@@ -168,36 +181,5 @@ public class GooglePhotosRepository(
             created.NewMediaItemResults, albumId);
 
         return created;
-    }
-
-    // TODO: Implement using IHttpClientWrapper, and test with mocked responses.
-    private async Task<string> UploadFileToGoogleStorage(string filePath)
-    {
-        const string uploadUrl = "https://photoslibrary.googleapis.com/v1/uploads";
-
-        byte[] data = await File.ReadAllBytesAsync(filePath);
-        var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Post, uploadUrl)
-        {
-            Content = new System.Net.Http.ByteArrayContent(data)
-        };
-
-        if (_userCredential == null)
-        {
-            throw new InvalidOperationException("User credential is not available. Please authenticate first.");
-        }
-
-        // Required headers (see Google docs)
-        request.Headers.Add("Authorization", $"Bearer {_userCredential.Token.AccessToken}");
-        request.Headers.Add("X-Goog-Upload-File-Name", Path.GetFileName(filePath));
-        request.Headers.Add("X-Goog-Upload-Protocol", "raw");
-        request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-
-        var http = new System.Net.Http.HttpClient();
-        var response = await http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-
-        // The body of a successful response is just the upload token (plain text)
-        string uploadToken = await response.Content.ReadAsStringAsync();
-        return uploadToken;
-    }
+    }   
 }

@@ -3,9 +3,9 @@
 namespace JottaShift.Core.Jottacloud;
 
 /// <summary>
-/// Client for accessing Jottacloud API.
+/// Client for accessing Jottacloud API via HTTP.
 /// </summary>
-public interface IJottacloudClient
+public interface IJottacloudHttpClient
 {
     /// <summary>
     /// Returns the photo-album with the specified ID.

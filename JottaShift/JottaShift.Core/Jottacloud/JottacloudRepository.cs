@@ -9,7 +9,7 @@ namespace JottaShift.Core.Jottacloud;
 public class JottacloudRepository(
     ILogger<JottacloudRepository> _logger,
     IFileStorage _fileStorage,
-    IJottacloudClient _client,
+    IJottacloudHttpClient _client,
     JottacloudSettings _settings) : IJottacloudRepository
 {
     private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;

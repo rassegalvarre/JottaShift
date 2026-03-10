@@ -4,12 +4,12 @@ using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.Jottacloud;
 
-public class JottacloudClient : IJottacloudClient
+public class JottacloudHttpClient : IJottacloudHttpClient
 {
-    private readonly ILogger<JottacloudClient> _logger;
+    private readonly ILogger<JottacloudHttpClient> _logger;
     private readonly IHttpClientWrapper _http;
 
-    public JottacloudClient(IHttpClientWrapper http, ILogger<JottacloudClient> logger)
+    public JottacloudHttpClient(IHttpClientWrapper http, ILogger<JottacloudHttpClient> logger)
     {
         _http = http;
         _http.BaseAddress = new Uri("https://api.jottacloud.com/");

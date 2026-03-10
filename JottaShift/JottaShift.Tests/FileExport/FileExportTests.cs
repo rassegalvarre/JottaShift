@@ -166,6 +166,7 @@ public class FileExportTests(
             new Mock<ILogger<FileStorageService>>().Object);
         var googlePhotosRepository = new GooglePhotosRepository(
             _googlePhotosFixture.MockGooglePhotosLibraryApiCredentials,
+            new Mock<IGooglePhotosHttpClient>().Object,
             new Mock<ILogger<GooglePhotosRepository>>().Object);
 
         var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(

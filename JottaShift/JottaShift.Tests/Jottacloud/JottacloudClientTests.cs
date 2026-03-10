@@ -60,9 +60,9 @@ public class JottacloudClientTests(
             .Setup(h => h.GetAsync<Album>(It.IsAny<string>()))
             .ReturnsAsync(new HttpGetResult<Album>(System.Net.HttpStatusCode.BadRequest));
 
-        var client = new JottacloudClient(
+        var client = new JottacloudHttpClient(
             mockHttpWrapper.Object,
-            new Mock<ILogger<JottacloudClient>>().Object);
+            new Mock<ILogger<JottacloudHttpClient>>().Object);
 
 
         var albumResult = await client.GetAlbumAsync(_fixture.Settings.TestAlbumId);
