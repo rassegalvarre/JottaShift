@@ -7,7 +7,7 @@ namespace JottaShift.Core.Configuration;
 
 public class AppSettings
 {
-    public required FileExportJobs FileExportSettings { get; init; }
+    public required FileExportJobs FileExportJobs { get; init; }
     public required GooglePhotosLibraryApiCredentials GooglePhotosLibraryApiCredentials { get; init; }
     public required JottacloudSettings JottacloudSettings { get; init; }
     public required SteamWebApiCredentials SteamWebApiCredentials { get; init; }
