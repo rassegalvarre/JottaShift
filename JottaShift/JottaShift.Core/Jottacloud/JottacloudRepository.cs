@@ -1,5 +1,4 @@
 ﻿using JottaShift.Core.FileStorage;
-using JottaShift.Core.Jottacloud.Models;
 using JottaShift.Core.Jottacloud.Models.Dto;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
@@ -19,13 +18,13 @@ public class JottacloudRepository(
         _culture = culture;
     }
 
-    public async Task<IEnumerable<PhotoDto>> GetAlbumPhotos(string albumId)
+    public async Task<Result<AlbumDto>> GetAlbumAsync(string albumId)
     {
         var albumResult = await _client.GetAlbumAsync(albumId);
         if (!albumResult.Succeeded || albumResult.Value == null)
         {
             _logger.LogWarning("Fetching album with id {AlbumId} failed", albumId);
-            return [];
+            return Result<AlbumDto>.Failure("Album not found");
         }
 
         List<PhotoDto> photoDtos = [];
@@ -49,6 +48,10 @@ public class JottacloudRepository(
             photoDtos.Add(photoDto);
         }
 
-        return photoDtos;
+        return Result<AlbumDto>.Success(new AlbumDto
+        {
+            AlbumTitle = albumResult.Value.Title,
+            Photos = photoDtos
+        });
     }
 }

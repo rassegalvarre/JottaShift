@@ -4,14 +4,8 @@ namespace JottaShift.Core.Jottacloud.Models.Dto;
 
 public record AlbumDto
 {
-    public string AlbumTitle { get; init; }
-    public IEnumerable<PhotoDto> Photos { get; init; } = Enumerable.Empty<PhotoDto>();
-
-    public AlbumDto(Album album)
-    {
-        AlbumTitle = album.Title;
-        Photos = album.Photos.Select(photo => new PhotoDto(photo));
-    }
+    public required string AlbumTitle { get; init; }
+    public required IEnumerable<PhotoDto> Photos { get; init; } = [];
 
     public Result<PhotoDto> GetPhotoById(string photoId)
     {
