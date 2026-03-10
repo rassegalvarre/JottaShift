@@ -21,7 +21,7 @@ public class JottacloudClientTests(
         
         var albumResult = await client.GetAlbumAsync(_fixture.Settings.TestAlbumId);
 
-        Assert.True(albumResult.Success);
+        Assert.True(albumResult.Succeeded);
         Assert.NotNull(albumResult.Value);
         Assert.NotEmpty(albumResult.Value.Photos);
     }
@@ -45,7 +45,7 @@ public class JottacloudClientTests(
 
         var albumResult = await client.GetAlbumAsync(_fixture.Settings.TestAlbumId);
 
-        Assert.True(albumResult.Success);
+        Assert.True(albumResult.Succeeded);
         Assert.NotNull(albumResult.Value);
         Assert.Equal(expectedAlbumResponse.Id, albumResult.Value.Id);
         Assert.Equal(expectedPhoto, expectedAlbumResponse.Photos.Single());
@@ -67,7 +67,7 @@ public class JottacloudClientTests(
 
         var albumResult = await client.GetAlbumAsync(_fixture.Settings.TestAlbumId);
 
-        Assert.False(albumResult.Success);
+        Assert.False(albumResult.Succeeded);
         Assert.Null(albumResult.Value);
     }
 }

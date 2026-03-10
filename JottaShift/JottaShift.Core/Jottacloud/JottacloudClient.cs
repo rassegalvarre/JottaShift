@@ -24,12 +24,12 @@ public class JottacloudClient : IJottacloudClient
 
         if (result.Success && result.Content != null)
         {
-            return new Result<Album>(true, result.Content);
+            return Result<Album>.Success(result.Content);
         }
         else
         {
             _logger.LogError("Failed to get album with id {AlbumId}", albumId);
-            return new Result<Album>(false);
+            return Result<Album>.Failure("Failed to get album");
         }
     }
 }

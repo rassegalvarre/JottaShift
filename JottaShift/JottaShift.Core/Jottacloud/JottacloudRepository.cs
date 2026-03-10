@@ -22,7 +22,7 @@ public class JottacloudRepository(
     public async Task<IEnumerable<PhotoDto>> GetAlbumPhotos(string albumId)
     {
         var albumResult = await _client.GetAlbumAsync(albumId);
-        if (!albumResult.Success || albumResult.Value == null)
+        if (!albumResult.Succeeded || albumResult.Value == null)
         {
             _logger.LogWarning("Fetching album with id {AlbumId} failed", albumId);
             return [];
@@ -38,7 +38,7 @@ public class JottacloudRepository(
                 _culture);
             var localFilePathResult = _fileStorage.SearchFileByExactName(predicatedSearchFolder, photo.Filename);
             
-            if (!localFilePathResult.Success)
+            if (!localFilePathResult.Succeeded)
             {
                 _logger.LogWarning("Photo named {PhotoName} was not found in the expected local directory. Searched in: {SearchDirectory}",
                     photoDto.ImageName,

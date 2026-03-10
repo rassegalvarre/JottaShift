@@ -14,7 +14,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
     {
         var jottacloudClient = new Mock<IJottacloudClient>();
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
-            .ReturnsAsync(new Core.Result<Album>(false));
+            .ReturnsAsync(Result<Album>.Failure("Album not found"));
 
         var jottacloudRepository = _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object);
@@ -45,12 +45,12 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var jottacloudClient = new Mock<IJottacloudClient>();
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
-            .ReturnsAsync(new Core.Result<Album>(true, album));
+            .ReturnsAsync(Result<Album>.Success(album));
 
         var fileStorage = new Mock<IFileStorage>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
             .Returns((string folder, string fileName, bool recursive) =>
-                new Result<string?>(true, Path.Combine(folder, fileName)));
+                Result<string?>.Success(Path.Combine(folder, fileName)));
 
         var jottacloudRepository = _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object,
@@ -80,11 +80,11 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var jottacloudClient = new Mock<IJottacloudClient>();
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
-            .ReturnsAsync(new Core.Result<Album>(true, album));
+            .ReturnsAsync(Result<Album>.Success(album));
 
         var fileStorage = new Mock<IFileStorage>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns(new Result<string?>(true));
+            .Returns(Result<string?>.Success(null));
 
         var jottacloudRepository = _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object,

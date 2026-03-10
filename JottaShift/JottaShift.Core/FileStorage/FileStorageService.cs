@@ -20,10 +20,10 @@ public sealed class FileStorageService(
 
         foreach (var path in _fileSystem.Directory.EnumerateFiles(folderPath, pattern, option))
         {
-            return new Result<string?>(true, path);
+            return Result<string?>.Success(path);
         }
 
-        return new Result<string?>(false);
+        return Result<string?>.Failure("File not found");
     }
 
     public bool DeleteFile(string fileFullPath)
