@@ -1,5 +1,6 @@
 ﻿using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Jottacloud.Models.Domain;
+using System.Globalization;
 
 namespace JottaShift.Tests.Jottacloud;
 
@@ -21,7 +22,10 @@ public class JottacloudAdapterTests(JottacloudFixture _fixture)
     public void PhotoCapturedDateToLocalDateTime_ParsesLongToDateTime()
     {
         long milliseconds = 1595431104000;
-        var expectedLocalDateTime = DateTime.Parse("22/07/2020 16:38:24"); 
+        var expectedLocalDateTime = DateTime.ParseExact(
+            "22/07/2020 16:38:24",
+            "dd/MM/yyyy HH:mm:ss", 
+            CultureInfo.InvariantCulture); 
 
         var photo = new Photo()
         {
