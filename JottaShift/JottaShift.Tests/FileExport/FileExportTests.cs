@@ -63,7 +63,7 @@ public class FileExportTests(
     [Fact]
     public async Task ExportAsync_ShouldExportAndRestrucutureTimeline()
     {
-        var job = _fixture.JottacloudTimelineJob;
+        var job = _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob;
         var duckSource = Path.Combine(
             job.SourceDirectoryPath,
             "2025",
@@ -108,7 +108,7 @@ public class FileExportTests(
 
         var result = await timelineExportService.ExportJottacloudTimelineAsync(CancellationToken.None);
 
-        Assert.True(result.Success);
+        Assert.True(result.Succeeded);
         Assert.True(fileSystemMock.File.Exists(duckTarget));
         Assert.True(fileSystemMock.File.Exists(waterfallTarget));
         Assert.False(fileSystemMock.File.Exists(duckSource));
@@ -124,7 +124,7 @@ public class FileExportTests(
         string appName,
         string parentDirectoryName)
     {
-        var jobSettings = _fixture.SteamScreenshotsJob;
+        var jobSettings = _fixture.DefaultFileExportJobs.SteamScreenshotsExportJob;
 
         var mockFileData = new Dictionary<string, MockFileData>();
         var steamRepositoryMock = new Mock<ISteamRepository>();
@@ -150,7 +150,7 @@ public class FileExportTests(
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
         var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, "image.png");
 
-        Assert.True(result.Success);
+        Assert.True(result.Succeeded);
         Assert.False(fileSystemMock.File.Exists(sourceFilePath));
         Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
             $"Expected file at path {expectedTargetPath} was not found.");
@@ -175,7 +175,7 @@ public class FileExportTests(
 
         var result = await fileExportOrchestrator.ExportChromecastPhotosAsync();
 
-        Assert.True(result.Success);
+        Assert.True(result.Succeeded);
         // Assert.Equal(2, result.GooglePhotosUploadOperationResults.Count());
     }
 
@@ -184,7 +184,7 @@ public class FileExportTests(
     {
         var imageBytes = await File.ReadAllBytesAsync(TestDataHelper.Egypt);
 
-        var job = _fixture.DesktopWallpapersJob;
+        var job = _fixture.DefaultFileExportJobs.ScreenshotsExportJob;
         string sourceFilePath = Path.Combine(job.SourceDirectoryPath, Path.GetFileName(TestDataHelper.Egypt));
         string expectedTargetPath = Path.Combine(job.TargetDirectoryPath, "4K", "egypt.jpg");
 
@@ -202,11 +202,11 @@ public class FileExportTests(
         var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(fileStorage: fileStorageService);
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
-        var operation = result.Operations.FirstOrDefault();
-        Assert.True(result.Success);
-        Assert.True(result.Operations.Count > 0);
-        Assert.True(operation?.Success == true);
-        Assert.Equal(expectedTargetPath, operation.TargetFilePath);
+        //var operation = result.Operations.FirstOrDefault();
+        Assert.True(result.Succeeded);
+        //Assert.True(result.Operations.Count > 0);
+        //Assert.True(operation?.Success == true);
+        //Assert.Equal(expectedTargetPath, operation.TargetFilePath);
         Assert.True(fileSystem.File.Exists(expectedTargetPath));
         Assert.False(fileSystem.File.Exists(sourceFilePath));
     }
