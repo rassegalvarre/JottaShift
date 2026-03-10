@@ -1,5 +1,6 @@
 ﻿using JottaShift.Core.HttpClientWrapper;
 using JottaShift.Core.Jottacloud;
+using JottaShift.Core.Jottacloud.Models.Domain;
 using Microsoft.Extensions.Logging;
 using Moq;
 

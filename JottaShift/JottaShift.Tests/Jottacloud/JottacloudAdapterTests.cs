@@ -1,4 +1,5 @@
 ﻿using JottaShift.Core.Jottacloud;
+using JottaShift.Core.Jottacloud.Models.Domain;
 
 namespace JottaShift.Tests.Jottacloud;
 

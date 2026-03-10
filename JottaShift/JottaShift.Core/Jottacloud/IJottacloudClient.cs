@@ -1,4 +1,6 @@
-﻿namespace JottaShift.Core.Jottacloud;
+﻿using JottaShift.Core.Jottacloud.Models.Domain;
+
+namespace JottaShift.Core.Jottacloud;
 
 /// <summary>
 /// Client for accessing Jottacloud API.

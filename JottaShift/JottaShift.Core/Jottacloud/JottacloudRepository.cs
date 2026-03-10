@@ -1,4 +1,6 @@
 ﻿using JottaShift.Core.FileStorage;
+using JottaShift.Core.Jottacloud.Models;
+using JottaShift.Core.Jottacloud.Models.Dto;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 

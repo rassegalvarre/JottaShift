@@ -1,4 +1,5 @@
 ﻿using JottaShift.Core.HttpClientWrapper;
+using JottaShift.Core.Jottacloud.Models.Domain;
 using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.Jottacloud;

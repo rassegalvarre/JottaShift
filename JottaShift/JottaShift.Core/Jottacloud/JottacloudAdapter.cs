@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using JottaShift.Core.Jottacloud.Models.Domain;
 
 namespace JottaShift.Core.Jottacloud;
 

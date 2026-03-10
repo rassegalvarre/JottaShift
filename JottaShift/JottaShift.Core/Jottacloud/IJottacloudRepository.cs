@@ -1,4 +1,6 @@
-﻿namespace JottaShift.Core.Jottacloud;
+﻿using JottaShift.Core.Jottacloud.Models.Dto;
+
+namespace JottaShift.Core.Jottacloud;
 
 /// <summary>
 /// Defines methods for accessing and managing files and photo-albums in Jottacloud.

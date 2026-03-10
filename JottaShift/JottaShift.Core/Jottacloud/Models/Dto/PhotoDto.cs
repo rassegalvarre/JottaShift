@@ -1,4 +1,6 @@
-﻿namespace JottaShift.Core.Jottacloud;
+﻿using JottaShift.Core.Jottacloud.Models.Domain;
+
+namespace JottaShift.Core.Jottacloud.Models.Dto;
 
 public record PhotoDto
 {

@@ -1,6 +1,7 @@
 ﻿using JottaShift.Core;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.Jottacloud;
+using JottaShift.Core.Jottacloud.Models.Domain;
 using Moq;
 
 namespace JottaShift.Tests.Jottacloud;
