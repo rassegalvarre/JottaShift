@@ -1,24 +1,35 @@
 ﻿namespace JottaShift.Core;
 
-public record Result<T>
+public record Result
 {
-    public bool Succeeded { get; init; }
-    public T? Value { get; init; }
+    public required bool Succeeded { get; init; }
     public string? ErrorMessage { get; init; }
 
-    private Result(bool success, T value)
+    public static Result Success() => new()
+    { 
+        Succeeded = true
+    };
+
+    public static Result Failure(string errorMessage) => new()
     {
-        Succeeded = success;
-        Value = value;
-    }
+        Succeeded = false,
+        ErrorMessage = errorMessage
+    };
+}
 
-    private Result(bool success, string errorMessage)
+public record Result<T> : Result
+{
+    public T? Value { get; init; }
+
+    public static Result<T> Success(T value) => new()
+    { 
+        Succeeded = true,
+        Value = value
+    };
+
+    public static new Result<T> Failure(string errorMessage) => new()
     {
-        Succeeded = success;
-        ErrorMessage = errorMessage;
-    }
-
-    public static Result<T> Success(T value) => new(true, value);
-
-    public static Result<T> Failure(string errorMessage) => new(false, errorMessage);
+        Succeeded = false,
+        ErrorMessage = errorMessage
+    };
 }

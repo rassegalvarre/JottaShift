@@ -1,6 +1,4 @@
 ﻿using JottaShift.Core.FileExport.Jobs;
-using JottaShift.Core.FileExport.Jobs.FileTransfer;
-using JottaShift.Core.FileExport.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.Jottacloud;
@@ -11,9 +9,9 @@ using System.Globalization;
 namespace JottaShift.Core.FileExport;
 
 public sealed class FileExportOrchestrator(
+    FileExportJobs _fileExportJobs,
     ILogger<FileExportOrchestrator> _logger,
     IFileStorage _fileStorage,
-    IFileExportJobValidator _fileExportJobValidator,
     IGooglePhotosRepository _googlePhotosRepository,
     IJottacloudRepository _jottacloudRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator
@@ -26,49 +24,28 @@ public sealed class FileExportOrchestrator(
     }
 
     // Todo: Handle (Conflict) files and dirs. Ignore?
-    // TODO: Get images from Jottacloud album. Then read from disk
-    public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
+    public async Task<Result> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
-        const string jobKey = DefaultJobKeys.ChromecastPhotos;
-        const string chromcastStagingAlbumId = ""; // TODO: Add to job
-
-        GooglePhotosUploadJobResult result;
-
-        if (!_fileExportJobValidator.TryGetGooglePhotosUploadJob(jobKey, out var job))
-        {
-            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-            result = new GooglePhotosUploadJobResult(jobKey);
-            result.Invalid();
-            return result;
-        }
-
-        result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(job);
-        if (result.PreValidationFailed)
-        {
-            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-            return result;
-        }
-
-        result.Start();
-
-        var stagingAlbumResult = await _jottacloudRepository.GetAlbumAsync(chromcastStagingAlbumId);
+        var job = _fileExportJobs.ChromecastUploadJob;
+        var stagingAlbumResult = await _jottacloudRepository.GetAlbumAsync(
+            job.SourceJottacloudAlbumId);
         if (!stagingAlbumResult.Succeeded || stagingAlbumResult.Value?.Photos == null)
         {
-            _logger.LogInformation("Could not get album with id {AlbumId} for staged Chromecast photos", chromcastStagingAlbumId);
-            result.Invalid();
-            return result;
+            _logger.LogInformation("Could not get album with id {AlbumId} for staged Chromecast photos", 
+                job.SourceJottacloudAlbumId);;
+            return Result.Failure("Could not get album");
         }
 
         var imagesToUpload = stagingAlbumResult.Value.Photos
             .Where(p => !string.IsNullOrEmpty(p.LocalFilePath))
             .Select(p => p.LocalFilePath!);
 
-
-        // TODO: Change return-type to Result
-        var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(imagesToUpload, job.AlbumName);
+        var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(
+            imagesToUpload,
+            job.TargetGooglePhotosAlbumName);
         if (filesUploaded == 0)
         {
-            return result.Fail($"No files were uploaded to Google");
+            return Result.Failure($"No files were uploaded to Google");
         }
 
         if (imagesToUpload.Count() != filesUploaded)
@@ -76,258 +53,262 @@ public sealed class FileExportOrchestrator(
             _logger.LogError(
                 "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
                 filesUploaded, imagesToUpload.Count());
-            return result.Fail($"Missing files");
+            return Result.Failure("Missing files");
         }
 
-        return result.Complete();
+        return Result.Success();
     }
 
-    public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
+    public async Task<Result> ExportDesktopWallpapersAsync(CancellationToken ct = default)
     {
-        const string jobKey = DefaultJobKeys.DesktopWallpapers;
-        FileTransferJobResult result;
+        return Result.Failure("Not implemented");
 
-        if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
-        {
-            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-            result = new FileTransferJobResult(jobKey);
-            result.Invalid();
-            return result;
-        }
+        //const string jobKey = DefaultJobKeys.DesktopWallpapers;
+        //FileTransferJobResult result;
 
-        result = _fileExportJobValidator.ValidateFileTransferJob(job);
-        if (result.PreValidationFailed)
-        {
-            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-            return result;
-        }
+        //if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
+        //{
+        //    _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+        //    result = new FileTransferJobResult(jobKey);
+        //    result.Invalid();
+        //    return result;
+        //}
 
-        result.Start();
+        //result = _fileExportJobValidator.ValidateFileTransferJob(job);
+        //if (result.PreValidationFailed)
+        //{
+        //    _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+        //    return result;
+        //}
 
-        foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
-        {
-            var imageResolution = _fileStorage.GetImageResolution(file);
-            string targetDirectoryForResolution;
+        //result.Start();
 
-            if (imageResolution.EndsWith("1440"))
-            {
-                targetDirectoryForResolution = "QHD";
-            }
-            else if (imageResolution.EndsWith("2160"))
-            {
-                targetDirectoryForResolution = "4K";
-            }
-            else if (imageResolution.EndsWith("1080"))
-            {
-                targetDirectoryForResolution = "FullHD";
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "Skipping file with name @{FileName} since it does not match expected format of ending with resolution",
-                    file);
+        //foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
+        //{
+        //    var imageResolution = _fileStorage.GetImageResolution(file);
+        //    string targetDirectoryForResolution;
 
-                continue;
-            }
+        //    if (imageResolution.EndsWith("1440"))
+        //    {
+        //        targetDirectoryForResolution = "QHD";
+        //    }
+        //    else if (imageResolution.EndsWith("2160"))
+        //    {
+        //        targetDirectoryForResolution = "4K";
+        //    }
+        //    else if (imageResolution.EndsWith("1080"))
+        //    {
+        //        targetDirectoryForResolution = "FullHD";
+        //    }
+        //    else
+        //    {
+        //        _logger.LogWarning(
+        //            "Skipping file with name @{FileName} since it does not match expected format of ending with resolution",
+        //            file);
 
-            result.PrepareOperation(file);
+        //        continue;
+        //    }
 
-            string fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
+        //    result.PrepareOperation(file);
 
-            result.StartOperation();
-            var copyResult = await _fileStorage.CopyAsync(file, fullTargetDirectoryPath, ct);
-            if (!copyResult.Success)
-            {
-                return result.FailOperation($"File transfer failed for file {file}");
-            }
-            if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
-            {
-                _logger.LogError(
-                    "File was copied, but file content does not match: {FilePath}",
-                    copyResult.targetFileFullPath);
-                return result.FailOperation($"Mismatched file content for file {file}");
-            }
-            if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
-            {
-                _logger.LogError(
-                    "File was copied, but metadata does not match: {FilePath}",
-                    copyResult.targetFileFullPath);
-                return result.FailOperation($"Mismatched file metadata for file {file}");
-            }
+        //    string fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
 
-            DeleteSourceFile(file, job);
+        //    result.StartOperation();
+        //    var copyResult = await _fileStorage.CopyAsync(file, fullTargetDirectoryPath, ct);
+        //    if (!copyResult.Success)
+        //    {
+        //        return result.FailOperation($"File transfer failed for file {file}");
+        //    }
+        //    if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
+        //    {
+        //        _logger.LogError(
+        //            "File was copied, but file content does not match: {FilePath}",
+        //            copyResult.targetFileFullPath);
+        //        return result.FailOperation($"Mismatched file content for file {file}");
+        //    }
+        //    if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
+        //    {
+        //        _logger.LogError(
+        //            "File was copied, but metadata does not match: {FilePath}",
+        //            copyResult.targetFileFullPath);
+        //        return result.FailOperation($"Mismatched file metadata for file {file}");
+        //    }
 
-            result.CompleteOperation(copyResult.targetFileFullPath);
-            _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
-        }
+        //    DeleteSourceFile(file, job);
 
-        DeleteSourceDirectory(job, result);
+        //    result.CompleteOperation(copyResult.targetFileFullPath);
+        //    _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
+        //}
 
-        return result.Complete();
+        //DeleteSourceDirectory(job, result);
+
+        //return result.Complete();
     }
 
-    public async Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
+    public async Task<Result> ExportSteamScreenshotsAsync(CancellationToken ct = default)
     {
-        const string jobKey = DefaultJobKeys.SteamScreenshots;
+        return Result.Failure("Not implemented");
 
-        FileTransferJobResult result;
+        //var job = _
+        //FileTransferJobResult result;
 
-        if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
-        {
-            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-            result = new FileTransferJobResult(jobKey);
-            result.Invalid();
-            return result;
-        }
+        //if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
+        //{
+        //    _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+        //    result = new FileTransferJobResult(jobKey);
+        //    result.Invalid();
+        //    return result;
+        //}
 
-        result = _fileExportJobValidator.ValidateFileTransferJob(job);
-        if (result.PreValidationFailed)
-        {
-            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-            return result;
-        }
+        //result = _fileExportJobValidator.ValidateFileTransferJob(job);
+        //if (result.PreValidationFailed)
+        //{
+        //    _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+        //    return result;
+        //}
 
-        result.Start();
-        foreach (var directory in _fileStorage.EnumerateDirectories(job.SourceDirectoryPath))
-        {
-            var directoryNameToCharArray = Path.GetFileName(directory)?.ToCharArray();
-            if (!uint.TryParse(directoryNameToCharArray, out uint appId))
-            {
-                _logger.LogWarning(
-                    "Skipping directory with name @{DirectoryName} since it does not match expected format of a Steam appId",
-                    directory);
-                continue;
-            }
+        //result.Start();
+        //foreach (var directory in _fileStorage.EnumerateDirectories(job.SourceDirectoryPath))
+        //{
+        //    var directoryNameToCharArray = Path.GetFileName(directory)?.ToCharArray();
+        //    if (!uint.TryParse(directoryNameToCharArray, out uint appId))
+        //    {
+        //        _logger.LogWarning(
+        //            "Skipping directory with name @{DirectoryName} since it does not match expected format of a Steam appId",
+        //            directory);
+        //        continue;
+        //    }
 
-            var appName = await _steamRepository.GetAppNameFromId(appId);
+        //    var appName = await _steamRepository.GetAppNameFromId(appId);
 
-            if (string.IsNullOrEmpty(appName))
-            {
-                _logger.LogWarning("Could not find Steam app name for appId {AppId}", appId);
-                continue;
-            }
+        //    if (string.IsNullOrEmpty(appName))
+        //    {
+        //        _logger.LogWarning("Could not find Steam app name for appId {AppId}", appId);
+        //        continue;
+        //    }
 
-            string parentDirectory = GetAlphabeticParentDirectoryName(appName);
-            string targetDirectoryForApp = Path.Combine(
-                job.TargetDirectoryPath,
-                parentDirectory,
-                appName);
+            //string parentDirectory = GetAlphabeticParentDirectoryName(appName);
+            //string targetDirectoryForApp = Path.Combine(
+            //    job.TargetDirectoryPath,
+            //    parentDirectory,
+            //    appName);
 
-            if (!_fileStorage.ValidateDirectory(new DirectoryOptions(targetDirectoryForApp, true)))
-            {
-                _logger.LogError(
-                    "Could not create target directory with name @{DirectoryName}",
-                    targetDirectoryForApp);
+            //if (!_fileStorage.ValidateDirectory(new DirectoryOptions(targetDirectoryForApp, true)))
+            //{
+            //    _logger.LogError(
+            //        "Could not create target directory with name @{DirectoryName}",
+            //        targetDirectoryForApp);
 
-                return result.FailOperation("Cannot create target directory");
-            }
+            //    return result.FailOperation("Cannot create target directory");
+            //}
 
-            foreach (var file in _fileStorage.EnumerateFiles(directory))
-            {
-                if (file.Contains("thumbnails"))
-                {
-                    DeleteSourceFile(file, job);
-                    continue;
-                }
+            //foreach (var file in _fileStorage.EnumerateFiles(directory))
+            //{
+            //    if (file.Contains("thumbnails"))
+            //    {
+            //        DeleteSourceFile(file, job);
+            //        continue;
+            //    }
 
-                result.PrepareOperation(file);
-                var copyResult = await _fileStorage.CopyAsync(file, targetDirectoryForApp, ct);
-                if (!copyResult.Success)
-                {
-                    return result.FailOperation($"File transfer failed for file {file}");
-                }
-                if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
-                {
-                    _logger.LogError(
-                        "File was copied, but file content does not match: {FilePath}",
-                        copyResult.targetFileFullPath);
-                    return result.FailOperation($"Mismatched file content for file {file}");
-                }
-                if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
-                {
-                    _logger.LogError(
-                        "File was copied, but metadata does not match: {FilePath}",
-                        copyResult.targetFileFullPath);
-                    return result.FailOperation($"Mismatched file metadata for file {file}");
-                }
+            //    result.PrepareOperation(file);
+            //    var copyResult = await _fileStorage.CopyAsync(file, targetDirectoryForApp, ct);
+            //    if (!copyResult.Success)
+            //    {
+            //        return result.FailOperation($"File transfer failed for file {file}");
+            //    }
+            //    if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
+            //    {
+            //        _logger.LogError(
+            //            "File was copied, but file content does not match: {FilePath}",
+            //            copyResult.targetFileFullPath);
+            //        return result.FailOperation($"Mismatched file content for file {file}");
+            //    }
+            //    if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
+            //    {
+            //        _logger.LogError(
+            //            "File was copied, but metadata does not match: {FilePath}",
+            //            copyResult.targetFileFullPath);
+            //        return result.FailOperation($"Mismatched file metadata for file {file}");
+            //    }
 
-                DeleteSourceFile(file, job);
+            //    DeleteSourceFile(file, job);
 
-                result.CompleteOperation(copyResult.targetFileFullPath);
-                _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
-            }
+            //    result.CompleteOperation(copyResult.targetFileFullPath);
+            //    _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
+            //}
 
-            _logger.LogInformation("Processed Steam-directory {Directory}", directory);
-        }
+        //    _logger.LogInformation("Processed Steam-directory {Directory}", directory);
+        //}
         
-        DeleteSourceDirectory(job, result);
+        //DeleteSourceDirectory(job, result);
 
-        return result.Complete();
+        //return result.Complete();
     }
 
-// Todo: Handle (Conflict) files and dirs. Ignore?
-    public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
+    // Todo: Handle (Conflict) files and dirs. Ignore?
+    public async Task<Result> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
-        const string jobKey = DefaultJobKeys.JottacloudTimeline;
-        FileTransferJobResult result;
+        return Result.Failure("Not implemened");
+        //const string jobKey = DefaultJobKeys.JottacloudTimeline;
+        //FileTransferJobResult result;
 
-        if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
-        {
-            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-            result = new FileTransferJobResult(jobKey);
-            result.Invalid();
-            return result;
-        }
+        //if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
+        //{
+        //    _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+        //    result = new FileTransferJobResult(jobKey);
+        //    result.Invalid();
+        //    return result;
+        //}
 
-        result = _fileExportJobValidator.ValidateFileTransferJob(job);
-        if (result.PreValidationFailed)
-        {
-            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-            return result;
-        }
+        //result = _fileExportJobValidator.ValidateFileTransferJob(job);
+        //if (result.PreValidationFailed)
+        //{
+        //    _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+        //    return result;
+        //}
 
-        result.Start();
+        //result.Start();
 
-        foreach (var file in _fileStorage.EnumerateFiles(result.SourceDirectoryPath))
-        {
-            result.PrepareOperation(file);
-            var timestamp = _fileStorage.GetImageDate(file);
-            var structuredDestinationDirectory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(timestamp, job.TargetDirectoryPath, CultureInfo.CurrentCulture);
+        //foreach (var file in _fileStorage.EnumerateFiles(result.SourceDirectoryPath))
+        //{
+        //    result.PrepareOperation(file);
+        //    var timestamp = _fileStorage.GetImageDate(file);
+        //    var structuredDestinationDirectory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(timestamp, job.TargetDirectoryPath, CultureInfo.CurrentCulture);
 
-            result.StartOperation();
+        //    result.StartOperation();
             
-            var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, ct);
+        //    var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, ct);
 
-            if (!copyResult.Success)
-            {
-                return result.FailOperation($"File transfer failed");
-            }
+        //    if (!copyResult.Success)
+        //    {
+        //        return result.FailOperation($"File transfer failed");
+        //    }
 
-            if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
-            {
-                _logger.LogError(
-                    "File was copied, but file content does not match: {FilePath}",
-                    copyResult.targetFileFullPath);
-                return result.FailOperation($"Mismatched file content");
-            }
+        //    if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
+        //    {
+        //        _logger.LogError(
+        //            "File was copied, but file content does not match: {FilePath}",
+        //            copyResult.targetFileFullPath);
+        //        return result.FailOperation($"Mismatched file content");
+        //    }
 
-            if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
-            {
-                _logger.LogError(
-                    "File was copied, but metadata does not match: {FilePath}",
-                    copyResult.targetFileFullPath);
-                return result.FailOperation($"Mismatched file metadata");
-            }
+        //    if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
+        //    {
+        //        _logger.LogError(
+        //            "File was copied, but metadata does not match: {FilePath}",
+        //            copyResult.targetFileFullPath);
+        //        return result.FailOperation($"Mismatched file metadata");
+        //    }
 
-            DeleteSourceFile(file, job);
+        //    DeleteSourceFile(file, job);
 
-            result.CompleteOperation(copyResult.targetFileFullPath);
-            _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
-        }
+        //    result.CompleteOperation(copyResult.targetFileFullPath);
+        //    _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
+        //}
 
-        DeleteSourceDirectory(job, result);
+        //DeleteSourceDirectory(job, result);
 
-        return result.Complete();
+        //return result.Complete();
     }
 
     public string GetAlphabeticParentDirectoryName(string directoryName)
@@ -369,29 +350,7 @@ public sealed class FileExportOrchestrator(
             .FirstOrDefault(n => n.StartsWith(firstLetter)) ?? alphabeticParentDirectoryNames[0];
     }
 
-    [Obsolete("Is not implemented in JottacloudRepository. Will be removed")]
-    public string GetTargetDirectoryNameFromFileTimestamp(string destinationRootPath, DateTime fileCreationTime)
-    {
-        string year = fileCreationTime.Year.ToString();
-        int monthIndex = fileCreationTime.Month - 1;
-        string monthDirectoryName = GetMonthDirectoryName(monthIndex);
-
-        return Path.Combine(destinationRootPath, year, monthDirectoryName);
-    }
-
-    [Obsolete("Is not implemented in JottacloudRepository. Will be removed")]
-    public string GetMonthDirectoryName(int monthIndex)
-    {
-        if (monthIndex < 0 || monthIndex > 11)
-            throw new ArgumentOutOfRangeException(nameof(monthIndex), "Month index must be between 0 and 11");
-
-        string monthName = _culture.DateTimeFormat.MonthNames[monthIndex];
-        string capitalizedMonthName = char.ToUpper(monthName[0]) + monthName[1..];
-
-        return $"{monthIndex + 1:D2} {capitalizedMonthName}";
-    }
-
-    private void DeleteSourceFile(string sourceFilePath, FileExportJob job)
+    private void DeleteSourceFile(FileTransferJob job, string sourceFilePath)
     {
         if (job.DeleteSourceFiles)
         {
@@ -405,9 +364,9 @@ public sealed class FileExportOrchestrator(
         }
     }
 
-    private void DeleteSourceDirectory(FileExportJob job, FileExportJobResult result)
+    private void DeleteSourceDirectory(FileTransferJob job, Result result)
     {
-        if (job.DeleteSourceFiles && result.Success)
+        if (job.DeleteSourceFiles && result.Succeeded)
         {
             bool deleted = _fileStorage.DeleteDirectoryContent(job.SourceDirectoryPath);
             if (!deleted)
@@ -417,5 +376,32 @@ public sealed class FileExportOrchestrator(
                     job.SourceDirectoryPath);
             }
         }
+    }
+
+    private Result ValidateFileTransferJob(FileTransferJob job)
+    {
+        if (!job.Enabled)
+        {
+            _logger.LogWarning("Job with key {JobId} is disabled and will not be started", job.Id);
+            return Result.Failure("Job is disabled");
+        }
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        {
+            _logger.LogError(
+                "Source directory with name @{DirectoryName} for job with id {JobId} does not exist",
+                job.SourceDirectoryPath,
+                job.Id);
+            return Result.Failure("Source directory does not exist");
+        }
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
+        {
+            _logger.LogError(
+                "Could not create target directory with name @{DirectoryName} for job with id {JobId}",
+                job.TargetDirectoryPath,
+                job.Id);
+            return Result.Failure("Target directory does not exist");
+        }
+
+        return Result.Success();
     }
 }

@@ -1,12 +1,9 @@
 ﻿using JottaShift.Core.FileExport;
 using JottaShift.Core.FileExport.Jobs;
-using JottaShift.Core.FileExport.Jobs.FileTransfer;
-using JottaShift.Core.FileExport.Jobs.GooglePhotosUpload;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
-using JottaShift.Tests.TestData;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -22,58 +19,40 @@ public class FileExportFixture : IDisposable
 
     public Mock<ISteamRepository> SteamRepositoryMock => new();
 
-    public FileExportSettings DefaultFileExportSettings => new()
+    public FileExportJobs DefaultFileExportJobs => new()
     {
-        FileTransferJobs = [
-            new FileTransferJob()
-            {
-                Key = "desktop_wallpapers",
-                SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "wallpapers"),
-                TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "wallpapers"),
-                Enabled = true,
-                DeleteSourceFiles = true
-            },
-            new FileTransferJob()
-            {
-                Key = "steam_screenshots",
-                SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "steam"),
-                TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "steam"),
-                Enabled = true,
-                DeleteSourceFiles = true
-            },
-            new FileTransferJob()
-            {
-                Key = "jottacloud_timeline",
-                SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "timeline"),
-                TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "timeline"),
-                Enabled = true,
-                DeleteSourceFiles = true
-            }
-        ],
-        GooglePhotosUploadJobs = new List<GooglePhotosUploadJob>()
+        ScreenshotsExportJob = new FileTransferJob()
         {
-            new GooglePhotosUploadJob()
-            {
-                Key = "chromecast_photos",
-                SourceDirectoryPath = TestDataHelper.TestDataPath,
-                AlbumName = "JottaSync.UnitTests.FileExport",
-                Enabled = true,
-                DeleteSourceFiles = false
-            }
-        }
-    };   
-
-    public FileTransferJob DesktopWallpapersJob => DefaultFileExportSettings.FileTransferJobs
-        .First(j => j.Key == DefaultJobKeys.DesktopWallpapers);
-
-    public FileTransferJob JottacloudTimelineJob => DefaultFileExportSettings.FileTransferJobs
-        .First(j => j.Key == DefaultJobKeys.JottacloudTimeline);
-
-    public FileTransferJob SteamScreenshotsJob => DefaultFileExportSettings.FileTransferJobs
-        .First(j => j.Key == DefaultJobKeys.SteamScreenshots);
-
-    public GooglePhotosUploadJob ChromecastUploadJob => DefaultFileExportSettings.GooglePhotosUploadJobs
-        .First(j => j.Key == DefaultJobKeys.ChromecastPhotos);
+            Id = "desktop_wallpapers",
+            SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "wallpapers"),
+            TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "wallpapers"),
+            Enabled = true,
+            DeleteSourceFiles = true
+        },
+        SteamScreenshotsExportJob = new FileTransferJob()
+        {
+            Id = "steam_screenshots",
+            SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "steam"),
+            TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "steam"),
+            Enabled = true,
+            DeleteSourceFiles = true
+        },
+        JottacloudTimelineExportJob = new FileTransferJob()
+        {
+            Id = "jottacloud_timeline",
+            SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "timeline"),
+            TargetDirectoryPath = Path.Combine(TargetDirectoryRoot, "timeline"),
+            Enabled = true,
+            DeleteSourceFiles = true
+        },
+        ChromecastUploadJob = new ChromecastUploadJob()
+        {
+            Id = "chromecast_photos",
+            SourceJottacloudAlbumSharedUrl = "https://www.jottacloud.com/share/imjg7a52t61g",
+            TargetGooglePhotosAlbumName = "JottaSync.UnitTests.FileExport",
+            Enabled = true
+        }        
+    };
 
     public FileExportOrchestrator CreateFileExportOrchestrator(
         IFileStorage? fileStorage = null,
@@ -86,15 +65,10 @@ public class FileExportFixture : IDisposable
         googlePhotosRepository ??= GooglePhotosRepositoryMock.Object;
         steamRepository ??= SteamRepositoryMock.Object;
 
-        var jobValidator = new FileExportJobValidator(
-            new Mock<ILogger<FileExportJobValidator>>().Object,
-            DefaultFileExportSettings,
-            fileStorage);
-
         return new FileExportOrchestrator(
+            DefaultFileExportJobs,
             new Mock<ILogger<FileExportOrchestrator>>().Object,
             fileStorage,
-            jobValidator,
             googlePhotosRepository, 
             jottacoudRepository,
             steamRepository);
