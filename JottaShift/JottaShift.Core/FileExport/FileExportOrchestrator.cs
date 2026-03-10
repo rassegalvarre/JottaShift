@@ -412,4 +412,31 @@ public sealed class FileExportOrchestrator(
             }
         }
     }
+
+    private Result ValidateFileTransferJob(FileTransferJob job)
+    {
+        if (!job.Enabled)
+        {
+            _logger.LogWarning("Job with key {JobId} is disabled and will not be started", job.Id);
+            return Result.Failure("Job is disabled");
+        }
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        {
+            _logger.LogError(
+                "Source directory with name @{DirectoryName} for job with id {JobId} does not exist",
+                job.SourceDirectoryPath,
+                job.Id);
+            return Result.Failure("Source directory does not exist");
+        }
+        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
+        {
+            _logger.LogError(
+                "Could not create target directory with name @{DirectoryName} for job with id {JobId}",
+                job.TargetDirectoryPath,
+                job.Id);
+            return Result.Failure("Target directory does not exist");
+        }
+
+        return Result.Success();
+    }
 }
