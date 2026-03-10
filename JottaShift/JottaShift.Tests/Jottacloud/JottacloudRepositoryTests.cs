@@ -10,7 +10,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
     : IClassFixture<JottacloudFixture>
 {
     [Fact]
-    public async Task GetAlbumPhotos_AlbumDoesNotExist()
+    public async Task GetAlbumAsync_AlbumDoesNotExist()
     {
         var jottacloudClient = new Mock<IJottacloudHttpClient>();
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
@@ -20,13 +20,14 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
             jottacloudClient: jottacloudClient.Object);
 
         string albumId = Guid.NewGuid().ToString();
-        var photos = await jottacloudRepository.GetAlbumPhotos(albumId);
+        var albumResult = await jottacloudRepository.GetAlbumAsync(albumId);
 
-        Assert.Empty(photos);
+        Assert.False(albumResult.Succeeded);
+        Assert.Null(albumResult.Value);
     }
 
     [Fact]
-    public async Task GetAlbumPhotos_FindLocalPathForPhoto()
+    public async Task GetAlbumAsync_FindLocalPathForPhoto()
     {
         string albumId = Guid.NewGuid().ToString();
         string fileName = Path.GetRandomFileName();
@@ -56,14 +57,16 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
             jottacloudClient: jottacloudClient.Object,
             fileStorage: fileStorage.Object);
 
-        var photos = await jottacloudRepository.GetAlbumPhotos(albumId);
+        var albumResult = await jottacloudRepository.GetAlbumAsync(albumId);
 
-        Assert.NotEmpty(photos);
-        Assert.NotNull(photos.First().LocalFilePath);
+        Assert.True(albumResult.Succeeded);
+        Assert.NotNull(albumResult.Value);
+        Assert.NotEmpty(albumResult.Value.Photos);
+        Assert.NotNull(albumResult.Value.Photos.First().LocalFilePath);
     }
 
     [Fact]
-    public async Task GetAlbumPhotos_PhotoDoesNotExistOnDisk()
+    public async Task GetAlbumAsync_PhotoDoesNotExistOnDisk()
     {
         string albumId = Guid.NewGuid().ToString();
         var album = new Album()
@@ -90,9 +93,11 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
             jottacloudClient: jottacloudClient.Object,
             fileStorage: fileStorage.Object);
 
-        var photos = await jottacloudRepository.GetAlbumPhotos(albumId);
+        var albumResult = await jottacloudRepository.GetAlbumAsync(albumId);
 
-        Assert.NotEmpty(photos);
-        Assert.Null(photos.First().LocalFilePath);
+        Assert.True(albumResult.Succeeded);
+        Assert.NotNull(albumResult.Value);
+        Assert.NotEmpty(albumResult.Value.Photos);
+        Assert.Null(albumResult.Value.Photos.First().LocalFilePath);
     }
 }

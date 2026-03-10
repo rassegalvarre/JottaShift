@@ -8,7 +8,7 @@ namespace JottaShift.Core.Jottacloud;
 public interface IJottacloudRepository
 {
     /// <summary>
-    /// Returns a list of photos in the specified album and their local file paths if they exist in local storage.
+    /// Returns an album with photos and their local file paths if they exist in local storage.
     /// </summary>
-    Task<IEnumerable<PhotoDto>> GetAlbumPhotos(string albumId);
+    Task<Result<AlbumDto>> GetAlbumAsync(string albumId);
 }

@@ -29,51 +29,66 @@ public sealed class FileExportOrchestrator(
     // TODO: Get images from Jottacloud album. Then read from disk
     public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
+        throw new NotImplementedException();
+
         const string jobKey = DefaultJobKeys.ChromecastPhotos;
-        GooglePhotosUploadJobResult result;
+        const string jottacloudAlbumId = ""; // TODO: Add to config
+        //GooglePhotosUploadJobResult.CreateFromJob(;
 
-        if (!_fileExportJobValidator.TryGetGooglePhotosUploadJob(jobKey, out var job))
-        {
-            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-            result = new GooglePhotosUploadJobResult(jobKey);
-            result.Invalid();
-            return result;
-        }
+        //var stagedPhotos = await _jottacloudRepository.GetAlbumPhotos(jottacloudAlbumId);
+        //if (!stagedPhotos.Any())
+        //{
+        //    _logger.LogInformation("No images are staged for upload to Chromecast");
+        //    return result.Complete();
+        //}
 
-        result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(job);
-        if (result.PreValidationFailed)
-        {
-            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-            return result;
-        }
 
-        result.Start();
+        //foreach (var photo in stagedPhotos)
+        //{
+        //}
 
-        List<string> filePathsToUpload = [.. _fileStorage.EnumerateFiles(job.SourceDirectoryPath)];
-        if (filePathsToUpload.Count == 0)
-        {
-            _logger.LogInformation("No images staged for upload to Google Photos");
-            return result.Complete();
-        }
+        //if (!_fileExportJobValidator.TryGetGooglePhotosUploadJob(jobKey, out var job))
+        //{
+        //    _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+        //    result = new GooglePhotosUploadJobResult(jobKey);
+        //    result.Invalid();
+        //    return result;
+        //}
 
-        var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(filePathsToUpload, job.AlbumName);
+        //result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(job);
+        //if (result.PreValidationFailed)
+        //{
+        //    _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+        //    return result;
+        //}
 
-        if (filesUploaded == 0)
-        {
-            return result.Fail($"No files were uploaded to Google");
-        }
+        //result.Start();
 
-        if (filePathsToUpload.Count != filesUploaded)
-        {
-            _logger.LogError(
-                "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
-                filesUploaded, filePathsToUpload.Count);
-            return result.Fail($"Missing files");
-        }
+        //List<string> filePathsToUpload = [.. _fileStorage.EnumerateFiles(job.SourceDirectoryPath)];
+        //if (filePathsToUpload.Count == 0)
+        //{
+        //    _logger.LogInformation("No images staged for upload to Google Photos");
+        //    return result.Complete();
+        //}
 
-        DeleteSourceDirectory(job, result);
+        //var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(filePathsToUpload, job.AlbumName);
 
-        return result.Complete();
+        //if (filesUploaded == 0)
+        //{
+        //    return result.Fail($"No files were uploaded to Google");
+        //}
+
+        //if (filePathsToUpload.Count != filesUploaded)
+        //{
+        //    _logger.LogError(
+        //        "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
+        //        filesUploaded, filePathsToUpload.Count);
+        //    return result.Fail($"Missing files");
+        //}
+
+        //DeleteSourceDirectory(job, result);
+
+        // return result.Complete();
     }
 
     public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
