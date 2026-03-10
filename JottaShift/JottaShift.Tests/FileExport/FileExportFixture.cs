@@ -22,7 +22,7 @@ public class FileExportFixture : IDisposable
 
     public Mock<ISteamRepository> SteamRepositoryMock => new();
 
-    public FileExportSettings DefaultFileExportSettings => new()
+    public FileExportJobs DefaultFileExportSettings => new()
     {
         FileTransferJobs = [
             new FileTransferJob()
