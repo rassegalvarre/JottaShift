@@ -20,9 +20,9 @@ public class GooglePhotosFixture : IDisposable
         }
     };
 
-    public GooglePhotosRepository CreateGooglePhotosRepository(IGooglePhotosClient? googlePhotosClient = null)
+    public GooglePhotosRepository CreateGooglePhotosRepository(IGooglePhotosHttpClient? googlePhotosClient = null)
     {
-        googlePhotosClient ??= new Mock<IGooglePhotosClient>().Object;
+        googlePhotosClient ??= new Mock<IGooglePhotosHttpClient>().Object;
 
         return new GooglePhotosRepository(
             MockGooglePhotosLibraryApiCredentials,

@@ -12,7 +12,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
     [Fact]
     public async Task GetAlbumPhotos_AlbumDoesNotExist()
     {
-        var jottacloudClient = new Mock<IJottacloudClient>();
+        var jottacloudClient = new Mock<IJottacloudHttpClient>();
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<Album>.Failure("Album not found"));
 
@@ -43,7 +43,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
             ]
         };
 
-        var jottacloudClient = new Mock<IJottacloudClient>();
+        var jottacloudClient = new Mock<IJottacloudHttpClient>();
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<Album>.Success(album));
 
@@ -78,7 +78,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
             ]
         };
 
-        var jottacloudClient = new Mock<IJottacloudClient>();
+        var jottacloudClient = new Mock<IJottacloudHttpClient>();
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<Album>.Success(album));
 

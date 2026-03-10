@@ -5,12 +5,12 @@ using System.Net.Http.Headers;
 
 namespace JottaShift.Core.GooglePhotos;
 
-public class GooglePhotosClient : IGooglePhotosClient
+public class GooglePhotosHttpClient : IGooglePhotosHttpClient
 {
-    private readonly ILogger<GooglePhotosClient> _logger;
+    private readonly ILogger<GooglePhotosHttpClient> _logger;
     private readonly IHttpClientWrapper _http;
 
-    public GooglePhotosClient(IHttpClientWrapper http, ILogger<GooglePhotosClient> logger)
+    public GooglePhotosHttpClient(IHttpClientWrapper http, ILogger<GooglePhotosHttpClient> logger)
     {
         _http = http;
         _http.BaseAddress = new Uri("https://photoslibrary.googleapis.com/v1/");

@@ -43,9 +43,9 @@ var host = Host.CreateDefaultBuilder(args)
         });
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
-        services.AddScoped<IGooglePhotosClient, GooglePhotosClient>();
+        services.AddScoped<IGooglePhotosHttpClient, GooglePhotosHttpClient>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
-        services.AddScoped<IJottacloudClient, JottacloudClient>();
+        services.AddScoped<IJottacloudHttpClient, JottacloudHttpClient>();
         services.AddScoped<IJottacloudRepository, JottacloudRepository>();
         services.AddScoped<ISteamRepository, SteamRepository>();
         services.AddScoped<IFileExportJobValidator, FileExportJobValidator>();

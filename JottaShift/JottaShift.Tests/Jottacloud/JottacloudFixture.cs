@@ -16,21 +16,21 @@ public class JottacloudFixture : IDisposable
         TestAlbumId = "imjg7a52t61g"
     };
 
-    public JottacloudClient CreateJottacloudClient(IHttpClientWrapper? httpClientWrapper = null)
+    public JottacloudHttpClient CreateJottacloudClient(IHttpClientWrapper? httpClientWrapper = null)
     {
         httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;
 
-        return new JottacloudClient(
+        return new JottacloudHttpClient(
             httpClientWrapper,
-            new Mock<ILogger<JottacloudClient>>().Object);
+            new Mock<ILogger<JottacloudHttpClient>>().Object);
     }
 
     public JottacloudRepository CreateJottacloudRepository(
         IFileStorage? fileStorage = null,
-        IJottacloudClient? jottacloudClient = null)
+        IJottacloudHttpClient? jottacloudClient = null)
     {
         fileStorage ??= new Mock<IFileStorage>().Object;
-        jottacloudClient ??= new Mock<IJottacloudClient>().Object;
+        jottacloudClient ??= new Mock<IJottacloudHttpClient>().Object;
 
         return new JottacloudRepository(
             new Mock<ILogger<JottacloudRepository>>().Object,
