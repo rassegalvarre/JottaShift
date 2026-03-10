@@ -38,14 +38,16 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
             baseDirectory,
             fileName,
             searchRecursively: true);
-        Assert.Equal(expectedFullPath, recursiveResult);
+        Assert.True(recursiveResult.Success);
+        Assert.Equal(expectedFullPath, recursiveResult.Value);
 
         // Return null when only top directory is searched
         var topDirectoryresult = fileStorageService.SearchFileByExactName(
             baseDirectory,
             fileName,
             searchRecursively: false);
-        Assert.Null(topDirectoryresult);
+        Assert.False(topDirectoryresult.Success);
+        Assert.Null(topDirectoryresult.Value);
     }
 
     [Fact]

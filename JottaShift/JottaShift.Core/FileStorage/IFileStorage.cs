@@ -2,7 +2,7 @@
 
 public interface IFileStorage
 {
-    string? SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true);
+    Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true);
 
     bool DeleteFile(string fileFullPath);
     bool DeleteDirectoryContent(string directoryFullPath);

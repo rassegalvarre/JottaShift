@@ -34,17 +34,16 @@ public class JottacloudRepository(
                 photoDto.CapturedDate,
                 _settings.PhotoStoragePath,
                 _culture);
-            var localFilePath = _fileStorage.SearchFileByExactName(predicatedSearchFolder, photo.Filename);
+            var localFilePathResult = _fileStorage.SearchFileByExactName(predicatedSearchFolder, photo.Filename);
             
-            if (string.IsNullOrEmpty(localFilePath))
+            if (!localFilePathResult.Success)
             {
                 _logger.LogWarning("Photo named {PhotoName} was not found in the expected local directory. Searched in: {SearchDirectory}",
                     photoDto.ImageName,
                     predicatedSearchFolder);
-                continue;
             }
 
-            photoDto.LocalFilePath = localFilePath;
+            photoDto.LocalFilePath = localFilePathResult.Value;
             photoDtos.Add(photoDto);
         }
 

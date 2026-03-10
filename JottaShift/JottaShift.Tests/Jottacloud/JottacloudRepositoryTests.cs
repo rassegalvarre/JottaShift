@@ -1,4 +1,5 @@
-﻿using JottaShift.Core.FileStorage;
+﻿using JottaShift.Core;
+using JottaShift.Core.FileStorage;
 using JottaShift.Core.Jottacloud;
 using Moq;
 
@@ -47,7 +48,8 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var fileStorage = new Mock<IFileStorage>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns((string folder, string fileName, bool recursive) => Path.Combine(folder, fileName));
+            .Returns((string folder, string fileName, bool recursive) =>
+                new Result<string?>(true, Path.Combine(folder, fileName)));
 
         var jottacloudRepository = _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object,
@@ -81,7 +83,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var fileStorage = new Mock<IFileStorage>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns(string.Empty);
+            .Returns(new Result<string?>(true));
 
         var jottacloudRepository = _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object,
@@ -89,6 +91,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var photos = await jottacloudRepository.GetAlbumPhotos(albumId);
 
-        Assert.Empty(photos);
+        Assert.NotEmpty(photos);
+        Assert.Null(photos.First().LocalFilePath);
     }
 }

@@ -10,7 +10,7 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorage
 {
-    public string? SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true)
+    public Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true)
     {
         var pattern = fileName;
 
@@ -20,10 +20,10 @@ public sealed class FileStorageService(
 
         foreach (var path in _fileSystem.Directory.EnumerateFiles(folderPath, pattern, option))
         {
-            return path;
+            return new Result<string?>(true, path);
         }
 
-        return null;
+        return new Result<string?>(false);
     }
 
     public bool DeleteFile(string fileFullPath)
