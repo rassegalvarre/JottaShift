@@ -1,11 +1,13 @@
 ﻿using System.Globalization;
-using System.Runtime;
 
 namespace JottaShift.Core.Jottacloud;
 
+/// <summary>
+/// Provides utility methods for adapting and transforming data from Jottacloud.
+/// </summary>
 public static class JottacloudAdapter
 {
-    public static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    public static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 
     public static string AlbumIdFromSharedUri(Uri sharedUri)
     {
