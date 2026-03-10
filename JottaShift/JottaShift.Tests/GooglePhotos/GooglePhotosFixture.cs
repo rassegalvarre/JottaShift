@@ -20,10 +20,13 @@ public class GooglePhotosFixture : IDisposable
         }
     };
 
-    public GooglePhotosRepository CreateGooglePhotosRepository()
+    public GooglePhotosRepository CreateGooglePhotosRepository(IGooglePhotosClient? googlePhotosClient = null)
     {
+        googlePhotosClient ??= new Mock<IGooglePhotosClient>().Object;
+
         return new GooglePhotosRepository(
             MockGooglePhotosLibraryApiCredentials,
+            googlePhotosClient,
             new Mock<ILogger<GooglePhotosRepository>>().Object);
     }
 
