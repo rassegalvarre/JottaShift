@@ -43,6 +43,7 @@ var host = Host.CreateDefaultBuilder(args)
         });
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
+        services.AddScoped<IGooglePhotosClient, GooglePhotosClient>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
         services.AddScoped<IJottacloudClient, JottacloudClient>();
         services.AddScoped<IJottacloudRepository, JottacloudRepository>();
