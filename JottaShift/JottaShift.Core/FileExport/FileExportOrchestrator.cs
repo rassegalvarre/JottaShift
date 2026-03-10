@@ -286,7 +286,7 @@ public sealed class FileExportOrchestrator(
         {
             result.PrepareOperation(file);
             var timestamp = _fileStorage.GetImageDate(file);
-            var structuredDestinationDirectory = GetTargetDirectoryNameFromFileTimestamp(job.TargetDirectoryPath, timestamp);
+            var structuredDestinationDirectory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(timestamp, job.TargetDirectoryPath, CultureInfo.CurrentCulture);
 
             result.StartOperation();
             

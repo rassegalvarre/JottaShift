@@ -12,16 +12,15 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     [Fact]
     public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
     {
-        string baseDirectory = @"C:\storage";
         string fileName = Path.GetRandomFileName();        
 
-        string directoryWithFile = Path.Combine(baseDirectory, "documents", "reports");
+        string directoryWithFile = Path.Combine(_fixture.BaseDirectory, "documents", "reports");
         string expectedFullPath = Path.Combine(directoryWithFile, fileName);
 
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
         {
-            { baseDirectory, new MockDirectoryData() },
-            { Path.Combine(baseDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { _fixture.BaseDirectory, new MockDirectoryData() },
+            { Path.Combine(_fixture.BaseDirectory, Path.GetRandomFileName()), new MockFileData([]) },
             { Path.Combine(directoryWithFile, Path.GetRandomFileName()), new MockFileData([]) },
             { expectedFullPath, new MockFileData([]) },
             
@@ -35,7 +34,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
 
         // Find file when searched recursivley
         var recursiveResult = fileStorageService.SearchFileByExactName(
-            baseDirectory,
+            _fixture.BaseDirectory,
             fileName,
             searchRecursively: true);
         Assert.True(recursiveResult.Succeeded);
@@ -43,7 +42,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
 
         // Return null when only top directory is searched
         var topDirectoryresult = fileStorageService.SearchFileByExactName(
-            baseDirectory,
+            _fixture.BaseDirectory,
             fileName,
             searchRecursively: false);
         Assert.False(topDirectoryresult.Succeeded);
