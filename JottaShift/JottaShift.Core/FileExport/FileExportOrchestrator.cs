@@ -29,66 +29,57 @@ public sealed class FileExportOrchestrator(
     // TODO: Get images from Jottacloud album. Then read from disk
     public async Task<GooglePhotosUploadJobResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
-        throw new NotImplementedException();
-
         const string jobKey = DefaultJobKeys.ChromecastPhotos;
-        const string jottacloudAlbumId = ""; // TODO: Add to config
-        //GooglePhotosUploadJobResult.CreateFromJob(;
+        const string chromcastStagingAlbumId = ""; // TODO: Add to job
 
-        //var stagedPhotos = await _jottacloudRepository.GetAlbumPhotos(jottacloudAlbumId);
-        //if (!stagedPhotos.Any())
-        //{
-        //    _logger.LogInformation("No images are staged for upload to Chromecast");
-        //    return result.Complete();
-        //}
+        GooglePhotosUploadJobResult result;
+
+        if (!_fileExportJobValidator.TryGetGooglePhotosUploadJob(jobKey, out var job))
+        {
+            _logger.LogError("Job with key {JobKey} does not exists", jobKey);
+            result = new GooglePhotosUploadJobResult(jobKey);
+            result.Invalid();
+            return result;
+        }
+
+        result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(job);
+        if (result.PreValidationFailed)
+        {
+            _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
+            return result;
+        }
+
+        result.Start();
+
+        var stagingAlbumResult = await _jottacloudRepository.GetAlbumAsync(chromcastStagingAlbumId);
+        if (!stagingAlbumResult.Succeeded || stagingAlbumResult.Value?.Photos == null)
+        {
+            _logger.LogInformation("Could not get album with id {AlbumId} for staged Chromecast photos", chromcastStagingAlbumId);
+            result.Invalid();
+            return result;
+        }
+
+        var imagesToUpload = stagingAlbumResult.Value.Photos
+            .Where(p => !string.IsNullOrEmpty(p.LocalFilePath))
+            .Select(p => p.LocalFilePath!);
 
 
-        //foreach (var photo in stagedPhotos)
-        //{
-        //}
+        // TODO: Change return-type to Result
+        var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(imagesToUpload, job.AlbumName);
+        if (filesUploaded == 0)
+        {
+            return result.Fail($"No files were uploaded to Google");
+        }
 
-        //if (!_fileExportJobValidator.TryGetGooglePhotosUploadJob(jobKey, out var job))
-        //{
-        //    _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-        //    result = new GooglePhotosUploadJobResult(jobKey);
-        //    result.Invalid();
-        //    return result;
-        //}
+        if (imagesToUpload.Count() != filesUploaded)
+        {
+            _logger.LogError(
+                "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
+                filesUploaded, imagesToUpload.Count());
+            return result.Fail($"Missing files");
+        }
 
-        //result = _fileExportJobValidator.ValidateGooglePhotosUploadJob(job);
-        //if (result.PreValidationFailed)
-        //{
-        //    _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-        //    return result;
-        //}
-
-        //result.Start();
-
-        //List<string> filePathsToUpload = [.. _fileStorage.EnumerateFiles(job.SourceDirectoryPath)];
-        //if (filePathsToUpload.Count == 0)
-        //{
-        //    _logger.LogInformation("No images staged for upload to Google Photos");
-        //    return result.Complete();
-        //}
-
-        //var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(filePathsToUpload, job.AlbumName);
-
-        //if (filesUploaded == 0)
-        //{
-        //    return result.Fail($"No files were uploaded to Google");
-        //}
-
-        //if (filePathsToUpload.Count != filesUploaded)
-        //{
-        //    _logger.LogError(
-        //        "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
-        //        filesUploaded, filePathsToUpload.Count);
-        //    return result.Fail($"Missing files");
-        //}
-
-        //DeleteSourceDirectory(job, result);
-
-        // return result.Complete();
+        return result.Complete();
     }
 
     public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
