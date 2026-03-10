@@ -1,4 +1,8 @@
-﻿using JottaShift.Tests.TestData;
+﻿using Google.Apis.Auth.OAuth2;
+using JottaShift.Core.GooglePhotos;
+using JottaShift.Core;
+using JottaShift.Tests.TestData;
+using Moq;
 
 namespace JottaShift.Tests.GooglePhotos;
 
@@ -17,7 +21,7 @@ public class GooglePhotosTests(GooglePhotosFixture _fixture) : IClassFixture<Goo
         Assert.NotNull(album);
     }
 
-    [Fact]
+    [Fact(Skip = "Must create an abstraction for GooglePhotosService")]
     public async Task UploadImage_UploadsTestImage()
     {
         var images = new List<string> {
@@ -25,7 +29,14 @@ public class GooglePhotosTests(GooglePhotosFixture _fixture) : IClassFixture<Goo
             TestDataHelper.Waterfall
         };
 
-        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository();
+        var googlePhotosClient = new Mock<IGooglePhotosHttpClient>();
+        googlePhotosClient.Setup(c => c.UploadPhoto(
+            It.IsAny<UserCredential>(),
+            It.IsAny<string>(),
+            It.IsAny<byte[]>()))
+            .ReturnsAsync(Result<string>.Success(Guid.NewGuid().ToString()));
+
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(googlePhotosClient.Object);
         var uploadedItems = await googlePhotosRepository.UploadImagesToAlbum(images, TestAlbumName);
 
         Assert.Equal(images.Count, uploadedItems);
