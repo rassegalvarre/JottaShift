@@ -6,20 +6,18 @@ using Moq;
 
 namespace JottaShift.Tests.GooglePhotos;
 
-[Trait("API", "Google")]
 public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassFixture<GooglePhotosFixture>
 {
-    private const string TestAlbumName = "JottaShift.UnitTests";
 
+    [Fact]
+    public async Task GetOrCreateAlbum_ShouldGetExistingAlbum()
+    {
 
-    //[Fact]
-    //public async Task GetOrCreateAlbum_CreateOrGetsAlbum_WithAlbumName()
-    //{
-    //    var googlePhotosRepository = _fixture.CreateGooglePhotosRepository();
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository();
 
-    //    var album = await googlePhotosRepository.GetOrCreateAlbum(TestAlbumName);
-    //    Assert.NotNull(album);
-    //}
+        var album = await googlePhotosRepository.GetOrCreateAlbum(_fixture.TestAlbumName);
+        Assert.NotNull(album);
+    }
 
     //[Fact(Skip = "Must create an abstraction for GooglePhotosService")]
     //public async Task UploadImage_UploadsTestImage()

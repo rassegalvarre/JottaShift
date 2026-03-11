@@ -8,8 +8,11 @@ namespace JottaShift.Tests.GooglePhotos;
 
 public class GooglePhotosFixture : IDisposable
 {
-    public string ValidPhotoDirectoryPath = @"C:\Photos";
-    public string ValidPhotoFileName = @"C:\Photos\photo.jpg";
+    public readonly string TestAlbumName = "JottaShift.UnitTests";
+    
+    public readonly string ValidPhotoDirectoryPath = @"C:\Photos";
+    public readonly string ValidPhotoFileName = "photo.jpg";
+
     public string ValidPhotoFullPath => Path.Combine(ValidPhotoDirectoryPath, ValidPhotoFileName);
 
     public GooglePhotosLibraryApiCredentials MockGooglePhotosLibraryApiCredentials = new()
