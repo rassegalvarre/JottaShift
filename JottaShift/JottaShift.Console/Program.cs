@@ -42,14 +42,7 @@ var host = Host.CreateDefaultBuilder(args)
         });
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileStorage, FileStorageService>();
-        services.AddSingleton<IGooglePhotosLibraryFacade>(provider =>
-        {
-            var logger = provider.GetRequiredService<ILogger<GooglePhotosLibraryFacade>>();
-            // TODO: Implement credential retrieval
-            Func<Task<Google.Apis.Auth.OAuth2.UserCredential>> getCredentialAsync = 
-                async () => await Task.FromResult(null as Google.Apis.Auth.OAuth2.UserCredential);
-            return new GooglePhotosLibraryFacade(logger, getCredentialAsync);
-        });
+        services.AddSingleton<IGooglePhotosLibraryFacade, GooglePhotosLibraryFacade>();
         services.AddScoped<IGooglePhotosHttpClient, GooglePhotosHttpClient>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
         services.AddScoped<IJottacloudHttpClient, JottacloudHttpClient>();

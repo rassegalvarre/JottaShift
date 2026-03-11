@@ -2,34 +2,100 @@
 using Google.Apis.PhotosLibrary.v1;
 using Google.Apis.PhotosLibrary.v1.Data;
 using Google.Apis.Services;
+using Google.Apis.Util.Store;
+using JottaShift.Core.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosLibraryFacade : IGooglePhotosLibraryFacade
 {
+    private readonly GooglePhotosLibraryApiCredentials _apiCredentials;
     private readonly ILogger<GooglePhotosLibraryFacade> _logger;
-    private readonly Func<Task<UserCredential>> _getCredentialAsync;
     private readonly Lazy<Task<PhotosLibraryService>> _photoLibraryService;
+    private UserCredential? _userCredential;
+
+    private readonly string[] _scopes = [
+        PhotosLibraryService.Scope.PhotoslibraryAppendonly,
+        PhotosLibraryService.Scope.PhotoslibraryReadonlyAppcreateddata
+    ];
 
     public GooglePhotosLibraryFacade(
-        ILogger<GooglePhotosLibraryFacade> logger,
-        Func<Task<UserCredential>> getCredentialAsync)
+        GooglePhotosLibraryApiCredentials apiCredentials,
+        ILogger<GooglePhotosLibraryFacade> logger)
     {
+        if (EnvironmentVariableManager.GooglePhotosLibraryApiProjectId == null ||
+            EnvironmentVariableManager.GooglePhotosLibraryApiClientId == null ||
+            EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret == null)
+        {
+            throw new InvalidOperationException("Required environment variables for Google Photos API are not set.");
+        }
+
+        _apiCredentials = apiCredentials;
+        _apiCredentials.installed.project_id = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
+        _apiCredentials.installed.client_id = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
+        _apiCredentials.installed.client_secret = EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
+
         _logger = logger;
-        _getCredentialAsync = getCredentialAsync;
         _photoLibraryService = new Lazy<Task<PhotosLibraryService>>(InitializeServiceAsync());
+    }
+
+    private async Task<Result<UserCredential>> GetCredentialAsync()
+    {
+        if (_userCredential != null)
+        {
+            if (_userCredential.Token.IsStale)
+            {
+                var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
+                if (!refreshed)
+                {
+                    return Result<UserCredential>.Failure("Could not refresh user credentials");
+                }
+            }
+            return Result<UserCredential>.Success(_userCredential);
+        }
+
+        var json = JsonSerializer.Serialize(_apiCredentials);
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+
+        var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
+
+        // Token will be stored in the token.json folder
+        var credPath = "token.json";
+        UserCredential newCredentials;
+        try
+        {
+            newCredentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                secretsResult.Secrets,
+                _scopes,
+                "user",
+                CancellationToken.None,
+                new FileDataStore(credPath, true));
+        }
+        catch (Exception ex)
+        {
+            return Result<UserCredential>.Failure($"Failed to authorize user credentials: {ex.Message}");
+        }
+
+        _userCredential = newCredentials;
+        return Result<UserCredential>.Success(_userCredential);
     }
 
     private async Task<PhotosLibraryService> InitializeServiceAsync()
     {
         _logger.LogInformation("Initializing PhotosLibraryService");
 
-        var credential = await _getCredentialAsync();
+        var credential = await GetCredentialAsync();
+        if (!credential.Succeeded)
+        {
+            _logger.LogError("Failed to obtain user credentials: {ErrorMessage}", credential.ErrorMessage);
+            throw new Exception();
+        }
 
         var service = new PhotosLibraryService(new BaseClientService.Initializer()
         {
-            HttpClientInitializer = credential,
+            HttpClientInitializer = credential.Value,
             ApplicationName = "JottaShift"
         });
 
