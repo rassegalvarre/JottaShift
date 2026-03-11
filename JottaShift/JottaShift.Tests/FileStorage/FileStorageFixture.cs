@@ -8,7 +8,9 @@ namespace JottaShift.Tests.FileStorage;
 
 public class FileStorageFixture : IDisposable
 {
-    public readonly string BaseDirectory = @"C:\FileStorage"; 
+    public readonly string BaseDirectory = @"C:\FileStorage";
+    public string SomeValidFileName => "SomeFile.pdf";
+    public string SomeValidFileFullPath => Path.Combine(BaseDirectory, SomeValidFileName);
 
     public FileStorageService CreateFileStorageService(IFileSystem? fileSystem = null)
     {

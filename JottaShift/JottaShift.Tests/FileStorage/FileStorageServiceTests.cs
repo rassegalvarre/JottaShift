@@ -26,7 +26,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         Assert.False(isValidFileNameResult.Succeeded);
     }
 
-    
+
     [Theory]
     [InlineData("simpleFile.png")]
     [InlineData("doubleExtension.jpg.png")]
@@ -73,6 +73,73 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
     #endregion
 
+    #region GetFileContent
+    [Fact]
+    public async Task GetFileContent_ShouldReturnFailedResult_WhenFileNotFound()
+    {
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.BaseDirectory, new MockDirectoryData() }
+        });
+        var fileStorage = _fixture.CreateFileStorageService(fileSystem);
+
+        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+        
+        Assert.False(contentResult.Succeeded);
+        Assert.Null(contentResult.Value);
+    }
+
+    [Fact]
+    public async Task GetFileContent_ShouldReturnFailedResult_WhenFileIsEmpty()
+    {
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.SomeValidFileFullPath, new MockFileData([]) }
+        });
+        var fileStorage = _fixture.CreateFileStorageService(fileSystem);
+
+        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+
+        Assert.False(contentResult.Succeeded);
+        Assert.Null(contentResult.Value);
+    }
+
+    [Fact]
+    public async Task GetFileContent_ShouldReturnFailedResult_WhenExceptionIsThrown()
+    {
+        var mockFileSystem = new Mock<IFileSystem>();
+        mockFileSystem.Setup(fs => fs.File.Exists(It.IsAny<string>()))
+            .Returns(true);
+
+        mockFileSystem.Setup(fs => fs.File.ReadAllBytesAsync(It.IsAny<string>()))
+            .Throws(new IOException("Simulated IO exception"));
+
+        var fileStorage = _fixture.CreateFileStorageService(mockFileSystem.Object);
+
+        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+
+        Assert.False(contentResult.Succeeded);
+        Assert.Null(contentResult.Value);
+    }
+
+
+    [Fact]
+    public async Task GetFileContent_ShouldReturnSuccessfullResult_WhenContentIsValid()
+    {
+        byte[] fileContnet = [1, 2, 3, 4, 5];
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.SomeValidFileFullPath, new MockFileData(fileContnet) }
+        });
+        var fileStorage = _fixture.CreateFileStorageService(fileSystem);
+
+        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+
+        Assert.True(contentResult.Succeeded);
+        Assert.Equal(fileContnet, contentResult.Value);
+    }
+    #endregion
+    
     [Fact]
     public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
     {
