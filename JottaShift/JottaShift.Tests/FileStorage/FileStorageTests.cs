@@ -311,6 +311,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void GetImageDate_ReturnsDateTakenExiffTag_WhenFileFound()
     {
         var fileSystem = new FileSystem();
@@ -557,6 +558,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void FilesAreBitPerfectMatch_DoesMatch_WhenCopyOfImage()
     {
         var fileStorageService = new FileStorageService(
@@ -569,6 +571,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void DoesFileMetadataMatch_DoesNotMatch_WhenDifferentImages()
     {
         var fileStorageService = new FileStorageService(
@@ -581,6 +584,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void DoesFileMetadataMatch_DoesMatch_WhenCopyOfSameImage()
     {
         var fileStorageService = new FileStorageService(
@@ -593,6 +597,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void GetImageResolution_GetResolutionForTestFile()
     {
         var fileStorageService = new FileStorageService(

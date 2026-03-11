@@ -16,6 +16,7 @@ public class JottacloudFixture : IDisposable
         TestAlbumId = "imjg7a52t61g"
     };
 
+    // TODO: Reanme to CreateMockJottacloudHttpClient
     public JottacloudHttpClient CreateJottacloudClient(IHttpClientWrapper? httpClientWrapper = null)
     {
         httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;

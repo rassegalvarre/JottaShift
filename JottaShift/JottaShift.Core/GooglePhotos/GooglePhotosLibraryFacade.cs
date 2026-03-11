@@ -25,7 +25,7 @@ public class GooglePhotosLibraryFacade : IGooglePhotosLibraryFacade
     {
         _logger.LogInformation("Initializing PhotosLibraryService");
 
-        var credential = await _userCredentialManager.GetCredentialAsync();
+        var credential = await _userCredentialManager.GetUserCredentialAsync();
         if (!credential.Succeeded)
         {
             _logger.LogError("Failed to obtain user credentials: {ErrorMessage}", credential.ErrorMessage);

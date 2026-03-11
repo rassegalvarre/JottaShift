@@ -16,7 +16,7 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
     private UserCredential? _userCredential;
 
     // TODO: Try to read .json-file in token.json
-    public async Task<Result<UserCredential>> GetCredentialAsync()
+    public async Task<Result<UserCredential>> GetUserCredentialAsync()
     {
         if (_userCredential != null)
         {
@@ -68,4 +68,14 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
         return Result<UserCredential>.Success(_userCredential);
     }
 
+    public async Task<Result<string>> GetAccessTokenAsync()
+    {
+        var credentialResult = await GetUserCredentialAsync();
+        if (!credentialResult.Succeeded || credentialResult.Value is null)
+        {
+            return Result<string>.Failure(credentialResult.ErrorMessage ?? "Failed to obtain user credentials");
+        }
+
+        return Result<string>.Success(credentialResult.Value.Token.AccessToken);
+    }
 }

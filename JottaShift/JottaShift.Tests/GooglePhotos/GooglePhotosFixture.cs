@@ -1,4 +1,5 @@
 ﻿using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -19,6 +20,19 @@ public class GooglePhotosFixture : IDisposable
             token_uri = string.Empty
         }
     };
+
+    public GooglePhotosHttpClient CreateGooglePhotosHttpClient(
+        IHttpClientWrapper? httpClientWrapper = null,
+        IUserCredentialManager? userCredentialManager= null)
+    {
+        httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;
+        userCredentialManager ??= new Mock<IUserCredentialManager>().Object;
+
+        return new GooglePhotosHttpClient(
+            httpClientWrapper,
+            userCredentialManager,
+            new Mock<ILogger<GooglePhotosHttpClient>>().Object);
+    }
 
     public GooglePhotosRepository CreateGooglePhotosRepository(
         IGooglePhotosLibraryFacade? googlePhotosLibraryFacade= null,

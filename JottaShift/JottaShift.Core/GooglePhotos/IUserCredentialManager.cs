@@ -4,5 +4,6 @@ namespace JottaShift.Core.GooglePhotos;
 
 public interface IUserCredentialManager
 {
-    Task<Result<UserCredential>> GetCredentialAsync();
+    Task<Result<UserCredential>> GetUserCredentialAsync();
+    Task<Result<string>> GetAccessTokenAsync();
 }

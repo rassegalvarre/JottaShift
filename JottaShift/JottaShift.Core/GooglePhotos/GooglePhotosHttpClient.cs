@@ -22,13 +22,13 @@ public class GooglePhotosHttpClient : IGooglePhotosHttpClient
         _logger = logger;
     }
 
-    public async Task<Result<string>> UploadPhoto(string fileName, byte[] fileData)
+    public async Task<Result<string>> UploadPhotoAsync(string fileName, byte[] fileData)
     {
-        var credentialResult = await _userCredentialManager.GetCredentialAsync();
-        if (!credentialResult.Succeeded || credentialResult.Value is null)
+        var accessTokenResult = await _userCredentialManager.GetAccessTokenAsync();
+        if (!accessTokenResult.Succeeded || accessTokenResult.Value is null)
         {
-            _logger.LogError("Failed to get user credential: {ErrorMessage}", credentialResult.ErrorMessage);
-            return Result<string>.Failure("Failed to get user credential.");
+            _logger.LogError("Failed to get access token: {ErrorMessage}", accessTokenResult.ErrorMessage);
+            return Result<string>.Failure("Failed to get access token.");
         }
 
         const string uploadUrl = "uploads";
@@ -39,7 +39,7 @@ public class GooglePhotosHttpClient : IGooglePhotosHttpClient
         };
 
         // Required headers (see Google docs)
-        request.Headers.Add("Authorization", $"Bearer {credentialResult.Value.Token.AccessToken}");
+        request.Headers.Add("Authorization", $"Bearer {accessTokenResult.Value}");
         request.Headers.Add("X-Goog-Upload-File-Name", fileName);
         request.Headers.Add("X-Goog-Upload-Protocol", "raw");
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");

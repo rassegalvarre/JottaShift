@@ -35,7 +35,7 @@ public class GooglePhotosRepository(
             string fileName = Path.GetFileName(image);
             var fileData = await File.ReadAllBytesAsync(image);
 
-            var tokenResult = await _googlePhotosClient.UploadPhoto(fileName, fileData);
+            var tokenResult = await _googlePhotosClient.UploadPhotoAsync(fileName, fileData);
             if (tokenResult.Succeeded && tokenResult.Value is not null)
             {
                 uploadTokens.Add(tokenResult.Value);
