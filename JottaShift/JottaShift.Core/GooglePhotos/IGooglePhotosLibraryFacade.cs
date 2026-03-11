@@ -1,4 +1,5 @@
 ﻿using Google.Apis.PhotosLibrary.v1;
+using Google.Apis.PhotosLibrary.v1.Data;
 
 namespace JottaShift.Core.GooglePhotos;
 
@@ -9,4 +10,5 @@ namespace JottaShift.Core.GooglePhotos;
 /// </summary>
 public interface IGooglePhotosLibraryFacade
 {
+    Task<Result<Album>> GetAlbumAsync(string albumName);
 }
