@@ -41,7 +41,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
 
         var mockUserCredentialManager = new Mock<IUserCredentialManager>();
         mockUserCredentialManager.Setup(m => m.GetAccessTokenAsync())
-            .ReturnsAsync(Result<string>.Failure("Failed to get crentials"));
+            .ReturnsAsync(Result<string>.Failure("Failed to get credentials"));
 
         var googlePhotosHttpClient = _fixture.CreateGooglePhotosHttpClient(
             fileStorage: mockFileStorage.Object,
@@ -66,13 +66,11 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
             .ReturnsAsync(Result<byte[]>.Success([]));
 
         var mockUserCredentialManager = new Mock<IUserCredentialManager>();
-        mockUserCredentialManager
-            .Setup(m => m.GetAccessTokenAsync())
+        mockUserCredentialManager.Setup(m => m.GetAccessTokenAsync())
             .ReturnsAsync(Result<string>.Success(Guid.NewGuid().ToString()));
 
         var mockHttpClientWrapper = new Mock<IHttpClientWrapper>();
-        mockHttpClientWrapper
-            .Setup(client => client.SendAsync<string>(It.IsAny<HttpRequestMessage>()))
+        mockHttpClientWrapper.Setup(client => client.SendAsync<string>(It.IsAny<HttpRequestMessage>()))
             .ReturnsAsync(new HttpSendResult<string>(HttpStatusCode.Forbidden, errorMessage: "Upload failed"));
 
         var googlePhotosHttpClient = _fixture.CreateGooglePhotosHttpClient(
@@ -98,8 +96,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
             .ReturnsAsync(Result<byte[]>.Success([]));
 
         var mockUserCredentialManager = new Mock<IUserCredentialManager>();
-        mockUserCredentialManager
-            .Setup(m => m.GetAccessTokenAsync())
+        mockUserCredentialManager.Setup(m => m.GetAccessTokenAsync())
             .ReturnsAsync(Result<string>.Success(Guid.NewGuid().ToString()));
 
         string expectedUploadToken = Guid.NewGuid().ToString();
