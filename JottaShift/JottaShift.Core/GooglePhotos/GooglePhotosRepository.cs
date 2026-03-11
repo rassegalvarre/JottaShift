@@ -28,7 +28,7 @@ public class GooglePhotosRepository(
             return Result<int>.Failure("Could not find album");
         }
 
-        List<string> uploadTokens = new();
+        List<string> uploadTokens = [];
         foreach (var photoPath in photosFullPaths)
         {
             var tokenResult = await _googlePhotosClient.UploadPhotoAsync(photoPath);
