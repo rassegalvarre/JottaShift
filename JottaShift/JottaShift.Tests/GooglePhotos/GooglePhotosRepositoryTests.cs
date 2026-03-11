@@ -7,7 +7,7 @@ using Moq;
 namespace JottaShift.Tests.GooglePhotos;
 
 [Trait("API", "Google")]
-public class GooglePhotosTests(GooglePhotosFixture _fixture) : IClassFixture<GooglePhotosFixture>
+public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassFixture<GooglePhotosFixture>
 {
     private const string TestAlbumName = "JottaShift.UnitTests";
 
