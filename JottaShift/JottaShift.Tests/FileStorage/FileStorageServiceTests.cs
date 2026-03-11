@@ -7,7 +7,7 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests.FileStorage;
 
-public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
+public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
 {
     [Theory]
     [InlineData(null)]
