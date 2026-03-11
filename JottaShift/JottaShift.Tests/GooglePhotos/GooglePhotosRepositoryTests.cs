@@ -23,7 +23,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
 
-        var albumResult = await googlePhotosRepository.GetOrCreateAlbum(_fixture.TestAlbumName);
+        var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
         Assert.True(albumResult.Succeeded);
         Assert.NotNull(albumResult.Value);
@@ -48,7 +48,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
 
-        var albumResult = await googlePhotosRepository.GetOrCreateAlbum(_fixture.TestAlbumName);
+        var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
         Assert.True(albumResult.Succeeded);
         Assert.NotNull(albumResult.Value);
@@ -67,12 +67,14 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
 
-        var albumResult = await googlePhotosRepository.GetOrCreateAlbum(_fixture.TestAlbumName);
+        var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
         Assert.False(albumResult.Succeeded);
         Assert.Null(albumResult.Value);
     }
     #endregion
+
+    #region
 
     //[Fact(Skip = "Must create an abstraction for GooglePhotosService")]
     //public async Task UploadImage_UploadsTestImage()

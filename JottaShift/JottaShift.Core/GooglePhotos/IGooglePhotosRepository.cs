@@ -8,5 +8,5 @@ public interface IGooglePhotosRepository
     /// <param name="albumName">Album full name</param>
     /// <param name="photosFullPath">Full file-path for the photos to be uploaded</param>
     /// <returns>A <see cref="Result[T]" with the number of images uploaded/></returns>
-    Task<Result<int>> UploadPhotosToAlbum(string albumName, IEnumerable<string> photosFullPath);
+    Task<Result<int>> UploadPhotosToAlbumAsync(string albumName, IEnumerable<string> photosFullPath);
 }

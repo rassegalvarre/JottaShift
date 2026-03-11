@@ -8,7 +8,7 @@ public class GooglePhotosRepository(
     IGooglePhotosHttpClient _googlePhotosClient,
     ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
-    public async Task<Result<Album>> GetOrCreateAlbum(string albumName)
+    public async Task<Result<Album>> GetOrCreateAlbumAsync(string albumName)
     {
         var albumResult = await _photosLibraryFacade.GetAlbumFromTitleAsync(albumName);
         if (albumResult.Succeeded && albumResult.Value is not null)
@@ -19,9 +19,9 @@ public class GooglePhotosRepository(
         return await _photosLibraryFacade.CreateAlbumAsync(albumName);
     }
  
-    public async Task<Result<int>> UploadPhotosToAlbum(string albumName, IEnumerable<string> photosFullPaths)
+    public async Task<Result<int>> UploadPhotosToAlbumAsync(string albumName, IEnumerable<string> photosFullPaths)
     {
-        var albumResult = await GetOrCreateAlbum(albumName);
+        var albumResult = await GetOrCreateAlbumAsync(albumName);
         if (!albumResult.Succeeded || albumResult.Value is null)
         {
             _logger.LogError("Failed to get or create album {AlbumName}. Error: {ErrorMessage}", albumName, albumResult.ErrorMessage);

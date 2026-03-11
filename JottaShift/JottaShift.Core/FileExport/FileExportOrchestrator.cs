@@ -39,7 +39,7 @@ public sealed class FileExportOrchestrator(
             .Where(p => !string.IsNullOrEmpty(p.LocalFilePath))
             .Select(p => p.LocalFilePath!);
 
-        var photoUploadResult = await _googlePhotosRepository.UploadPhotosToAlbum(
+        var photoUploadResult = await _googlePhotosRepository.UploadPhotosToAlbumAsync(
             job.TargetGooglePhotosAlbumName,
             photosToUpload);
         if (!photoUploadResult.Succeeded || photoUploadResult.Value is 0)
