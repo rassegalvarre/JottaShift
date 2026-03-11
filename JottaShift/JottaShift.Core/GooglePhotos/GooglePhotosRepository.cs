@@ -20,7 +20,7 @@ public class GooglePhotosRepository(
         return newAlbumResult;
     }
  
-    public async Task<Result<int>> UploadPhotosToAlbum(IEnumerable<string> imagesFullPath, string albumName)
+    public async Task<Result<int>> UploadPhotosToAlbum(IEnumerable<string> photosFullPaths, string albumName)
     {
         var albumResult = await GetOrCreateAlbum(albumName);
         if (!albumResult.Succeeded || albumResult.Value is null)
@@ -30,12 +30,9 @@ public class GooglePhotosRepository(
         }
 
         List<string> uploadTokens = new();
-        foreach (var image in imagesFullPath)
+        foreach (var photoPath in photosFullPaths)
         {
-            string fileName = Path.GetFileName(image);
-            var fileData = await File.ReadAllBytesAsync(image);
-
-            var tokenResult = await _googlePhotosClient.UploadPhotoAsync(fileName, fileData);
+            var tokenResult = await _googlePhotosClient.UploadPhotoAsync(photoPath);
             if (tokenResult.Succeeded && tokenResult.Value is not null)
             {
                 uploadTokens.Add(tokenResult.Value);
@@ -43,7 +40,7 @@ public class GooglePhotosRepository(
             else
             {
                 _logger.LogError("Failed to upload image {ImagePath} to Google Photos. Error: {ErrorMessage}",
-                    image, tokenResult.ErrorMessage);
+                    photoPath, tokenResult.ErrorMessage);
             }
         }
 

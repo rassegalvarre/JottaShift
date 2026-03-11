@@ -9,6 +9,19 @@ namespace JottaShift.Tests.FileStorage;
 
 public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
 {
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("asdfsf")]
+    public async Task IsValidFileName_ShouldDetectInvalidNames(string? fileName)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        var isValidFileName = fileStorage.IsValidFileName(fileName);
+
+        Assert.False(isValidFileName);
+    }
+
     [Fact]
     public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
     {

@@ -2,6 +2,12 @@
 
 public interface IFileStorage
 {
+    bool IsValidFileName(string fileName);
+
+    Result<string> GetFileName(string fileFullPath);
+    
+    Task<Result<byte[]>> GetFileContent(string fileFullPath);
+
     Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true);
 
     bool DeleteFile(string fileFullPath);

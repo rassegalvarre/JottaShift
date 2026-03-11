@@ -1,4 +1,5 @@
-﻿using JottaShift.Core.GooglePhotos;
+﻿using JottaShift.Core.FileStorage;
+using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -7,6 +8,10 @@ namespace JottaShift.Tests.GooglePhotos;
 
 public class GooglePhotosFixture : IDisposable
 {
+    public string ValidPhotoDirectoryPath = @"C:\Photos";
+    public string ValidPhotoFileName = @"C:\Photos\photo.jpg";
+    public string ValidPhotoFullPath => Path.Combine(ValidPhotoDirectoryPath, ValidPhotoFileName);
+
     public GooglePhotosLibraryApiCredentials MockGooglePhotosLibraryApiCredentials = new()
     {
         installed = new()
@@ -22,13 +27,16 @@ public class GooglePhotosFixture : IDisposable
     };
 
     public GooglePhotosHttpClient CreateGooglePhotosHttpClient(
+        IFileStorage? fileStorage = null,
         IHttpClientWrapper? httpClientWrapper = null,
         IUserCredentialManager? userCredentialManager= null)
     {
+        fileStorage ??= new Mock<IFileStorage>().Object;
         httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;
         userCredentialManager ??= new Mock<IUserCredentialManager>().Object;
 
         return new GooglePhotosHttpClient(
+            fileStorage,
             httpClientWrapper,
             userCredentialManager,
             new Mock<ILogger<GooglePhotosHttpClient>>().Object);

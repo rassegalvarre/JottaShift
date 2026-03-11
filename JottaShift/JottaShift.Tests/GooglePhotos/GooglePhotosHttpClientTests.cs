@@ -1,4 +1,5 @@
 ﻿using JottaShift.Core;
+using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.HttpClientWrapper;
 using Moq;
@@ -9,16 +10,19 @@ namespace JottaShift.Tests.GooglePhotos;
 public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassFixture<GooglePhotosFixture>
 {
     [Fact]
-    public async Task UploadPhot_ShouldReturnFailedResult_WhenFailedToGetUserCredentials()
+    public async Task UploadPhotoAsync_ShouldReturnFailedResult_WhenInvalidFileNameAndContent()
     {
-        var mockUserCredentialManager = new Mock<IUserCredentialManager>();
-        mockUserCredentialManager.Setup(m => m.GetAccessTokenAsync())
-            .ReturnsAsync(Result<string>.Failure("Failed to get crentials"));
+        var mockFileStorage = new Mock<IFileStorage>();
+        mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
+            .Returns(Result<string>.Failure("Invalid name"));
+
+        mockFileStorage.Setup(m => m.GetFileContent(It.IsAny<string>()))
+            .ReturnsAsync(Result<byte[]>.Failure("Invalid data"));
 
         var googlePhotosHttpClient = _fixture.CreateGooglePhotosHttpClient(
-            userCredentialManager: mockUserCredentialManager.Object);
+            fileStorage: mockFileStorage.Object);
 
-        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync("test.jpg", [0x01, 0x02]);
+        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
 
         Assert.False(uploadPhotoResult.Succeeded);
         Assert.Null(uploadPhotoResult.Value);
@@ -26,8 +30,41 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
     }
 
     [Fact]
-    public async Task UploadPhot_ShouldReturnFailedResult_WhenUploadFailed()
-    {        
+    public async Task UploadPhotoAsync_ShouldReturnFailedResult_WhenFailedToGetUserCredentials()
+    {
+        var mockFileStorage = new Mock<IFileStorage>();
+        mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
+            .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
+
+        mockFileStorage.Setup(m => m.GetFileContent(It.IsAny<string>()))
+            .ReturnsAsync(Result<byte[]>.Success([]));
+
+        var mockUserCredentialManager = new Mock<IUserCredentialManager>();
+        mockUserCredentialManager.Setup(m => m.GetAccessTokenAsync())
+            .ReturnsAsync(Result<string>.Failure("Failed to get crentials"));
+
+        var googlePhotosHttpClient = _fixture.CreateGooglePhotosHttpClient(
+            fileStorage: mockFileStorage.Object,
+            userCredentialManager: mockUserCredentialManager.Object);
+
+        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
+
+        Assert.False(uploadPhotoResult.Succeeded);
+        Assert.Null(uploadPhotoResult.Value);
+        Assert.NotNull(uploadPhotoResult.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task UploadPhotoAsync_ShouldReturnFailedResult_WhenUploadFailed()
+    {
+
+        var mockFileStorage = new Mock<IFileStorage>();
+        mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
+            .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
+
+        mockFileStorage.Setup(m => m.GetFileContent(It.IsAny<string>()))
+            .ReturnsAsync(Result<byte[]>.Success([]));
+
         var mockUserCredentialManager = new Mock<IUserCredentialManager>();
         mockUserCredentialManager
             .Setup(m => m.GetAccessTokenAsync())
@@ -36,16 +73,51 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
         var mockHttpClientWrapper = new Mock<IHttpClientWrapper>();
         mockHttpClientWrapper
             .Setup(client => client.SendAsync<string>(It.IsAny<HttpRequestMessage>()))
-            .ReturnsAsync(new HttpSendResult<string>(HttpStatusCode.Forbidden, "Upload failed"));
+            .ReturnsAsync(new HttpSendResult<string>(HttpStatusCode.Forbidden, errorMessage: "Upload failed"));
 
         var googlePhotosHttpClient = _fixture.CreateGooglePhotosHttpClient(
+            fileStorage: mockFileStorage.Object,
             userCredentialManager: mockUserCredentialManager.Object,
             httpClientWrapper: mockHttpClientWrapper.Object);
 
-        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync("test.jpg", [0x01, 0x02]);
+        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
 
         Assert.False(uploadPhotoResult.Succeeded);
         Assert.Null(uploadPhotoResult.Value);
         Assert.NotNull(uploadPhotoResult.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task UploadPhotoAsync_ShouldReturnUploadToken_WhenUploadSucceeded()
+    {
+        var mockFileStorage = new Mock<IFileStorage>();
+        mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
+            .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
+
+        mockFileStorage.Setup(m => m.GetFileContent(It.IsAny<string>()))
+            .ReturnsAsync(Result<byte[]>.Success([]));
+
+        var mockUserCredentialManager = new Mock<IUserCredentialManager>();
+        mockUserCredentialManager
+            .Setup(m => m.GetAccessTokenAsync())
+            .ReturnsAsync(Result<string>.Success(Guid.NewGuid().ToString()));
+
+        string expectedUploadToken = Guid.NewGuid().ToString();
+
+        var mockHttpClientWrapper = new Mock<IHttpClientWrapper>();
+        mockHttpClientWrapper
+            .Setup(client => client.SendAsync<string>(It.IsAny<HttpRequestMessage>()))
+            .ReturnsAsync(new HttpSendResult<string>(HttpStatusCode.OK, data: expectedUploadToken));
+
+        var googlePhotosHttpClient = _fixture.CreateGooglePhotosHttpClient(
+            fileStorage: mockFileStorage.Object,
+            userCredentialManager: mockUserCredentialManager.Object,
+            httpClientWrapper: mockHttpClientWrapper.Object);
+
+        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
+
+        Assert.True(uploadPhotoResult.Succeeded);
+        Assert.Equal(expectedUploadToken, uploadPhotoResult.Value);
+        Assert.Null(uploadPhotoResult.ErrorMessage);
     }
 }
