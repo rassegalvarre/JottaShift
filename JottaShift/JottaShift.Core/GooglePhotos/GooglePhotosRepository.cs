@@ -16,8 +16,7 @@ public class GooglePhotosRepository(
             return albumResult;
         }
 
-        var newAlbumResult = await _photosLibraryFacade.CreateAlbumAsync(albumName);
-        return newAlbumResult;
+        return await _photosLibraryFacade.CreateAlbumAsync(albumName);
     }
  
     public async Task<Result<int>> UploadPhotosToAlbum(string albumName, IEnumerable<string> photosFullPaths)

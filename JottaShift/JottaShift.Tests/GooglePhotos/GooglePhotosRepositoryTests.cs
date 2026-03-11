@@ -1,23 +1,78 @@
-﻿using Google.Apis.Auth.OAuth2;
-using JottaShift.Core.GooglePhotos;
+﻿using Google.Apis.PhotosLibrary.v1.Data;
 using JottaShift.Core;
-using JottaShift.Tests.TestData;
+using JottaShift.Core.GooglePhotos;
 using Moq;
 
 namespace JottaShift.Tests.GooglePhotos;
 
 public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassFixture<GooglePhotosFixture>
 {
-
+    #region GetOrCreateAlbum
     [Fact]
     public async Task GetOrCreateAlbum_ShouldGetExistingAlbum()
     {
+        Album existingAlbum = new()
+        {
+            Id = "existing-album-id",
+            Title = _fixture.TestAlbumName
+        };
 
-        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository();
+        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
+        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<Album>.Success(existingAlbum));
 
-        var album = await googlePhotosRepository.GetOrCreateAlbum(_fixture.TestAlbumName);
-        Assert.NotNull(album);
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
+
+        var albumResult = await googlePhotosRepository.GetOrCreateAlbum(_fixture.TestAlbumName);
+
+        Assert.True(albumResult.Succeeded);
+        Assert.NotNull(albumResult.Value);
+        Assert.Equal(existingAlbum.Id, albumResult.Value.Id);
     }
+
+    [Fact]
+    public async Task GetOrCreateAlbum_ShouldCreateNewWhenNoneExist()
+    {
+        Album newAlbum = new()
+        {
+            Id = "new-album-id",
+            Title = _fixture.TestAlbumName
+        };
+
+        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
+        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<Album>.Failure("Not found"));
+
+        mockGooglePhotosLibraryFacade.Setup(f => f.CreateAlbumAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<Album>.Success(newAlbum));
+
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
+
+        var albumResult = await googlePhotosRepository.GetOrCreateAlbum(_fixture.TestAlbumName);
+
+        Assert.True(albumResult.Succeeded);
+        Assert.NotNull(albumResult.Value);
+        Assert.Equal(newAlbum.Id, albumResult.Value.Id);
+    }
+
+    [Fact]
+    public async Task GetOrCreateAlbum_ShouldReturnFailure_WhenUnableToCreateNewAlbum()
+    {
+        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
+        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<Album>.Failure("Not found"));
+
+        mockGooglePhotosLibraryFacade.Setup(f => f.CreateAlbumAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<Album>.Failure("Cant create"));
+
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
+
+        var albumResult = await googlePhotosRepository.GetOrCreateAlbum(_fixture.TestAlbumName);
+
+        Assert.False(albumResult.Succeeded);
+        Assert.Null(albumResult.Value);
+    }
+    #endregion
 
     //[Fact(Skip = "Must create an abstraction for GooglePhotosService")]
     //public async Task UploadImage_UploadsTestImage()
