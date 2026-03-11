@@ -9,9 +9,10 @@ namespace JottaShift.Tests.FileStorage;
 
 public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
 {
+    #region IsValidFileName
     [Theory]
     [InlineData("")]
-    [InlineData("cleanString.")]
+    [InlineData("cleanString")]
     [InlineData("nameWithoutExtension.")]
     [InlineData("?name*With/Invalid:Chars>")]
     [InlineData(@"C:\fullyRooted\fileFullPath.tiff")]
@@ -20,9 +21,9 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     {
         var fileStorage = _fixture.CreateFileStorageService();
 
-        var isValidFileName = fileStorage.IsValidFileName(fileName);
+        var isValidFileNameResult = fileStorage.IsValidFileName(fileName);
 
-        Assert.False(isValidFileName.Succeeded);
+        Assert.False(isValidFileNameResult.Succeeded);
     }
 
     
@@ -34,10 +35,43 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     {
         var fileStorage = _fixture.CreateFileStorageService();
 
-        var isValidFileName = fileStorage.IsValidFileName(fileName);
+        var isValidFileNameResult = fileStorage.IsValidFileName(fileName);
 
-        Assert.True(isValidFileName.Succeeded);
+        Assert.True(isValidFileNameResult.Succeeded);
     }
+    #endregion
+
+    #region GetFileName
+    [Theory]
+    [InlineData("")]
+    [InlineData("cleanString")]
+    [InlineData("nameWithoutExtension.")]
+    [InlineData("?name*With/Invalid:Chars>")]
+    [InlineData(@"notFullyRooted\file.cs")]
+    [InlineData(@"C:\fullyRooted\invalidFile*Name.")]
+
+    public async Task GetFileName_ShouldDetectInvalidFilePaths(string fileFullPath)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        var fileNameResult = fileStorage.GetFileName(fileFullPath);
+
+        Assert.False(fileNameResult.Succeeded);
+    }
+
+
+    [Theory]
+    [InlineData(@"C:\fullyRooted\fileFullPath.tiff")]
+    [InlineData(@"C:\fullyRooted\doubleExtension.tiff.jpg")]
+    public async Task GetFileName_ShouldDetectValidFilePaths(string fileFullPath)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        var fileNameResult = fileStorage.GetFileName(fileFullPath);
+
+        Assert.True(fileNameResult.Succeeded);
+    }
+    #endregion
 
     [Fact]
     public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
