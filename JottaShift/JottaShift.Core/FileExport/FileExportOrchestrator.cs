@@ -40,8 +40,8 @@ public sealed class FileExportOrchestrator(
             .Select(p => p.LocalFilePath!);
 
         var photoUploadResult = await _googlePhotosRepository.UploadPhotosToAlbum(
-            photosToUpload,
-            job.TargetGooglePhotosAlbumName);
+            job.TargetGooglePhotosAlbumName,
+            photosToUpload);
         if (!photoUploadResult.Succeeded || photoUploadResult.Value is 0)
         {
             return Result.Failure($"No files were uploaded to Google");

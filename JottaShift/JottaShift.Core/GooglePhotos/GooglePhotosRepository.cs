@@ -8,7 +8,7 @@ public class GooglePhotosRepository(
     IGooglePhotosHttpClient _googlePhotosClient,
     ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
-    private async Task<Result<Album>> GetOrCreateAlbum(string albumName)
+    public async Task<Result<Album>> GetOrCreateAlbum(string albumName)
     {
         var albumResult = await _photosLibraryFacade.GetAlbumFromTitleAsync(albumName);
         if (albumResult.Succeeded && albumResult.Value is not null)
@@ -20,7 +20,7 @@ public class GooglePhotosRepository(
         return newAlbumResult;
     }
  
-    public async Task<Result<int>> UploadPhotosToAlbum(IEnumerable<string> photosFullPaths, string albumName)
+    public async Task<Result<int>> UploadPhotosToAlbum(string albumName, IEnumerable<string> photosFullPaths)
     {
         var albumResult = await GetOrCreateAlbum(albumName);
         if (!albumResult.Succeeded || albumResult.Value is null)
