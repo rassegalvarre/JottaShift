@@ -10,5 +10,8 @@ namespace JottaShift.Core.GooglePhotos;
 /// </summary>
 public interface IGooglePhotosLibraryFacade
 {
-    Task<Result<Album>> GetAlbumAsync(string albumName);
+    Task<Result<Album>> GetAlbumFromTitleAsync(string albumName);
+    Task<Result<Album>> GetAlbumFromIdAsync(string albumId);
+    Task<Result<Album>> CreateAlbumAsync(string albumName);
+    Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens);
 }

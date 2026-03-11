@@ -7,18 +7,30 @@ namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosHttpClient : IGooglePhotosHttpClient
 {
-    private readonly ILogger<GooglePhotosHttpClient> _logger;
     private readonly IHttpClientWrapper _http;
+    private readonly IUserCredentialManager _userCredentialManager;
+    private readonly ILogger<GooglePhotosHttpClient> _logger;
 
-    public GooglePhotosHttpClient(IHttpClientWrapper http, ILogger<GooglePhotosHttpClient> logger)
+    public GooglePhotosHttpClient(
+        IHttpClientWrapper http,
+        IUserCredentialManager userCredentialManager,
+        ILogger<GooglePhotosHttpClient> logger)
     {
         _http = http;
         _http.BaseAddress = new Uri("https://photoslibrary.googleapis.com/v1/");
+        _userCredentialManager = userCredentialManager;
         _logger = logger;
     }
 
-    public async Task<Result<string>> UploadPhoto(UserCredential userCredential, string fileName, byte[] fileData)
+    public async Task<Result<string>> UploadPhoto(string fileName, byte[] fileData)
     {
+        var credentialResult = await _userCredentialManager.GetCredentialAsync();
+        if (!credentialResult.Succeeded || credentialResult.Value is null)
+        {
+            _logger.LogError("Failed to get user credential: {ErrorMessage}", credentialResult.ErrorMessage);
+            return Result<string>.Failure("Failed to get user credential.");
+        }
+
         const string uploadUrl = "uploads";
 
         var request = new HttpRequestMessage(HttpMethod.Post, uploadUrl)
@@ -27,7 +39,7 @@ public class GooglePhotosHttpClient : IGooglePhotosHttpClient
         };
 
         // Required headers (see Google docs)
-        request.Headers.Add("Authorization", $"Bearer {userCredential.Token.AccessToken}");
+        request.Headers.Add("Authorization", $"Bearer {credentialResult.Value.Token.AccessToken}");
         request.Headers.Add("X-Goog-Upload-File-Name", fileName);
         request.Headers.Add("X-Goog-Upload-Protocol", "raw");
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");

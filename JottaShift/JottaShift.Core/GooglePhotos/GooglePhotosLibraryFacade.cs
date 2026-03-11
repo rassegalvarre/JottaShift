@@ -1,92 +1,31 @@
-﻿using Google.Apis.Auth.OAuth2;
-using Google.Apis.PhotosLibrary.v1;
+﻿using Google.Apis.PhotosLibrary.v1;
 using Google.Apis.PhotosLibrary.v1.Data;
 using Google.Apis.Services;
-using Google.Apis.Util.Store;
-using JottaShift.Core.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosLibraryFacade : IGooglePhotosLibraryFacade
 {
-    private readonly GooglePhotosLibraryApiCredentials _apiCredentials;
     private readonly ILogger<GooglePhotosLibraryFacade> _logger;
+    private readonly IUserCredentialManager _userCredentialManager;
     private readonly Lazy<Task<PhotosLibraryService>> _photoLibraryService;
-    private UserCredential? _userCredential;
-
-    private readonly string[] _scopes = [
-        PhotosLibraryService.Scope.PhotoslibraryAppendonly,
-        PhotosLibraryService.Scope.PhotoslibraryReadonlyAppcreateddata
-    ];
 
     public GooglePhotosLibraryFacade(
-        GooglePhotosLibraryApiCredentials apiCredentials,
+        IUserCredentialManager userCredentialManager,
         ILogger<GooglePhotosLibraryFacade> logger)
     {
-        if (EnvironmentVariableManager.GooglePhotosLibraryApiProjectId == null ||
-            EnvironmentVariableManager.GooglePhotosLibraryApiClientId == null ||
-            EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret == null)
-        {
-            throw new InvalidOperationException("Required environment variables for Google Photos API are not set.");
-        }
-
-        _apiCredentials = apiCredentials;
-        _apiCredentials.installed.project_id = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
-        _apiCredentials.installed.client_id = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
-        _apiCredentials.installed.client_secret = EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
-
         _logger = logger;
+        _userCredentialManager = userCredentialManager;
         _photoLibraryService = new Lazy<Task<PhotosLibraryService>>(InitializeServiceAsync());
     }
 
-    private async Task<Result<UserCredential>> GetCredentialAsync()
-    {
-        if (_userCredential != null)
-        {
-            if (_userCredential.Token.IsStale)
-            {
-                var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
-                if (!refreshed)
-                {
-                    return Result<UserCredential>.Failure("Could not refresh user credentials");
-                }
-            }
-            return Result<UserCredential>.Success(_userCredential);
-        }
-
-        var json = JsonSerializer.Serialize(_apiCredentials);
-        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
-
-        var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
-
-        // Token will be stored in the token.json folder
-        var credPath = "token.json";
-        UserCredential newCredentials;
-        try
-        {
-            newCredentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                secretsResult.Secrets,
-                _scopes,
-                "user",
-                CancellationToken.None,
-                new FileDataStore(credPath, true));
-        }
-        catch (Exception ex)
-        {
-            return Result<UserCredential>.Failure($"Failed to authorize user credentials: {ex.Message}");
-        }
-
-        _userCredential = newCredentials;
-        return Result<UserCredential>.Success(_userCredential);
-    }
-
+  
     private async Task<PhotosLibraryService> InitializeServiceAsync()
     {
         _logger.LogInformation("Initializing PhotosLibraryService");
 
-        var credential = await GetCredentialAsync();
+        var credential = await _userCredentialManager.GetCredentialAsync();
         if (!credential.Succeeded)
         {
             _logger.LogError("Failed to obtain user credentials: {ErrorMessage}", credential.ErrorMessage);
@@ -109,23 +48,122 @@ public class GooglePhotosLibraryFacade : IGooglePhotosLibraryFacade
         return await _photoLibraryService.Value;
     }
 
-    public async Task<Result<Album>> GetAlbumAsync(string albumName)
+    private async Task<Result<ListAlbumsResponse>> GetAlbums()
     {
         try
         {
             var photosLibraryService = await GetServiceAsync();
 
             var albumListResponse = await photosLibraryService.Albums.List().ExecuteAsync();
-            var album = albumListResponse.Albums?.FirstOrDefault(a => a.Title == albumName);
 
-            return album != null 
-                ? Result<Album>.Success(album)
-                : Result<Album>.Failure("Album not found");
+            return albumListResponse != null 
+                ? Result<ListAlbumsResponse>.Success(albumListResponse)
+                : Result<ListAlbumsResponse>.Failure("Albums not found");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get album {AlbumName}", albumName);
+            _logger.LogError(ex, "Failed to get albums");
+            return Result<ListAlbumsResponse>.Failure("An exception occurred");
+        }
+    }
+
+    public async Task<Result<Album>> GetAlbumFromTitleAsync(string albumName)
+    {
+        var albumsResult = await GetAlbums();
+        if (!albumsResult.Succeeded || albumsResult.Value is null)
+        {
+            return Result<Album>.Failure(albumsResult.ErrorMessage ?? "Failed to get albums");
+        }
+
+        var album = albumsResult.Value.Albums?.FirstOrDefault(a => a.Title == albumName);
+        if (album is null)
+        {
+            return Result<Album>.Failure($"Album with name '{albumName}' not found");
+        }
+
+        return Result<Album>.Success(album);
+    }
+
+    public async Task<Result<Album>> GetAlbumFromIdAsync(string albumId)
+    {
+        var albumsResult = await GetAlbums();
+        if (!albumsResult.Succeeded || albumsResult.Value is null)
+        {
+            return Result<Album>.Failure(albumsResult.ErrorMessage ?? "Failed to get albums");
+        }
+
+        var album = albumsResult.Value.Albums?.FirstOrDefault(a => a.Id == albumId);
+        if (album is null)
+        {
+            return Result<Album>.Failure($"Album with Id '{albumId}' not found");
+        }
+
+        return Result<Album>.Success(album);
+    }
+
+    public async Task<Result<Album>> CreateAlbumAsync(string albumTitle)
+    {
+        try
+        {
+            var photosLibraryService = await GetServiceAsync();
+
+            var request = new CreateAlbumRequest
+            {
+                Album = new Album()
+                {
+                    Title = albumTitle
+                }
+            };
+            var newAlbumResponse = await photosLibraryService.Albums.Create(request).ExecuteAsync();
+
+            if (newAlbumResponse is null)
+            {
+                _logger.LogWarning("Failed to created new album with title {AlbumTitle}", albumTitle);
+                return Result<Album>.Failure("Album was not created");
+            }
+
+            return Result<Album>.Success(newAlbumResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create new album {AlbumName}", albumTitle);
             return Result<Album>.Failure("An exception occurred");
+        }
+    }
+
+    public async Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens)
+    {
+        try
+        {
+            var photosLibraryService = await GetServiceAsync();
+
+            var batchCreateRequest = new BatchCreateMediaItemsRequest
+            {
+                AlbumId = albumId,
+                NewMediaItems = [.. uploadTokens.Select(token => new NewMediaItem
+                {
+                    SimpleMediaItem = new SimpleMediaItem { UploadToken = token }
+                })]
+            };
+
+            var batchCreateResponse = await photosLibraryService.MediaItems
+                .BatchCreate(batchCreateRequest)
+                .ExecuteAsync();
+
+            if (batchCreateResponse == null || batchCreateResponse.NewMediaItemResults == null)
+            {
+                return Result<BatchCreateMediaItemsResponse>.Failure("Failed to add media items to album");
+            }
+
+            _logger.LogInformation("Uploaded {ItemCount} items to Google Photos album with Id {AlbumId}",
+                batchCreateResponse.NewMediaItemResults, albumId);
+
+            return Result<BatchCreateMediaItemsResponse>.Success(batchCreateResponse);
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, "Failed to add images to album with title {AlbumId}", albumId);
+            return Result<BatchCreateMediaItemsResponse>.Failure("An exception occurred");
         }
     }
 }

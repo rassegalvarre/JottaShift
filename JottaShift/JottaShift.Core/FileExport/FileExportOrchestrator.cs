@@ -23,7 +23,6 @@ public sealed class FileExportOrchestrator(
         _culture = culture;
     }
 
-    // Todo: Handle (Conflict) files and dirs. Ignore?
     public async Task<Result> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         var job = _fileExportJobs.ChromecastUploadJob;
@@ -36,24 +35,24 @@ public sealed class FileExportOrchestrator(
             return Result.Failure("Could not get album");
         }
 
-        var imagesToUpload = stagingAlbumResult.Value.Photos
+        var photosToUpload = stagingAlbumResult.Value.Photos
             .Where(p => !string.IsNullOrEmpty(p.LocalFilePath))
             .Select(p => p.LocalFilePath!);
 
-        var filesUploaded = await _googlePhotosRepository.UploadImagesToAlbum(
-            imagesToUpload,
+        var photoUploadResult = await _googlePhotosRepository.UploadPhotosToAlbum(
+            photosToUpload,
             job.TargetGooglePhotosAlbumName);
-        if (filesUploaded == 0)
+        if (!photoUploadResult.Succeeded || photoUploadResult.Value is 0)
         {
             return Result.Failure($"No files were uploaded to Google");
         }
 
-        if (imagesToUpload.Count() != filesUploaded)
+        if (photoUploadResult.Value != photosToUpload.Count())
         {
             _logger.LogError(
                 "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
-                filesUploaded, imagesToUpload.Count());
-            return Result.Failure("Missing files");
+                photoUploadResult, photosToUpload.Count());
+            return Result.Failure("Some photos were not uploaded");
         }
 
         return Result.Success();

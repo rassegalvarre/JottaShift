@@ -1,44 +1,44 @@
-﻿using Google.Apis.Auth.OAuth2;
-using Google.Apis.PhotosLibrary.v1;
-using Google.Apis.PhotosLibrary.v1.Data;
-using Google.Apis.Services;
-using Google.Apis.Util.Store;
-using JottaShift.Core.Configuration;
+﻿using Google.Apis.PhotosLibrary.v1.Data;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosRepository(
-    GooglePhotosLibraryApiCredentials _apiCredentials,
-    IGooglePhotosLibraryFacade photosLibraryFacade,
+    IGooglePhotosLibraryFacade _photosLibraryFacade,
     IGooglePhotosHttpClient _googlePhotosClient,
     ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
-    private readonly string[] _scopes = [
-        PhotosLibraryService.Scope.PhotoslibraryAppendonly,
-        PhotosLibraryService.Scope.PhotoslibraryReadonlyAppcreateddata
-    ];
-
-    private PhotosLibraryService? _service;
-    private UserCredential? _userCredential;
-
-    public async Task<int> UploadImagesToAlbum(IEnumerable<string> imagesFullPath, string albumName)
+    private async Task<Result<Album>> GetOrCreateAlbum(string albumName)
     {
-        using var photosLibraryService = await GetPhotosLibraryService();
-        var album = await GetOrCreateAlbum(albumName);
+        var albumResult = await _photosLibraryFacade.GetAlbumFromTitleAsync(albumName);
+        if (albumResult.Succeeded && albumResult.Value is not null)
+        {
+            return albumResult;
+        }
 
-        var tokens = new List<string>();
+        var newAlbumResult = await _photosLibraryFacade.CreateAlbumAsync(albumName);
+        return newAlbumResult;
+    }
+ 
+    public async Task<Result<int>> UploadPhotosToAlbum(IEnumerable<string> imagesFullPath, string albumName)
+    {
+        var albumResult = await GetOrCreateAlbum(albumName);
+        if (!albumResult.Succeeded || albumResult.Value is null)
+        {
+            _logger.LogError("Failed to get or create album {AlbumName}. Error: {ErrorMessage}", albumName, albumResult.ErrorMessage);
+            return Result<int>.Failure("Could not find album");
+        }
+
+        List<string> uploadTokens = new();
         foreach (var image in imagesFullPath)
         {
             string fileName = Path.GetFileName(image);
             var fileData = await File.ReadAllBytesAsync(image);
 
-            var tokenResult = await _googlePhotosClient.UploadPhoto(_userCredential, fileName, fileData);
-
+            var tokenResult = await _googlePhotosClient.UploadPhoto(fileName, fileData);
             if (tokenResult.Succeeded && tokenResult.Value is not null)
             {
-                tokens.Add(tokenResult.Value);
+                uploadTokens.Add(tokenResult.Value);
             }
             else
             {
@@ -47,140 +47,13 @@ public class GooglePhotosRepository(
             }
         }
 
-        var uploaded = await UploadImages(tokens, album.Id);
-        return uploaded?.NewMediaItemResults?.Count ?? 0;
-    }
-
-    private async Task<GoogleClientSecrets> GetGoogleClientSecretsAsync()
-    {
-        if (EnvironmentVariableManager.GooglePhotosLibraryApiProjectId == null ||
-            EnvironmentVariableManager.GooglePhotosLibraryApiClientId == null ||
-            EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret == null)
+        var batchCreateResult = await _photosLibraryFacade.AddImagesToAlbum(albumResult.Value.Id, uploadTokens);
+        if (!batchCreateResult.Succeeded || batchCreateResult.Value is null)
         {
-            throw new InvalidOperationException("Required environment variables for Google Photos API are not set.");
+            _logger.LogError("Failed to add images to album {AlbumName}. Error: {ErrorMessage}", albumName, batchCreateResult.ErrorMessage);
+            return Result<int>.Failure("Failed to add images to album");
         }
 
-        _apiCredentials.installed.project_id = EnvironmentVariableManager.GooglePhotosLibraryApiProjectId;
-        _apiCredentials.installed.client_id = EnvironmentVariableManager.GooglePhotosLibraryApiClientId;
-        _apiCredentials.installed.client_secret= EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret;
-
-        var json = JsonSerializer.Serialize(_apiCredentials);
-        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
-        
-        var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
-        return secretsResult;
+        return Result<int>.Success(batchCreateResult.Value.NewMediaItemResults.Count);
     }
-
-    // TODO: This does not work optimally. Permissions needs to be re-given to often.
-    private async Task<UserCredential> GetUserCredential()
-    {
-        if (_userCredential != null)
-        {
-            var storedScopes = string.Join(' ', _scopes);
-            if (storedScopes != _userCredential.Token.Scope)
-            {
-                await _userCredential.RevokeTokenAsync(CancellationToken.None);
-            }
-            else if (_userCredential.Token.IsStale)
-            {
-                var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
-                if (refreshed)
-                {
-                    return _userCredential;
-                }
-            }
-            else
-            {
-                return _userCredential;
-            }
-        }
-
-        var secretsResult = await GetGoogleClientSecretsAsync();
-
-        // Token will be stored in the token.json folder
-        var credPath = "token.json";
-        var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-            secretsResult.Secrets,
-            _scopes,
-            "user",
-            CancellationToken.None,
-            new FileDataStore(credPath, true));
-
-        _userCredential = credential;
-        return _userCredential;
-    }
-
-    private async Task<PhotosLibraryService> GetPhotosLibraryService()
-    {
-        try
-        {
-            var userCredential = await GetUserCredential();
-
-            _service = new PhotosLibraryService(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = userCredential,
-                ApplicationName = "JottaShift"
-            });
-
-
-            return _service;
-        }
-        catch (Exception)
-        {
-            throw;
-        }
-    }
-
-    private async Task<Album> CreateAlbum(string albumName)
-    {
-        using var photosLibraryService = await GetPhotosLibraryService();
-
-        var request = new CreateAlbumRequest
-        {
-            Album = new Album()
-            {
-                Title = albumName
-            }
-        };
-        var newAlbum = await photosLibraryService.Albums.Create(request).ExecuteAsync();
-        _logger.LogInformation("Created new Google Photos album {AlbumName}", albumName);
-        
-        return newAlbum;
-    }
-
-    public async Task<Album> GetOrCreateAlbum(string albumName)
-    {
-        using var photosLibraryService = await GetPhotosLibraryService();
-        var response = await photosLibraryService.Albums.List().ExecuteAsync();
-        
-        var album = response.Albums?.FirstOrDefault(a => a.Title == albumName);
-
-        album ??= await CreateAlbum(albumName);
-
-        return album;
-    }
-    
-    private async Task<BatchCreateMediaItemsResponse> UploadImages(IEnumerable<string> uploadTokens, string albumId)
-    {
-        using var photosLibraryService = await GetPhotosLibraryService();
-
-        var albums = await photosLibraryService.Albums.List().ExecuteAsync();
-
-        var created = await photosLibraryService.MediaItems.BatchCreate(new BatchCreateMediaItemsRequest
-        {
-            NewMediaItems = [.. uploadTokens.Select(t => new NewMediaItem
-            {
-                SimpleMediaItem = new SimpleMediaItem
-                {
-                    UploadToken = t                     
-                }
-            })],
-            AlbumId = albumId
-        }).ExecuteAsync();
-
-        _logger.LogInformation("Uploaded {ItemCount} items to Google Photos album with id {AlbumId}",
-            created.NewMediaItemResults, albumId);
-
-        return created;
-    }   
 }
