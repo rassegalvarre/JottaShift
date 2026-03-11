@@ -2,7 +2,7 @@
 
 public interface IFileStorage
 {
-    bool IsValidFileName(string fileName);
+    Result IsValidFileName(string fileNameWithExtension);
 
     Result<string> GetFileName(string fileFullPath);
     

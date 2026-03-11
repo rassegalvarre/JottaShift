@@ -10,11 +10,26 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorage
 {
-    public bool IsValidFileName(string fileName)
+    public Result IsValidFileName(string fileNameWithExtension)
     {
-        var invalid = Path.GetInvalidFileNameChars();
-        return !string.IsNullOrWhiteSpace(fileName) &&
-               fileName.All(c => !invalid.Contains(c));
+        if (string.IsNullOrWhiteSpace(fileNameWithExtension))
+        {
+            return Result.Failure("Filename is empty");
+        }
+
+        var invalidCharacters = Path.GetInvalidFileNameChars();
+        if (fileNameWithExtension.Any(c => invalidCharacters.Contains(c)))
+        {
+            return Result.Failure("Filename contains invalid characters");
+        }
+
+        var split = fileNameWithExtension.Split('.');
+        if (string.IsNullOrEmpty(split.Last()))
+        {
+            return Result.Failure("Filename does not contain an extension");
+        }
+
+        return Result.Success();
     }
 
     public Result<string> GetFileName(string fileFullPath)
@@ -25,7 +40,7 @@ public sealed class FileStorageService(
         }
 
         var fileName = Path.GetFileName(fileFullPath);
-        if (!IsValidFileName(fileName))
+        if (!IsValidFileName(fileName).Succeeded)
         {
             return Result<string>.Failure("File name contains invalid characters");
         }

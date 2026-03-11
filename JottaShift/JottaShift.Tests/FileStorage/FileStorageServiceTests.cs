@@ -10,16 +10,33 @@ namespace JottaShift.Tests.FileStorage;
 public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
 {
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
-    [InlineData("asdfsf")]
-    public async Task IsValidFileName_ShouldDetectInvalidNames(string? fileName)
+    [InlineData("cleanString.")]
+    [InlineData("nameWithoutExtension.")]
+    [InlineData("?name*With/Invalid:Chars>")]
+    [InlineData(@"C:\fullyRooted\fileFullPath.tiff")]
+    [InlineData(@"containsDirectory\file.cs")]
+    public async Task IsValidFileName_ShouldDetectInvalidNames(string fileName)
     {
         var fileStorage = _fixture.CreateFileStorageService();
 
         var isValidFileName = fileStorage.IsValidFileName(fileName);
 
-        Assert.False(isValidFileName);
+        Assert.False(isValidFileName.Succeeded);
+    }
+
+    
+    [Theory]
+    [InlineData("simpleFile.png")]
+    [InlineData("doubleExtension.jpg.png")]
+    [InlineData("alphaNum31c.pdf")]
+    public async Task IsValidFileName_ShouldDetectValidNames(string fileName)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        var isValidFileName = fileStorage.IsValidFileName(fileName);
+
+        Assert.True(isValidFileName.Succeeded);
     }
 
     [Fact]
