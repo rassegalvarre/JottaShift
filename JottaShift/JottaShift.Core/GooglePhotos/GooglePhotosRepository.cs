@@ -28,6 +28,12 @@ public class GooglePhotosRepository(
             return Result<int>.Failure("Could not find album");
         }
 
+        if (photosFullPaths.Count() == 0)
+        {
+            _logger.LogWarning("No photos were provided for upload to album {AlbumName}", albumName);
+            return Result<int>.Success(0);
+        }
+
         List<string> uploadTokens = [];
         foreach (var photoPath in photosFullPaths)
         {
@@ -41,6 +47,11 @@ public class GooglePhotosRepository(
                 _logger.LogError("Failed to upload image {ImagePath} to Google Photos. Error: {ErrorMessage}",
                     photoPath, tokenResult.ErrorMessage);
             }
+        }
+
+        if (uploadTokens.Count == 0)
+        {
+            return Result<int>.Failure("Failed to upload any photos");
         }
 
         var batchCreateResult = await _photosLibraryFacade.AddImagesToAlbum(albumResult.Value.Id, uploadTokens);
