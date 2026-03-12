@@ -17,7 +17,7 @@ Console.WriteLine("JottaShift initiating..");
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((hostingContext, config) =>
     {
-        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+        config.AddJsonFile(AppSettings.AppSettingsFullPath, optional: false, reloadOnChange: true);
     })
     .ConfigureServices((hostContext, services) =>
     {
@@ -45,6 +45,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<IGooglePhotosLibraryFacade, GooglePhotosLibraryFacade>();
         services.AddScoped<IGooglePhotosHttpClient, GooglePhotosHttpClient>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
+        services.AddScoped<IUserCredentialManager, UserCredentialManager>();
         services.AddScoped<IJottacloudHttpClient, JottacloudHttpClient>();
         services.AddScoped<IJottacloudRepository, JottacloudRepository>();
         services.AddScoped<ISteamRepository, SteamRepository>();
