@@ -26,6 +26,12 @@ public sealed class FileExportOrchestrator(
     public async Task<Result> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         var job = _fileExportJobs.ChromecastUploadJob;
+        if (!job.Enabled)
+        {
+            _logger.LogInformation("Job {JobId} is disabled and will not run.", job.Id);
+            return Result.Success();
+        }
+
         var stagingAlbumResult = await _jottacloudRepository.GetAlbumAsync(
             job.SourceJottacloudAlbumId);
         if (!stagingAlbumResult.Succeeded || stagingAlbumResult.Value?.Photos == null)
