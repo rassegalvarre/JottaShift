@@ -17,7 +17,9 @@ public class AppSettingsFixture : IDisposable
         var appSettingsFileStream = File.OpenRead(AppSettings.AppSettingsFullPath);
         var appSettingsInstance = await JsonSerializer.DeserializeAsync<AppSettings>(appSettingsFileStream);
 
-        return appSettingsInstance ??
+        _appSettings = appSettingsInstance;
+
+        return _appSettings ??
             throw new FileLoadException("Could not deserialize the expected appsettings.json file");
     }
 
