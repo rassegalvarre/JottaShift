@@ -23,9 +23,10 @@ public class UserCredentialManagerTests(AppSettingsFixture _appSettingsFixture)
         var userCredentialManager = await GetUserCredentialManagerAsync();
                
         // Act
+        // The user will be prompted for authorization unless a token exists locally.
         var userCredentialResult = await userCredentialManager.GetUserCredentialAsync();
 
-        // Assert that the user was prompted, authorized the app and that the token was saved locally
+        // Assert that the app was authorized and the token was saved locally
         Assert.True(userCredentialResult.Succeeded);
         Assert.NotNull(userCredentialResult.Value);
 
