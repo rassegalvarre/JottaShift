@@ -7,6 +7,11 @@ namespace JottaShift.Core.Configuration;
 
 public class AppSettings
 {
+    public static string AppSettingsFullPath => Path.Combine(
+        AppContext.BaseDirectory,
+        "Configuration",
+        "appsettings.json");
+
     public required FileExportJobs FileExportJobs { get; init; }
     public required GooglePhotosLibraryApiCredentials GooglePhotosLibraryApiCredentials { get; init; }
     public required JottacloudSettings JottacloudSettings { get; init; }
