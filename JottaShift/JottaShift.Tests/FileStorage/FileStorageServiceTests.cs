@@ -7,8 +7,139 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests.FileStorage;
 
-public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
+public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
 {
+    #region IsValidFileName
+    [Theory]
+    [InlineData("")]
+    [InlineData("cleanString")]
+    [InlineData("nameWithoutExtension.")]
+    [InlineData("?name*With/Invalid:Chars>")]
+    [InlineData(@"C:\fullyRooted\fileFullPath.tiff")]
+    [InlineData(@"containsDirectory\file.cs")]
+    public async Task IsValidFileName_ShouldDetectInvalidNames(string fileName)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        var isValidFileNameResult = fileStorage.IsValidFileName(fileName);
+
+        Assert.False(isValidFileNameResult.Succeeded);
+    }
+
+
+    [Theory]
+    [InlineData("simpleFile.png")]
+    [InlineData("doubleExtension.jpg.png")]
+    [InlineData("alphaNum31c.pdf")]
+    public async Task IsValidFileName_ShouldDetectValidNames(string fileName)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        var isValidFileNameResult = fileStorage.IsValidFileName(fileName);
+
+        Assert.True(isValidFileNameResult.Succeeded);
+    }
+    #endregion
+
+    #region GetFileName
+    [Theory]
+    [InlineData("")]
+    [InlineData("cleanString")]
+    [InlineData("nameWithoutExtension.")]
+    [InlineData("?name*With/Invalid:Chars>")]
+    [InlineData(@"notFullyRooted\file.cs")]
+    [InlineData(@"C:\fullyRooted\invalidFile*Name.")]
+
+    public async Task GetFileName_ShouldDetectInvalidFilePaths(string fileFullPath)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        var fileNameResult = fileStorage.GetFileName(fileFullPath);
+
+        Assert.False(fileNameResult.Succeeded);
+    }
+
+
+    [Theory]
+    [InlineData(@"C:\fullyRooted\fileFullPath.tiff")]
+    [InlineData(@"C:\fullyRooted\doubleExtension.tiff.jpg")]
+    public async Task GetFileName_ShouldDetectValidFilePaths(string fileFullPath)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        var fileNameResult = fileStorage.GetFileName(fileFullPath);
+
+        Assert.True(fileNameResult.Succeeded);
+    }
+    #endregion
+
+    #region GetFileContent
+    [Fact]
+    public async Task GetFileContent_ShouldReturnFailedResult_WhenFileNotFound()
+    {
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.BaseDirectory, new MockDirectoryData() }
+        });
+        var fileStorage = _fixture.CreateFileStorageService(fileSystem);
+
+        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+        
+        Assert.False(contentResult.Succeeded);
+        Assert.Null(contentResult.Value);
+    }
+
+    [Fact]
+    public async Task GetFileContent_ShouldReturnFailedResult_WhenFileIsEmpty()
+    {
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.SomeValidFileFullPath, new MockFileData([]) }
+        });
+        var fileStorage = _fixture.CreateFileStorageService(fileSystem);
+
+        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+
+        Assert.False(contentResult.Succeeded);
+        Assert.Null(contentResult.Value);
+    }
+
+    [Fact]
+    public async Task GetFileContent_ShouldReturnFailedResult_WhenExceptionIsThrown()
+    {
+        var mockFileSystem = new Mock<IFileSystem>();
+        mockFileSystem.Setup(fs => fs.File.Exists(It.IsAny<string>()))
+            .Returns(true);
+
+        mockFileSystem.Setup(fs => fs.File.ReadAllBytesAsync(It.IsAny<string>()))
+            .Throws(new IOException("Simulated IO exception"));
+
+        var fileStorage = _fixture.CreateFileStorageService(mockFileSystem.Object);
+
+        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+
+        Assert.False(contentResult.Succeeded);
+        Assert.Null(contentResult.Value);
+    }
+
+
+    [Fact]
+    public async Task GetFileContent_ShouldReturnSuccessfullResult_WhenContentIsValid()
+    {
+        byte[] fileContnet = [1, 2, 3, 4, 5];
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.SomeValidFileFullPath, new MockFileData(fileContnet) }
+        });
+        var fileStorage = _fixture.CreateFileStorageService(fileSystem);
+
+        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+
+        Assert.True(contentResult.Succeeded);
+        Assert.Equal(fileContnet, contentResult.Value);
+    }
+    #endregion
+    
     [Fact]
     public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
     {
@@ -311,6 +442,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void GetImageDate_ReturnsDateTakenExiffTag_WhenFileFound()
     {
         var fileSystem = new FileSystem();
@@ -557,6 +689,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void FilesAreBitPerfectMatch_DoesMatch_WhenCopyOfImage()
     {
         var fileStorageService = new FileStorageService(
@@ -569,6 +702,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void DoesFileMetadataMatch_DoesNotMatch_WhenDifferentImages()
     {
         var fileStorageService = new FileStorageService(
@@ -581,6 +715,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void DoesFileMetadataMatch_DoesMatch_WhenCopyOfSameImage()
     {
         var fileStorageService = new FileStorageService(
@@ -593,6 +728,7 @@ public class FileStorageTests(FileStorageFixture _fixture) : IClassFixture<FileS
     }
 
     [Fact]
+    [Trait("Dependency", "FileSystem")]
     public void GetImageResolution_GetResolutionForTestFile()
     {
         var fileStorageService = new FileStorageService(

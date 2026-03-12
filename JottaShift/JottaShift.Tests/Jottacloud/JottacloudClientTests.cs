@@ -6,6 +6,7 @@ using Moq;
 
 namespace JottaShift.Tests.Jottacloud;
 
+// TODO: Rename to JottacloudHttpClientTests
 public class JottacloudClientTests(
     JottacloudFixture _fixture,
     HttpClientWrapperFixture _httpClientFixture) :
@@ -13,7 +14,7 @@ public class JottacloudClientTests(
     IClassFixture<HttpClientWrapperFixture>
 {
     [Fact]
-    [Trait("API", "Jottacloud")]
+    [Trait("Dependency", "Jottacloud.Api")]
     public async Task GetAlbumAsync_WithImplementedHttpClient_ReturnsAlbum_WhenValidAlbumIdUsingHttpClient()
     {
         var httpClientWrapper = _httpClientFixture.CreateHttpClientWrapper();

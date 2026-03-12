@@ -10,6 +10,71 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorage
 {
+    public Result IsValidFileName(string fileNameWithExtension)
+    {
+        if (string.IsNullOrWhiteSpace(fileNameWithExtension))
+        {
+            return Result.Failure("Filename is empty");
+        }
+
+        var invalidCharacters = Path.GetInvalidFileNameChars();
+        if (fileNameWithExtension.Any(c => invalidCharacters.Contains(c)))
+        {
+            return Result.Failure("Filename contains invalid characters");
+        }
+
+        var split = fileNameWithExtension.Split('.');
+        if (split.Length == 1 || string.IsNullOrEmpty(split.Last()))
+        {
+            return Result.Failure("Filename does not contain an extension");
+        }
+
+        return Result.Success();
+    }
+
+    public Result<string> GetFileName(string fileFullPath)
+    {
+        if (!Path.IsPathRooted(fileFullPath) || !Path.IsPathFullyQualified(fileFullPath))
+        {
+            return Result<string>.Failure("File path must be absolute and fully qualified");
+        }
+
+        var fileName = Path.GetFileName(fileFullPath);
+        if (!IsValidFileName(fileName).Succeeded)
+        {
+            return Result<string>.Failure("File name contains invalid characters");
+        }
+
+        return Result<string>.Success(fileName);
+    }
+
+    public async Task<Result<byte[]>> GetFileContent(string fileFullPath)
+    {
+        if (!_fileSystem.File.Exists(fileFullPath))
+        {
+            _logger.LogWarning("File not found: {FilePath}", fileFullPath);
+            return Result<byte[]>.Failure("File not found");
+        }
+        try
+        {
+            byte[] content = await _fileSystem.File.ReadAllBytesAsync(fileFullPath);
+            if (content.Length == 0)
+            {
+                _logger.LogWarning("File is empty: {FilePath}", fileFullPath);
+                return Result<byte[]>.Failure("File is empty");
+            }
+
+            return Result<byte[]>.Success(content);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Could not read file {FilePath}. Exception: {ExceptionMessage}",
+                fileFullPath,
+                ex.Message);
+            return Result<byte[]>.Failure("Could not read file");
+        }
+    }
+
     public Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true)
     {
         var pattern = fileName;

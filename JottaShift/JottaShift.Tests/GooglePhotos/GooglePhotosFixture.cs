@@ -1,4 +1,6 @@
-﻿using JottaShift.Core.GooglePhotos;
+﻿using JottaShift.Core.FileStorage;
+using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -6,6 +8,13 @@ namespace JottaShift.Tests.GooglePhotos;
 
 public class GooglePhotosFixture : IDisposable
 {
+    public readonly string TestAlbumName = "JottaShift.UnitTests";
+    
+    public readonly string ValidPhotoDirectoryPath = @"C:\Photos";
+    public readonly string ValidPhotoFileName = "photo.jpg";
+
+    public string ValidPhotoFullPath => Path.Combine(ValidPhotoDirectoryPath, ValidPhotoFileName);
+
     public GooglePhotosLibraryApiCredentials MockGooglePhotosLibraryApiCredentials = new()
     {
         installed = new()
@@ -20,12 +29,31 @@ public class GooglePhotosFixture : IDisposable
         }
     };
 
-    public GooglePhotosRepository CreateGooglePhotosRepository(IGooglePhotosHttpClient? googlePhotosClient = null)
+    public GooglePhotosHttpClient CreateGooglePhotosHttpClient(
+        IFileStorage? fileStorage = null,
+        IHttpClientWrapper? httpClientWrapper = null,
+        IUserCredentialManager? userCredentialManager= null)
     {
+        fileStorage ??= new Mock<IFileStorage>().Object;
+        httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;
+        userCredentialManager ??= new Mock<IUserCredentialManager>().Object;
+
+        return new GooglePhotosHttpClient(
+            fileStorage,
+            httpClientWrapper,
+            userCredentialManager,
+            new Mock<ILogger<GooglePhotosHttpClient>>().Object);
+    }
+
+    public GooglePhotosRepository CreateGooglePhotosRepository(
+        IGooglePhotosLibraryFacade? googlePhotosLibraryFacade= null,
+        IGooglePhotosHttpClient? googlePhotosClient = null)
+    {
+        googlePhotosLibraryFacade ??= new Mock<IGooglePhotosLibraryFacade>().Object;
         googlePhotosClient ??= new Mock<IGooglePhotosHttpClient>().Object;
 
         return new GooglePhotosRepository(
-            MockGooglePhotosLibraryApiCredentials,
+            googlePhotosLibraryFacade,
             googlePhotosClient,
             new Mock<ILogger<GooglePhotosRepository>>().Object);
     }
