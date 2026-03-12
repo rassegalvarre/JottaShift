@@ -6,8 +6,7 @@ using Moq;
 
 namespace JottaShift.Tests.Jottacloud;
 
-// TODO: Rename to JottacloudHttpClientTests
-public class JottacloudClientTests(
+public class JottacloudHttpClientTests(
     JottacloudFixture _fixture,
     HttpClientWrapperFixture _httpClientFixture) :
     IClassFixture<JottacloudFixture>,
