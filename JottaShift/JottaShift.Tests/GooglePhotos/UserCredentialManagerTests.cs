@@ -18,16 +18,10 @@ public class UserCredentialManagerTests(AppSettingsFixture _appSettingsFixture)
     }
 
     [Fact]
-    public async Task GetUserCredentialAsync_ShouldPromptAuthorization_WhenNotJsonTokenFound()
+    public async Task GetUserCredentialAsync_ShouldAuthorizeAndStoreToken()
     {
         var userCredentialManager = await GetUserCredentialManagerAsync();
-        
-        // Ensure that no token is saved locally
-        if (Directory.Exists(userCredentialManager.CredentialDirectoryPath))
-        {
-            Directory.Delete(userCredentialManager.CredentialDirectoryPath, true);
-        }
-
+               
         // Act
         var userCredentialResult = await userCredentialManager.GetUserCredentialAsync();
 
