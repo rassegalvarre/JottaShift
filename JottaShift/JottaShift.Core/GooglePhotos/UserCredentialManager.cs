@@ -8,6 +8,9 @@ namespace JottaShift.Core.GooglePhotos;
 
 public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredentials) : IUserCredentialManager
 {
+    public readonly string CredentialDirectoryPath =
+        Path.Combine(AppContext.BaseDirectory, "tokens");
+
     private readonly string[] _scopes = [
         PhotosLibraryService.Scope.PhotoslibraryAppendonly,
         PhotosLibraryService.Scope.PhotoslibraryReadonlyAppcreateddata
@@ -47,17 +50,16 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
 
         var secretsResult = await GoogleClientSecrets.FromStreamAsync(stream);
 
-        // Token will be stored in the token.json folder
-        var credPath = "token.json";
         UserCredential newCredentials;
         try
         {
+            // Prompt the user to authorize the app
             newCredentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 secretsResult.Secrets,
                 _scopes,
                 "user",
                 CancellationToken.None,
-                new FileDataStore(credPath, true));
+                new FileDataStore(CredentialDirectoryPath, true));
         }
         catch (Exception ex)
         {
