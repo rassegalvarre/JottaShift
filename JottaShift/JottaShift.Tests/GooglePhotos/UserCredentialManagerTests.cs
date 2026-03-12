@@ -1,9 +1,5 @@
-﻿using JottaShift.Core.FileStorage;
-using JottaShift.Core.GooglePhotos;
+﻿using JottaShift.Core.GooglePhotos;
 using JottaShift.Tests.Configuration;
-using Microsoft.Extensions.Logging;
-using Moq;
-using System.IO.Abstractions;
 
 namespace JottaShift.Tests.GooglePhotos;
 
