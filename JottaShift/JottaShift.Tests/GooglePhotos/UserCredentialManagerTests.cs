@@ -1,5 +1,9 @@
-﻿using JottaShift.Core.GooglePhotos;
+﻿using JottaShift.Core.FileStorage;
+using JottaShift.Core.GooglePhotos;
 using JottaShift.Tests.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System.IO.Abstractions;
 
 namespace JottaShift.Tests.GooglePhotos;
 
@@ -10,8 +14,7 @@ public class UserCredentialManagerTests(AppSettingsFixture _appSettingsFixture)
     private async Task<UserCredentialManager> GetUserCredentialManagerAsync()
     {
         var appSettings = await _appSettingsFixture.GetAppSettingsAsync();
-        return new UserCredentialManager(
-            appSettings.GooglePhotosLibraryApiCredentials);
+        return new UserCredentialManager(appSettings.GooglePhotosLibraryApiCredentials);
     }
 
     [Fact]
