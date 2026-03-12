@@ -24,7 +24,7 @@ public sealed class FileStorageService(
         }
 
         var split = fileNameWithExtension.Split('.');
-        if (string.IsNullOrEmpty(split.Last()))
+        if (split.Length == 1 || string.IsNullOrEmpty(split.Last()))
         {
             return Result.Failure("Filename does not contain an extension");
         }
