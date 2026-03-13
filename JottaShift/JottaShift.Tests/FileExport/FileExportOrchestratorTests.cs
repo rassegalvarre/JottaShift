@@ -1,4 +1,5 @@
-﻿using JottaShift.Core.FileStorage;
+﻿using JottaShift.Core;
+using JottaShift.Core.FileStorage;
 using JottaShift.Core.Steam;
 using JottaShift.Tests.GooglePhotos;
 using JottaShift.Tests.TestData;
@@ -133,7 +134,7 @@ public class FileExportOrchestratorTests(
 
         steamRepositoryMock
             .Setup(repo => repo.GetAppNameFromId(appId))
-            .ReturnsAsync(appName);
+            .ReturnsAsync(Result<string>.Success(appName));
 
         var fileSystemMock = new MockFileSystem(mockFileData);
 

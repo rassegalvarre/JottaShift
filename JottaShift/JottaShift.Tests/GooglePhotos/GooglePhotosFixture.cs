@@ -15,20 +15,6 @@ public class GooglePhotosFixture : IDisposable
 
     public string ValidPhotoFullPath => Path.Combine(ValidPhotoDirectoryPath, ValidPhotoFileName);
 
-    public GooglePhotosLibraryApiCredentials MockGooglePhotosLibraryApiCredentials = new()
-    {
-        installed = new()
-        {
-            auth_provider_x509_cert_url = string.Empty,
-            auth_uri = string.Empty,
-            client_id = string.Empty,
-            client_secret = string.Empty,
-            project_id = string.Empty,
-            redirect_uris = [],
-            token_uri = string.Empty
-        }
-    };
-
     public GooglePhotosHttpClient CreateGooglePhotosHttpClient(
         IFileStorageService? fileStorage = null,
         IHttpClientWrapper? httpClientWrapper = null,

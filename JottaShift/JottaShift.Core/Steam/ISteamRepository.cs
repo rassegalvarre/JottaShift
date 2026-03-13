@@ -2,5 +2,5 @@
 
 public interface ISteamRepository
 {
-    Task<string> GetAppNameFromId(uint appId);
+    Task<Result<string>> GetAppNameFromId(uint appId);
 }
