@@ -468,14 +468,14 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         // Test <LastWriteTime = DateTime.Now>
         var imageDateResult = fileStorageService.GetImageDate(fileNameWithCurrentDate);
 
-        Assert.False(imageDateResult.Succeeded);
+        Assert.False(imageDateResult.Succeeded, "DateTime.Now was detected as a valid image date");
         Assert.NotNull(imageDateResult.ErrorMessage);
         Assert.Equal(default, imageDateResult.Value);
 
         // Test <LastWriteTime = default>
         imageDateResult = fileStorageService.GetImageDate(fileNameWithDefaultDate);
 
-        Assert.False(imageDateResult.Succeeded);
+        Assert.False(imageDateResult.Succeeded, "Default DateTime was detected as a valid image date");
         Assert.NotNull(imageDateResult.ErrorMessage);
         Assert.Equal(default, imageDateResult.Value);
     }

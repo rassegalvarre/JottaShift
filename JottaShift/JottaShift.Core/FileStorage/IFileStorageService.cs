@@ -9,6 +9,8 @@ public interface IFileStorageService
     Result IsValidFileName(string fileNameWithExtension);
 
     Result<string> GetFileName(string fileFullPath);
+    
+    Result<DateTime> GetImageDate(string fileFullPath);
 
     Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true); // TODO: Remove nullable
 
@@ -19,10 +21,7 @@ public interface IFileStorageService
 
     IEnumerable<string> EnumerateFiles(string directoryFullPath);
 
-
     // TODO
-    Result<DateTime> GetImageDate(string fileFullPath);
-
     bool DeleteFile(string fileFullPath);
 
     bool DeleteDirectoryContent(string directoryFullPath);
