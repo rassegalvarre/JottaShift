@@ -22,8 +22,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
         string albumId = Guid.NewGuid().ToString();
         var albumResult = await jottacloudRepository.GetAlbumAsync(albumId);
 
-        Assert.False(albumResult.Succeeded);
-        Assert.Null(albumResult.Value);
+        ResultAssert.ValueFailure(albumResult);
     }
 
     [Fact]
@@ -59,9 +58,8 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var albumResult = await jottacloudRepository.GetAlbumAsync(albumId);
 
-        Assert.True(albumResult.Succeeded);
-        Assert.NotNull(albumResult.Value);
-        Assert.NotEmpty(albumResult.Value.Photos);
+        ResultAssert.Success(albumResult);
+        Assert.NotEmpty(albumResult.Value!.Photos);
         Assert.NotNull(albumResult.Value.Photos.First().LocalFilePath);
     }
 
@@ -95,9 +93,8 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var albumResult = await jottacloudRepository.GetAlbumAsync(albumId);
 
-        Assert.True(albumResult.Succeeded);
-        Assert.NotNull(albumResult.Value);
-        Assert.NotEmpty(albumResult.Value.Photos);
+        ResultAssert.Success(albumResult);
+        Assert.NotEmpty(albumResult.Value!.Photos);
         Assert.Null(albumResult.Value.Photos.First().LocalFilePath);
     }
 }

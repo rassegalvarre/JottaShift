@@ -24,9 +24,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
 
         var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
 
-        Assert.False(uploadPhotoResult.Succeeded);
-        Assert.Null(uploadPhotoResult.Value);
-        Assert.NotNull(uploadPhotoResult.ErrorMessage);
+        ResultAssert.ValueFailure(uploadPhotoResult);
     }
 
     [Fact]
@@ -48,10 +46,8 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
             userCredentialManager: mockUserCredentialManager.Object);
 
         var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
-
-        Assert.False(uploadPhotoResult.Succeeded);
-        Assert.Null(uploadPhotoResult.Value);
-        Assert.NotNull(uploadPhotoResult.ErrorMessage);
+        
+        ResultAssert.ValueFailure(uploadPhotoResult);
     }
 
     [Fact]
@@ -80,9 +76,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
 
         var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
 
-        Assert.False(uploadPhotoResult.Succeeded);
-        Assert.Null(uploadPhotoResult.Value);
-        Assert.NotNull(uploadPhotoResult.ErrorMessage);
+        ResultAssert.ValueFailure(uploadPhotoResult);
     }
 
     [Fact]
@@ -113,8 +107,6 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
 
         var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
 
-        Assert.True(uploadPhotoResult.Succeeded);
-        Assert.Equal(expectedUploadToken, uploadPhotoResult.Value);
-        Assert.Null(uploadPhotoResult.ErrorMessage);
+        ResultAssert.ValueSuccess(uploadPhotoResult, expectedUploadToken);
     }
 }

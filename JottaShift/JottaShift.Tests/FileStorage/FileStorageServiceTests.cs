@@ -1,4 +1,5 @@
 ﻿using JottaShift.Core.FileStorage;
+using JottaShift.Tests;
 using JottaShift.Tests.TestData;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -27,8 +28,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var result = fileStorageService.DeleteDirectoryContent(targetDirectoryPath);
 
-        Assert.False(result.Succeeded);
-        Assert.NotNull(result.ErrorMessage);
+        ResultAssert.Failure(result);
         Assert.True(fileSystemMock.Directory.Exists(_fixture.BaseDirectory));
     }
 
@@ -56,7 +56,8 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var result = fileStorageService.DeleteDirectoryContent(_fixture.BaseDirectory);
 
-        Assert.True(result.Succeeded);
+        ResultAssert.Success(result);
+
         Assert.Empty(fileSystemMock.AllFiles);
 
         Assert.True(fileSystemMock.Directory.Exists(_fixture.BaseDirectory));
@@ -75,7 +76,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var result = fileStorageService.DeleteFile(_fixture.SomeValidFileFullPath);
 
-        Assert.True(result.Succeeded);
+        ResultAssert.Success(result);
     }
 
     [Fact]
@@ -85,8 +86,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var result = fileStorageService.DeleteFile("some-string-that-is-not-a-valid-path");
 
-        Assert.False(result.Succeeded);
-        Assert.NotNull(result.ErrorMessage);
+        ResultAssert.Failure(result);
     }
 
     [Fact]
@@ -101,9 +101,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var result = fileStorageService.DeleteFile(_fixture.SomeValidFileFullPath);
 
-        Assert.True(result.Succeeded);
-        Assert.Null(result.ErrorMessage);
-
+        ResultAssert.Success(result);
         Assert.False(fileSystem.File.Exists(_fixture.SomeValidFileFullPath));
     }
     #endregion
@@ -122,7 +120,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var isValidFileNameResult = fileStorage.IsValidFileName(fileName);
 
-        Assert.False(isValidFileNameResult.Succeeded);
+        ResultAssert.Failure(isValidFileNameResult);
     }
 
 
@@ -136,7 +134,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var isValidFileNameResult = fileStorage.IsValidFileName(fileName);
 
-        Assert.True(isValidFileNameResult.Succeeded);
+        ResultAssert.Success(isValidFileNameResult);
     }
     #endregion
 
@@ -155,7 +153,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var fileNameResult = fileStorage.GetFileName(fileFullPath);
 
-        Assert.False(fileNameResult.Succeeded);
+        ResultAssert.Failure(fileNameResult);
     }
 
 
@@ -168,7 +166,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var fileNameResult = fileStorage.GetFileName(fileFullPath);
 
-        Assert.True(fileNameResult.Succeeded);
+        ResultAssert.Success(fileNameResult);
     }
     #endregion
 
@@ -183,9 +181,8 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         var fileStorage = _fixture.CreateFileStorageService(fileSystem);
 
         var contentResult = await fileStorage.GetFileBytesAsync(_fixture.SomeValidFileFullPath);
-        
-        Assert.False(contentResult.Succeeded);
-        Assert.Null(contentResult.Value);
+
+        ResultAssert.ValueFailure(contentResult);
     }
 
     [Fact]
@@ -199,8 +196,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var contentResult = await fileStorage.GetFileBytesAsync(_fixture.SomeValidFileFullPath);
 
-        Assert.False(contentResult.Succeeded);
-        Assert.Null(contentResult.Value);
+        ResultAssert.ValueFailure(contentResult);
     }
 
     [Fact]
@@ -217,25 +213,23 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var contentResult = await fileStorage.GetFileBytesAsync(_fixture.SomeValidFileFullPath);
 
-        Assert.False(contentResult.Succeeded);
-        Assert.Null(contentResult.Value);
+        ResultAssert.ValueFailure(contentResult);
     }
 
 
     [Fact]
     public async Task GetFileContent_ShouldReturnSuccessfullResult_WhenContentIsValid()
     {
-        byte[] fileContnet = [1, 2, 3, 4, 5];
+        byte[] fileContent = [1, 2, 3, 4, 5];
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
         {
-            { _fixture.SomeValidFileFullPath, new MockFileData(fileContnet) }
+            { _fixture.SomeValidFileFullPath, new MockFileData(fileContent) }
         });
         var fileStorage = _fixture.CreateFileStorageService(fileSystem);
 
         var contentResult = await fileStorage.GetFileBytesAsync(_fixture.SomeValidFileFullPath);
 
-        Assert.True(contentResult.Succeeded);
-        Assert.Equal(fileContnet, contentResult.Value);
+        ResultAssert.ValueSuccess(contentResult, fileContent);
     }
     #endregion
     
@@ -267,16 +261,16 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             _fixture.BaseDirectory,
             fileName,
             searchRecursively: true);
-        Assert.True(recursiveResult.Succeeded);
-        Assert.Equal(expectedFullPath, recursiveResult.Value);
+
+        ResultAssert.ValueSuccess(recursiveResult, expectedFullPath);
 
         // Return null when only top directory is searched
         var topDirectoryresult = fileStorageService.SearchFileByExactName(
             _fixture.BaseDirectory,
             fileName,
             searchRecursively: false);
-        Assert.False(topDirectoryresult.Succeeded);
-        Assert.Null(topDirectoryresult.Value);
+
+        ResultAssert.ValueFailure(topDirectoryresult);
     }
 
     [Fact]
@@ -503,9 +497,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var imageDateResult = fileStorageService.GetImageDate(string.Empty);
 
-        Assert.False(imageDateResult.Succeeded);
-        Assert.NotNull(imageDateResult.ErrorMessage);
-        Assert.Equal(default, imageDateResult.Value);
+        ResultAssert.ValueFailure(imageDateResult);
     }
 
     [Fact]
@@ -531,17 +523,11 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         // Test <LastWriteTime = DateTime.Now>
         var imageDateResult = fileStorageService.GetImageDate(fileNameWithCurrentDate);
-
-        Assert.False(imageDateResult.Succeeded, "DateTime.Now was detected as a valid image date");
-        Assert.NotNull(imageDateResult.ErrorMessage);
-        Assert.Equal(default, imageDateResult.Value);
+        ResultAssert.ValueFailure(imageDateResult);
 
         // Test <LastWriteTime = default>
         imageDateResult = fileStorageService.GetImageDate(fileNameWithDefaultDate);
-
-        Assert.False(imageDateResult.Succeeded, "Default DateTime was detected as a valid image date");
-        Assert.NotNull(imageDateResult.ErrorMessage);
-        Assert.Equal(default, imageDateResult.Value);
+        ResultAssert.ValueFailure(imageDateResult);
     }
 
     [Fact]
@@ -556,8 +542,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var imageDateResult = fileStorageService.GetImageDate(TestDataHelper.Duck);
 
-        Assert.True(imageDateResult.Succeeded);
-        Assert.Null(imageDateResult.ErrorMessage);
+        ResultAssert.Success(imageDateResult);
 
         Assert.Equal(2025, imageDateResult.Value.Year);
         Assert.Equal(5, imageDateResult.Value.Month);
@@ -581,8 +566,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var imageDateResult = fileStorageService.GetImageDate(filename);
 
-        Assert.True(imageDateResult.Succeeded);
-        Assert.Null(imageDateResult.ErrorMessage);
+        ResultAssert.Success(imageDateResult);
 
         Assert.Equal(expectedYear, imageDateResult.Value.Year);
         Assert.Equal(expectedMonth, imageDateResult.Value.Month);

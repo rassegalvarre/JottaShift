@@ -25,9 +25,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
-        Assert.True(albumResult.Succeeded);
-        Assert.NotNull(albumResult.Value);
-        Assert.Equal(existingAlbum.Id, albumResult.Value.Id);
+        ResultAssert.ValueSuccess(albumResult, existingAlbum);
     }
 
     [Fact]
@@ -50,9 +48,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
-        Assert.True(albumResult.Succeeded);
-        Assert.NotNull(albumResult.Value);
-        Assert.Equal(newAlbum.Id, albumResult.Value.Id);
+        ResultAssert.ValueSuccess(albumResult, newAlbum);
     }
 
     [Fact]
@@ -69,8 +65,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
-        Assert.False(albumResult.Succeeded);
-        Assert.Null(albumResult.Value);
+        ResultAssert.ValueFailure(albumResult);
     }
     #endregion
 
@@ -91,9 +86,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var uploadResult = await googlePhotosRepository.UploadPhotosToAlbumAsync(_fixture.TestAlbumName, filePaths);
 
-        Assert.False(uploadResult.Succeeded);
-        Assert.Equal(0, uploadResult.Value);
-        Assert.NotNull(uploadResult.ErrorMessage);
+        ResultAssert.ValueFailure(uploadResult);
     }
 
     [Fact]
@@ -121,9 +114,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var uploadResult = await googlePhotosRepository.UploadPhotosToAlbumAsync(_fixture.TestAlbumName, filePaths);
 
-        Assert.False(uploadResult.Succeeded);
-        Assert.Equal(0, uploadResult.Value);
-        Assert.NotNull(uploadResult.ErrorMessage);
+        ResultAssert.ValueFailure(uploadResult);
     }
 
     [Fact]
@@ -154,9 +145,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var uploadResult = await googlePhotosRepository.UploadPhotosToAlbumAsync(_fixture.TestAlbumName, filePaths);
 
-        Assert.False(uploadResult.Succeeded);
-        Assert.Equal(0, uploadResult.Value);
-        Assert.NotNull(uploadResult.ErrorMessage);
+        ResultAssert.ValueFailure(uploadResult);
     }
 
     [Fact]
@@ -176,9 +165,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var uploadResult = await googlePhotosRepository.UploadPhotosToAlbumAsync(_fixture.TestAlbumName, []);
 
-        Assert.True(uploadResult.Succeeded);
-        Assert.Equal(0, uploadResult.Value);
-        Assert.Null(uploadResult.ErrorMessage);
+        ResultAssert.ValueSuccess(uploadResult, 0);
     }
 
     [Fact]
@@ -217,9 +204,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
 
         var uploadResult = await googlePhotosRepository.UploadPhotosToAlbumAsync(_fixture.TestAlbumName, filePaths);
 
-        Assert.True(uploadResult.Succeeded);
-        Assert.Equal(1, uploadResult.Value);
-        Assert.Null(uploadResult.ErrorMessage);
+        ResultAssert.ValueSuccess(uploadResult, batchCreateResponse.NewMediaItemResults.Count);
     }
     #endregion
 }

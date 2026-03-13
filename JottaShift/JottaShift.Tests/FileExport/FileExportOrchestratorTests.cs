@@ -106,7 +106,7 @@ public class FileExportOrchestratorTests(
 
         var result = await timelineExportService.ExportJottacloudTimelineAsync(CancellationToken.None);
 
-        Assert.True(result.Succeeded);
+        ResultAssert.Success(result);
         Assert.True(fileSystemMock.File.Exists(duckTarget));
         Assert.True(fileSystemMock.File.Exists(waterfallTarget));
         Assert.False(fileSystemMock.File.Exists(duckSource));
@@ -148,7 +148,7 @@ public class FileExportOrchestratorTests(
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
         var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, "image.png");
 
-        Assert.True(result.Succeeded);
+        ResultAssert.Success(result);
         Assert.False(fileSystemMock.File.Exists(sourceFilePath));
         Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
             $"Expected file at path {expectedTargetPath} was not found.");
@@ -173,7 +173,7 @@ public class FileExportOrchestratorTests(
 
         //var result = await fileExportOrchestrator.ExportChromecastPhotosAsync();
 
-        //Assert.True(result.Succeeded);
+        //ResultAssert.Success(result);
         // Assert.Equal(2, result.GooglePhotosUploadOperationResults.Count());
     }
 
@@ -201,7 +201,7 @@ public class FileExportOrchestratorTests(
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
         //var operation = result.Operations.FirstOrDefault();
-        Assert.True(result.Succeeded);
+        ResultAssert.Success(result);
         //Assert.True(result.Operations.Count > 0);
         //Assert.True(operation?.Success == true);
         //Assert.Equal(expectedTargetPath, operation.TargetFilePath);
