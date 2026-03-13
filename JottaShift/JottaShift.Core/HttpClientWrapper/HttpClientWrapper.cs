@@ -6,6 +6,7 @@ namespace JottaShift.Core.HttpClientWrapper;
 public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _logger) : IHttpClientWrapper
 {
     public Uri? BaseAddress { get; set; }
+    public HttpClient HttpClient=> _http;
 
     public async Task<HttpSendResult<T>> SendAsync<T>(HttpRequestMessage request)
     {

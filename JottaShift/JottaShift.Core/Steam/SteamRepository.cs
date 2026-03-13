@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JottaShift.Core.HttpClientWrapper;
+using Microsoft.Extensions.Logging;
 using SteamWebAPI2.Interfaces;
 
 namespace JottaShift.Core.Steam;
 
 public class SteamRepository(
     ILogger<SteamRepository> logger,
+    IHttpClientWrapper _httpClientWrapper,
     SteamWebApiCredentials webApiCredentials) : ISteamRepository
 {
     private readonly ILogger<SteamRepository> _logger = logger;
@@ -15,7 +17,7 @@ public class SteamRepository(
     {
         try
         {
-            var steamStoreFacade = new SteamStore(new HttpClient()); // TODO: Inject HttpClient
+            var steamStoreFacade = new SteamStore(_httpClientWrapper.HttpClient);
 
             string storeLanguage = !string.IsNullOrEmpty(webApiCredentials.store_language) ?
                 webApiCredentials.store_language :

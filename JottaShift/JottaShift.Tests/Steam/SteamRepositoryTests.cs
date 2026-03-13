@@ -1,7 +1,9 @@
 ﻿namespace JottaShift.Tests.Steam;
 
 [Trait("API", "Google")]
-public class SteamTests(SteamFixture _fixture) : IClassFixture<SteamFixture>
+public class SteamRepositoryTests(SteamFixture _fixture, HttpClientWrapperFixture _httpFixture) : 
+    IClassFixture<SteamFixture>,
+    IClassFixture<HttpClientWrapperFixture>
 {
     [Fact]
     [Trait("Dependency", "Steam.Api")]
@@ -10,7 +12,8 @@ public class SteamTests(SteamFixture _fixture) : IClassFixture<SteamFixture>
         const uint appId = 990080;
         const string appName = "Hogwarts Legacy";
 
-        var steamRepository = _fixture.CreateSteamRepository();
+        var steamRepository = _fixture.CreateSteamRepository(
+            _httpFixture.CreateHttpClientWrapper());
 
         var result = await steamRepository.GetAppNameFromId(appId);
 
@@ -21,7 +24,8 @@ public class SteamTests(SteamFixture _fixture) : IClassFixture<SteamFixture>
     [Trait("Dependency", "Steam.Api")]
     public async Task GetGameName_ReturnsEmptyString_WhenInvalidId()
     {
-        var steamRepository = _fixture.CreateSteamRepository();
+        var steamRepository = _fixture.CreateSteamRepository(
+            _httpFixture.CreateHttpClientWrapper());
 
         var result = await steamRepository.GetAppNameFromId(0);
 

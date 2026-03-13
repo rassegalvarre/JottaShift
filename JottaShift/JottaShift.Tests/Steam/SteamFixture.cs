@@ -1,4 +1,5 @@
-﻿using JottaShift.Core.Steam;
+﻿using JottaShift.Core.HttpClientWrapper;
+using JottaShift.Core.Steam;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -13,10 +14,13 @@ public class SteamFixture : IDisposable
         store_language = string.Empty
     };
 
-    public SteamRepository CreateSteamRepository()
+    public SteamRepository CreateSteamRepository(IHttpClientWrapper? httpClientWrapper = null)
     {
+        httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;
+
         return new SteamRepository(
             new Mock<ILogger<SteamRepository>>().Object,
+            httpClientWrapper,
             SteamWebApiCredentialsMock);
     }
 
