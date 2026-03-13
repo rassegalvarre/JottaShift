@@ -178,8 +178,14 @@ public sealed class FileStorageService(
         return new CopyAsyncResult(true, newFileName);
     }
 
-    public DateTime GetImageDate(string fileFullPath)
+    public Result<DateTime> GetImageDate(string fileFullPath)
     {
+        if (!_fileSystem.File.Exists(fileFullPath))
+        {
+            _logger.LogError("The provided file was not found. Path: {FilePath}", fileFullPath);
+            return Result<DateTime>.Failure("File not found");
+        }
+
         var directories = GetMetadataDirectories(fileFullPath);
         string[] potentialTagNames = [
             "Date/Time Original",
@@ -197,28 +203,42 @@ public sealed class FileStorageService(
                 System.Globalization.DateTimeStyles.None,
                 out var imageDate))
             {
-                return imageDate;
+                return Result<DateTime>.Success(imageDate);
             }
 
             // Fall back to general parsing
             if (DateTime.TryParse(tagValue, out imageDate))
             {
-                return imageDate;
+                return Result<DateTime>.Success(imageDate);
             }
         }
 
         if (TryGetDateFromFilename(Path.GetFileName(fileFullPath), out DateTime dateFromFilename))
         {
-            return dateFromFilename;
+            return Result<DateTime>.Success(dateFromFilename);
         }
 
         // Fall back to LastWriteTime
-        if (_fileSystem.File.Exists(fileFullPath))
+        try
         {
-            return _fileSystem.File.GetLastWriteTime(fileFullPath);
-        }
+            var lastWriteTime = _fileSystem.File.GetLastWriteTime(fileFullPath);
+            var dateDiff = DateTime.UtcNow - lastWriteTime.ToUniversalTime();
 
-        return default;
+            // Ensure that LastWriteTime is neither DateTime.Now or MinDate/default
+            if (dateDiff.TotalMinutes < 1 || lastWriteTime.Year == DateTime.MinValue.Year)
+            {
+                return Result<DateTime>.Failure("The LastWriteTime is no valid indicator for the files origin date");
+            }
+
+            return Result<DateTime>.Success(lastWriteTime);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "An exception occured when trying to get the last write time for file with path: {FilePath}",
+                fileFullPath);
+            return Result<DateTime>.Failure("Could not extract a valid date from the provided image-file");
+        }
     }
 
     public string GetImageResolution(string fileFullPath)

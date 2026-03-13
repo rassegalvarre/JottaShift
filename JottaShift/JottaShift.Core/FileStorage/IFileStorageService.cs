@@ -10,7 +10,7 @@ public interface IFileStorageService
 
     Result<string> GetFileName(string fileFullPath);
 
-    Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true);
+    Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true); // TODO: Remove nullable
 
     Task<Result<byte[]>> GetFileBytesAsync(string fileFullPath);
 
@@ -21,7 +21,7 @@ public interface IFileStorageService
 
 
     // TODO
-    DateTime GetImageDate(string fileFullPath);
+    Result<DateTime> GetImageDate(string fileFullPath);
 
     bool DeleteFile(string fileFullPath);
 

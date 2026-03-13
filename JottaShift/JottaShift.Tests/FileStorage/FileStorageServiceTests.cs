@@ -427,8 +427,9 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         Assert.Equal(10, collection.Count());
     }
 
+    #region GetImageDate
     [Fact]
-    public void GetImageDate_ReturnsMinValue_WhenFileNotFound()
+    public void GetImageDate_ReturnsFailedResult_WhenFileNotFound()
     {
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
 
@@ -436,9 +437,47 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetImageDate(string.Empty);
+        var imageDateResult = fileStorageService.GetImageDate(string.Empty);
 
-        Assert.Equal(DateTime.MinValue, timestamp);
+        Assert.False(imageDateResult.Succeeded);
+        Assert.NotNull(imageDateResult.ErrorMessage);
+        Assert.Equal(default, imageDateResult.Value);
+    }
+
+    [Fact]
+    public void GetImageDate_ReturnsFailedResult_WhenFileHasNoValidDate()
+    {
+        string fileNameWithCurrentDate = Path.GetRandomFileName();
+
+        string fileNameWithDefaultDate = Path.GetRandomFileName();
+        var fileDataWithDefaultDate = new MockFileData(fileNameWithDefaultDate)
+        {
+            LastWriteTime = default
+        };
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { fileNameWithCurrentDate, new MockFileData([]) },
+            { fileNameWithDefaultDate, fileDataWithDefaultDate },
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        // Test <LastWriteTime = DateTime.Now>
+        var imageDateResult = fileStorageService.GetImageDate(fileNameWithCurrentDate);
+
+        Assert.False(imageDateResult.Succeeded);
+        Assert.NotNull(imageDateResult.ErrorMessage);
+        Assert.Equal(default, imageDateResult.Value);
+
+        // Test <LastWriteTime = default>
+        imageDateResult = fileStorageService.GetImageDate(fileNameWithDefaultDate);
+
+        Assert.False(imageDateResult.Succeeded);
+        Assert.NotNull(imageDateResult.ErrorMessage);
+        Assert.Equal(default, imageDateResult.Value);
     }
 
     [Fact]
@@ -451,13 +490,16 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             fileSystem,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetImageDate(TestDataHelper.Duck);
+        var imageDateResult = fileStorageService.GetImageDate(TestDataHelper.Duck);
 
-        Assert.Equal(2025, timestamp.Year);
-        Assert.Equal(5, timestamp.Month);
-        Assert.Equal(17, timestamp.Day);
-        Assert.Equal(13, timestamp.Hour);
-        Assert.Equal(42, timestamp.Minute);
+        Assert.True(imageDateResult.Succeeded);
+        Assert.Null(imageDateResult.ErrorMessage);
+
+        Assert.Equal(2025, imageDateResult.Value.Year);
+        Assert.Equal(5, imageDateResult.Value.Month);
+        Assert.Equal(17, imageDateResult.Value.Day);
+        Assert.Equal(13, imageDateResult.Value.Hour);
+        Assert.Equal(42, imageDateResult.Value.Minute);
     }
 
     [Theory]
@@ -473,12 +515,16 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             fileSystemMock,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timestamp = fileStorageService.GetImageDate(filename);
+        var imageDateResult = fileStorageService.GetImageDate(filename);
 
-        Assert.Equal(expectedYear, timestamp.Year);
-        Assert.Equal(expectedMonth, timestamp.Month);
-        Assert.Equal(expectedDay, timestamp.Day);
+        Assert.True(imageDateResult.Succeeded);
+        Assert.Null(imageDateResult.ErrorMessage);
+
+        Assert.Equal(expectedYear, imageDateResult.Value.Year);
+        Assert.Equal(expectedMonth, imageDateResult.Value.Month);
+        Assert.Equal(expectedDay, imageDateResult.Value.Day);
     }
+    #endregion
 
     public static IEnumerable<object[]> GetImageFilenameTestData()
     {
