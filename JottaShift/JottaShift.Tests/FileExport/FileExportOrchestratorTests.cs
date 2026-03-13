@@ -1,17 +1,15 @@
 ﻿using JottaShift.Core.FileStorage;
-using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.Steam;
 using JottaShift.Tests.GooglePhotos;
 using JottaShift.Tests.TestData;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Globalization;
-using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests.FileExport;
 
-public class FileExportTests(
+public class FileExportOrchestratorTests(
     FileExportFixture _fixture,
     GooglePhotosFixture _googlePhotosFixture
     ) : IClassFixture<FileExportFixture>, 
