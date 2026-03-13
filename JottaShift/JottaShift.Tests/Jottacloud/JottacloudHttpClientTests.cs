@@ -17,9 +17,11 @@ public class JottacloudHttpClientTests(
     public async Task GetAlbumAsync_WithImplementedHttpClient_ReturnsAlbum_WhenValidAlbumIdUsingHttpClient()
     {
         var httpClientWrapper = _httpClientFixture.CreateHttpClientWrapper();
-        var client = _fixture.CreateJottacloudClient(httpClientWrapper);
-        
-        var albumResult = await client.GetAlbumAsync(_fixture.Settings.TestAlbumId);
+        var client = _fixture.CreateMockJottacloudHttpClient(httpClientWrapper);
+
+        var appSettings = await _fixture.GetAppSettingsAsync();        
+        var albumResult = await client.GetAlbumAsync(
+            appSettings.JottacloudSettings.TestAlbumId);
 
         ResultAssert.Success(albumResult);
         Assert.NotEmpty(albumResult.Value!.Photos);
@@ -40,9 +42,12 @@ public class JottacloudHttpClientTests(
             .ReturnsAsync(new HttpGetResult<Album>(
                 System.Net.HttpStatusCode.OK, expectedAlbumResponse));
 
-        var client = _fixture.CreateJottacloudClient(httpClientWrapper.Object);
+        var appSettings = await _fixture.GetAppSettingsAsync();
+        
+        var client = _fixture.CreateMockJottacloudHttpClient(httpClientWrapper.Object);
 
-        var albumResult = await client.GetAlbumAsync(_fixture.Settings.TestAlbumId);
+        var albumResult = await client.GetAlbumAsync(
+            appSettings.JottacloudSettings.TestAlbumId);
 
         ResultAssert.ValueSuccess(albumResult, expectedAlbumResponse);
     }
@@ -60,8 +65,10 @@ public class JottacloudHttpClientTests(
             mockHttpWrapper.Object,
             new Mock<ILogger<JottacloudHttpClient>>().Object);
 
+        var appSettings = await _fixture.GetAppSettingsAsync();
 
-        var albumResult = await client.GetAlbumAsync(_fixture.Settings.TestAlbumId);
+        var albumResult = await client.GetAlbumAsync(
+            appSettings.JottacloudSettings.TestAlbumId);
 
         ResultAssert.ValueFailure(albumResult);
     }

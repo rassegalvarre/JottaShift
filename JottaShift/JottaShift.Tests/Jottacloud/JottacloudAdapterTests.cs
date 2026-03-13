@@ -72,19 +72,20 @@ public class JottacloudAdapterTests(JottacloudFixture _fixture)
     [InlineData(2011, 1, 1, @"2011\01 January")]
     [InlineData(2012, 5, 17, @"2012\05 May")]
     [InlineData(2013, 12, 31, @"2013\12 December")]
-    public void PhotoStorageStructuredDirectoryPath_CreatesStructuredPath(
+    public async Task PhotoStorageStructuredDirectoryPath_CreatesStructuredPath(
         int year,
         int month,
         int day,
         string expectedStructuredDirectory)
     {
         var caputuredDate = new DateTimeOffset(year, month, day, 12, 12, 12, TimeSpan.Zero);
-        string storagePath = _fixture.Settings.PhotoStoragePath;
+        var appSettings = await _fixture.GetAppSettingsAsync();
+        
         var cultureInfo = JottacloudAdapter.DefaultCulture;
 
         var directory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(
             caputuredDate, 
-            storagePath,
+            appSettings.JottacloudSettings.PhotoStoragePath,
             cultureInfo);
 
         Assert.EndsWith(expectedStructuredDirectory, directory);

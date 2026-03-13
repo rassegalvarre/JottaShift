@@ -16,7 +16,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<Album>.Failure("Album not found"));
 
-        var jottacloudRepository = _fixture.CreateJottacloudRepository(
+        var jottacloudRepository = await _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object);
 
         string albumId = Guid.NewGuid().ToString();
@@ -52,7 +52,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
             .Returns((string folder, string fileName, bool recursive) =>
                 Result<string>.Success(Path.Combine(folder, fileName)));
 
-        var jottacloudRepository = _fixture.CreateJottacloudRepository(
+        var jottacloudRepository = await _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object,
             fileStorage: fileStorage.Object);
 
@@ -85,9 +85,9 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var fileStorage = new Mock<IFileStorageService>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns(Result<string>.Success(null));
+            .Returns(Result<string>.Failure("Not found"));
 
-        var jottacloudRepository = _fixture.CreateJottacloudRepository(
+        var jottacloudRepository = await _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object,
             fileStorage: fileStorage.Object);
 

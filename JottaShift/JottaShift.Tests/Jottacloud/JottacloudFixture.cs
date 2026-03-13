@@ -1,23 +1,15 @@
 ﻿using JottaShift.Core.FileStorage;
 using JottaShift.Core.HttpClientWrapper;
 using JottaShift.Core.Jottacloud;
+using JottaShift.Tests.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace JottaShift.Tests.Jottacloud;
 
-public class JottacloudFixture : IDisposable
+public class JottacloudFixture : AppSettingsFixture
 {
-    public JottacloudSettings Settings => new()
-    {
-        ApiUri = "https://api.jottacloud.com/",
-        SyncFolderFullPath = @"C:\\Jottacloud",
-        PhotoStoragePath = @"C:\\Jottacloud\\Images",
-        TestAlbumId = "imjg7a52t61g"
-    };
-
-    // TODO: Reanme to CreateMockJottacloudHttpClient
-    public JottacloudHttpClient CreateJottacloudClient(IHttpClientWrapper? httpClientWrapper = null)
+    public JottacloudHttpClient CreateMockJottacloudHttpClient(IHttpClientWrapper? httpClientWrapper = null)
     {
         httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;
 
@@ -26,21 +18,22 @@ public class JottacloudFixture : IDisposable
             new Mock<ILogger<JottacloudHttpClient>>().Object);
     }
 
-    public JottacloudRepository CreateJottacloudRepository(
+    public async Task<JottacloudRepository> CreateJottacloudRepository(
         IFileStorageService? fileStorage = null,
         IJottacloudHttpClient? jottacloudClient = null)
     {
         fileStorage ??= new Mock<IFileStorageService>().Object;
         jottacloudClient ??= new Mock<IJottacloudHttpClient>().Object;
+        var appSettings = await GetAppSettingsAsync();
 
         return new JottacloudRepository(
             new Mock<ILogger<JottacloudRepository>>().Object,
             fileStorage,
             jottacloudClient,
-            Settings);
+            appSettings.JottacloudSettings);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         GC.SuppressFinalize(this);
     }
