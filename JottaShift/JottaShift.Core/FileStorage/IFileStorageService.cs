@@ -10,6 +10,8 @@ public interface IFileStorageService
 
     Result DeleteFile(string fileFullPath);
 
+    Result FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024);
+
     Result IsValidFileName(string fileNameWithExtension);
 
     Result ValidateDirectory(string directoryFullPath);
@@ -31,7 +33,6 @@ public interface IFileStorageService
 
     // TODO
 
-    bool FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024);
 
     bool DoesFileMetadataMatch(string pathA, string pathB);
 

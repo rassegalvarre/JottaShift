@@ -106,6 +106,105 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
     #endregion
 
+    #region FilesAreBitPerfectMatch
+    [Fact]
+    public void FilesAreBitPerfectMatch_DoesNotMatch_WhenDifferentContentLength()
+    {
+        string fileA = Path.GetRandomFileName();
+        var fileAContent = Enumerable.Range(0, 8)
+            .Select(x => (byte)x)
+            .ToArray();
+
+        string fileB = Path.GetRandomFileName();
+        var fileBContent = Enumerable.Range(0, 16)
+          .Select(x => (byte)x)
+          .ToArray();
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { fileA, new MockFileData(fileAContent) },
+            { fileB, new MockFileData(fileBContent) },
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
+
+        ResultAssert.Failure(filesAreBitPerfectMatch);
+    }
+
+    [Fact]
+    public void FilesAreBitPerfectMatch_DoesNotMatch_WhenDifferentContent()
+    {
+        string fileA = Path.GetRandomFileName();
+        var fileAContent = Enumerable.Range(0, 8)
+            .Select(x => (byte)x)
+            .ToArray();
+
+        string fileB = Path.GetRandomFileName();
+        var fileBContent = Enumerable.Range(0, 8)
+          .Select(x => (byte)(x * 2))
+          .ToArray();
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { fileA, new MockFileData(fileAContent) },
+            { fileB, new MockFileData(fileBContent) },
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
+
+        ResultAssert.Failure(filesAreBitPerfectMatch);
+    }
+
+    [Fact]
+    public void FilesAreBitPerfectMatch_DoesMatch_WhenEqualContent()
+    {
+        string fileA = Path.GetRandomFileName();
+        var fileAContent = Enumerable.Range(0, 64)
+            .Select(x => (byte)(x * 2))
+            .ToArray();
+
+        string fileB = Path.GetRandomFileName();
+        var fileBContent = Enumerable.Range(0, 64)
+          .Select(x => (byte)(x * 2))
+          .ToArray();
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { fileA, new MockFileData(fileAContent) },
+            { fileB, new MockFileData(fileBContent) },
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
+
+        ResultAssert.Success(filesAreBitPerfectMatch);
+    }
+
+    [Fact]
+    [Trait("Dependency", "FileSystem")]
+    public void FilesAreBitPerfectMatch_DoesMatch_WhenCopyOfImage()
+    {
+        var fileStorageService = new FileStorageService(
+            new FileSystem(),
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(TestDataHelper.Duck, TestDataHelper.DuckCopy);
+
+        ResultAssert.Success(filesAreBitPerfectMatch);
+    }
+    #endregion
+
     #region IsValidFileName
     [Theory]
     [InlineData("")]
@@ -159,7 +258,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     {
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
 
-        var fileStorageService = _fixture.CreateFileStorageService();
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var result = fileStorageService.ValidateDirectory(_fixture.BaseDirectory);
 
@@ -709,103 +808,6 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         Assert.True(result.Success);
         Assert.True(sourceExists);
         Assert.True(copied);
-    }
-
-    [Fact]
-    public void FilesAreBitPerfectMatch_DoesNotMatch_WhenDifferentContentLength()
-    {
-        string fileA = Path.GetRandomFileName();
-        var fileAContent = Enumerable.Range(0, 8)
-            .Select(x => (byte)x)
-            .ToArray();
-
-        string fileB = Path.GetRandomFileName();
-        var fileBContent = Enumerable.Range(0, 16)
-          .Select(x => (byte)x)
-          .ToArray();
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { fileA, new MockFileData(fileAContent) },
-            { fileB, new MockFileData(fileBContent) },
-        });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
-
-        Assert.False(filesAreBitPerfectMatch);
-    }
-
-    [Fact]
-    public void FilesAreBitPerfectMatch_DoesNotMatch_WhenDifferentContent()
-    {
-        string fileA = Path.GetRandomFileName();
-        var fileAContent = Enumerable.Range(0, 8)
-            .Select(x => (byte)x)
-            .ToArray();
-
-        string fileB = Path.GetRandomFileName();
-        var fileBContent = Enumerable.Range(0, 8)
-          .Select(x => (byte)(x * 2))
-          .ToArray();
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { fileA, new MockFileData(fileAContent) },
-            { fileB, new MockFileData(fileBContent) },
-        });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
-
-        Assert.False(filesAreBitPerfectMatch);
-    }
-
-    [Fact]
-    public void FilesAreBitPerfectMatch_DoesMatch_WhenEqualContent()
-    {
-        string fileA = Path.GetRandomFileName();
-        var fileAContent = Enumerable.Range(0, 64)
-            .Select(x => (byte)(x * 2))
-            .ToArray();
-
-        string fileB = Path.GetRandomFileName();
-        var fileBContent = Enumerable.Range(0, 64)
-          .Select(x => (byte)(x * 2))
-          .ToArray();
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { fileA, new MockFileData(fileAContent) },
-            { fileB, new MockFileData(fileBContent) },
-        });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
-
-        Assert.True(filesAreBitPerfectMatch);
-    }
-
-    [Fact]
-    [Trait("Dependency", "FileSystem")]
-    public void FilesAreBitPerfectMatch_DoesMatch_WhenCopyOfImage()
-    {
-        var fileStorageService = new FileStorageService(
-            new FileSystem(),
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        bool filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(TestDataHelper.Duck, TestDataHelper.DuckCopy);
-
-        Assert.True(filesAreBitPerfectMatch);
     }
 
     [Fact]
