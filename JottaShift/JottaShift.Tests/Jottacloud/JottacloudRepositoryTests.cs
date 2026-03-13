@@ -50,7 +50,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
         var fileStorage = new Mock<IFileStorageService>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
             .Returns((string folder, string fileName, bool recursive) =>
-                Result<string?>.Success(Path.Combine(folder, fileName)));
+                Result<string>.Success(Path.Combine(folder, fileName)));
 
         var jottacloudRepository = _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object,
@@ -85,7 +85,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
 
         var fileStorage = new Mock<IFileStorageService>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns(Result<string?>.Success(null));
+            .Returns(Result<string>.Success(null));
 
         var jottacloudRepository = _fixture.CreateJottacloudRepository(
             jottacloudClient: jottacloudClient.Object,

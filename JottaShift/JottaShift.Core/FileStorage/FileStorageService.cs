@@ -320,7 +320,7 @@ public sealed class FileStorageService(
         }
     }
 
-    public Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true)
+    public Result<string> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true)
     {
         var pattern = fileName;
 
@@ -330,10 +330,10 @@ public sealed class FileStorageService(
 
         foreach (var path in _fileSystem.Directory.EnumerateFiles(folderPath, pattern, option))
         {
-            return Result<string?>.Success(path);
+            return Result<string>.Success(path);
         }
 
-        return Result<string?>.Failure("File not found");
+        return Result<string>.Failure("File not found");
     }    
 
     public Result<DateTime> GetImageDate(string fileFullPath)

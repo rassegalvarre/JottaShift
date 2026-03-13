@@ -22,7 +22,7 @@ public interface IFileStorageService
 
     Result<string> GetImageResolution(string fileFullPath);
 
-    Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true); // TODO: Remove nullable
+    Result<string> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true);
 
     Task<Result<byte[]>> GetFileBytesAsync(string fileFullPath);
 

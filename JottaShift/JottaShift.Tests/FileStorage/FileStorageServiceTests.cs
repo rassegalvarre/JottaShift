@@ -591,6 +591,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
     #endregion
 
+    #region SearchFileByExactName
     [Fact]
     public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
     {
@@ -629,8 +630,10 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             searchRecursively: false);
 
         ResultAssert.ValueFailure(topDirectoryresult);
-    }    
+    }
+    #endregion
 
+    #region EnumerateDirectories
     [Fact]
     public void EnumerateDirectories_ShouldEnumerate_EmptyCollectionOnInvalidPath()
     {
@@ -699,7 +702,9 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         Assert.Equal(2, collection.Count());
     }
+    #endregion
 
+    #region EnumerateFiles
     [Fact]
     public void EnumerateFiles_ShouldEnumerate_EmptyCollectionOnInvalidPath()
     {
@@ -769,7 +774,8 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         var collection = fileStorageService.EnumerateFiles(baseDirectory);
 
         Assert.Equal(10, collection.Count());
-    }   
+    }
+    #endregion
 
     public static IEnumerable<object[]> GetImageFilenameTestData()
     {
