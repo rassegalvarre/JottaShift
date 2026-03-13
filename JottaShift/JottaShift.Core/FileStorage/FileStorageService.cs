@@ -82,6 +82,44 @@ public sealed class FileStorageService(
             Result.Failure("File was not deleted");
     }
 
+    public Result DoesFileMetadataMatch(string filePathA, string filePathB)
+    {
+        var metadataFileA = GetFileMetadata(filePathA);
+        var metadataFileB = GetFileMetadata(filePathB);
+        var allKeys = new SortedSet<string>(metadataFileA.Keys.Concat(metadataFileB.Keys));
+
+        foreach (var key in allKeys)
+        {
+            metadataFileA.TryGetValue(key, out var valueA);
+            metadataFileB.TryGetValue(key, out var valueB);
+
+            if (valueA == null)
+            {
+                _logger.LogError("Metadata field {Key} is missing from file {FilePathA}",
+                    filePathA, key);
+                return Result.Failure("Missing metadata detected");
+
+            }
+            else if (valueB == null)
+            {
+                _logger.LogError("Metadata field {Key} is missing from file {FilePathB}",
+                    filePathB, key);
+                return Result.Failure("Missing metadata detected");
+            }
+            else if (!valueA.Equals(valueB))
+            {
+                _logger.LogError("The value of metadata field {Key} is mismatched between the provided files." +
+                    "File A: {FilePathA}." +
+                    "File B: {FilePathB}",
+                    key, filePathA, filePathB);
+                return Result.Failure("Detected mismatched metadata values");
+            }
+        }
+
+        return Result.Success();
+    }
+
+
     public Result FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024) // 1 MiB default
     {
         // Quick size check – if lengths differ they can’t be identical.
@@ -445,49 +483,6 @@ public sealed class FileStorageService(
 
         return _fileSystem.Directory.EnumerateFiles(directoryFullPath, "*", SearchOption.AllDirectories);
     }    
-
-    public bool DoesFileMetadataMatch(string originalFileFullPath, string copiedFileFullPath)
-    {
-        var originalFileMetadata = GetFileMetadata(originalFileFullPath);
-        var copedFileMetadata = GetFileMetadata(copiedFileFullPath);
-        var allKeys = new SortedSet<string>(originalFileMetadata.Keys.Concat(copedFileMetadata.Keys));
-
-        bool hasMismatch = false;
-
-        foreach (var key in allKeys)
-        {
-            originalFileMetadata.TryGetValue(key, out var valA);
-            copedFileMetadata.TryGetValue(key, out var valB);
-
-            if (valA == null)
-            {
-                _logger.LogError(
-                    "Tile original file {FileName} is missing metadata field with key {Key}",
-                    Path.GetFileName(originalFileFullPath),
-                    key);
-                hasMismatch = true;
-
-            }
-            else if (valB == null)
-            {
-                _logger.LogError(
-                    "The copied file {FileName} is missing metadata field with key {Key}",
-                    Path.GetFileName(copiedFileFullPath),
-                    key);
-                hasMismatch = true;
-            }
-            else if (!valA.Equals(valB))
-            {
-                _logger.LogError(
-                    "The value of metadata field with key {Key} is mismatched between the original copied file {FileName}",
-                    key,
-                    Path.GetFileName(originalFileFullPath));
-                hasMismatch = true;
-            }
-        }
-
-        return !hasMismatch;
-    }
 
     private SortedDictionary<string, string> GetFileMetadata(string fileFullPath)
     {

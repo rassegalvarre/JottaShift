@@ -9,6 +9,8 @@ public interface IFileStorageService
     Result DeleteDirectoryContent(string directoryFullPath);
 
     Result DeleteFile(string fileFullPath);
+    
+    Result DoesFileMetadataMatch(string filePathA, string filePathB);
 
     Result FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024);
 
@@ -32,9 +34,5 @@ public interface IFileStorageService
     IEnumerable<string> EnumerateFiles(string directoryFullPath);
 
     // TODO
-
-
-    bool DoesFileMetadataMatch(string pathA, string pathB);
-
     Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, CancellationToken ct = default);
 }

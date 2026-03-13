@@ -106,6 +106,34 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
     #endregion
 
+    #region DoesFileMetadataMatch
+    [Fact]
+    [Trait("Dependency", "FileSystem")]
+    public void DoesFileMetadataMatch_DoesNotMatch_WhenDifferentImages()
+    {
+        var fileStorageService = _fixture.CreateFileStorageService(new FileSystem());
+
+        var metadataMatchResult = fileStorageService.DoesFileMetadataMatch(
+            TestDataHelper.Duck,
+            TestDataHelper.Waterfall);
+
+        ResultAssert.Failure(metadataMatchResult);
+    }
+
+    [Fact]
+    [Trait("Dependency", "FileSystem")]
+    public void DoesFileMetadataMatch_DoesMatch_WhenCopyOfSameImage()
+    {
+        var fileStorageService = _fixture.CreateFileStorageService(new FileSystem());
+
+        var metadataMatchResult = fileStorageService.DoesFileMetadataMatch(
+           TestDataHelper.Duck,
+           TestDataHelper.DuckCopy);
+
+        ResultAssert.Success(metadataMatchResult);
+    }
+    #endregion
+
     #region FilesAreBitPerfectMatch
     [Fact]
     public void FilesAreBitPerfectMatch_DoesNotMatch_WhenDifferentContentLength()
@@ -809,30 +837,4 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         Assert.True(sourceExists);
         Assert.True(copied);
     }
-
-    [Fact]
-    [Trait("Dependency", "FileSystem")]
-    public void DoesFileMetadataMatch_DoesNotMatch_WhenDifferentImages()
-    {
-        var fileStorageService = new FileStorageService(
-            new FileSystem(),
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(TestDataHelper.Duck, TestDataHelper.Waterfall);
-
-        Assert.False(metadataMatches);
-    }
-
-    [Fact]
-    [Trait("Dependency", "FileSystem")]
-    public void DoesFileMetadataMatch_DoesMatch_WhenCopyOfSameImage()
-    {
-        var fileStorageService = new FileStorageService(
-            new FileSystem(),
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        bool metadataMatches = fileStorageService.DoesFileMetadataMatch(TestDataHelper.Duck, TestDataHelper.DuckCopy);
-
-        Assert.True(metadataMatches);
-    }   
 }
