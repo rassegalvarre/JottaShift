@@ -1,11 +1,9 @@
 ﻿namespace JottaShift.Core.FileStorage;
 
-/// <remarks>
-/// Return-types are currently being converted to Result
-/// </remarks>
 public interface IFileStorageService
 {
-    // Done
+    Result<string> CopyFile(string sourceFileFullPath, string targetDirectory);
+
     Result DeleteDirectoryContent(string directoryFullPath);
 
     Result DeleteFile(string fileFullPath);
@@ -28,11 +26,7 @@ public interface IFileStorageService
 
     Task<Result<byte[]>> GetFileBytesAsync(string fileFullPath);
 
-    // Keep current
     IEnumerable<string> EnumerateDirectories(string directoryFullPath);
 
     IEnumerable<string> EnumerateFiles(string directoryFullPath);
-
-    // TODO
-    Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, CancellationToken ct = default);
 }

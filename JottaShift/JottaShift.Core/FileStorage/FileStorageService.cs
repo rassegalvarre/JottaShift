@@ -10,6 +10,52 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorageService
 {
+    public Result<string> CopyFile(string sourceFileFullPath, string targetDirectory)
+    {
+        string fileName = Path.GetFileName(sourceFileFullPath);
+        string newFileName = Path.Combine(targetDirectory, fileName);
+
+        if (!_fileSystem.File.Exists(sourceFileFullPath))
+        {
+            _logger.LogWarning("Source file not found: {FilePath}", sourceFileFullPath);
+            return Result<string>.Failure("Source file not found");
+        }
+
+        if (!ValidateDirectory(targetDirectory).Succeeded)
+        {
+            _logger.LogWarning("Could not find or create target directory: {TargeDirectory}", targetDirectory);
+            return Result<string>.Failure("Target directory does not exist");
+        }
+
+        if (_fileSystem.File.Exists(newFileName))
+        {
+            _logger.LogInformation("Target file already exists: {TargeFile}", newFileName);
+            return Result<string>.Success(newFileName);
+        }
+
+        try
+        {
+            _fileSystem.File.Copy(sourceFileFullPath, newFileName, false);
+
+            if (_fileSystem.File.Exists(newFileName))
+            {
+                return Result<string>.Success(newFileName);
+            }
+            else
+            {
+                _logger.LogError("File-copy was executed, but target file was not created. Target file: {TargetFileName}",
+                    newFileName);
+                return Result<string>.Failure("File was not copied");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception when copying file to target: {TargetFileName}", newFileName);
+            return Result<string>.Failure("Error when copying file");
+        }
+    }
+
+
     public Result DeleteDirectoryContent(string directoryFullPath)
     {
         if (!_fileSystem.Directory.Exists(directoryFullPath))
@@ -281,45 +327,7 @@ public sealed class FileStorageService(
         }
 
         return Result<string?>.Failure("File not found");
-    }   
-
-    public async Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, CancellationToken ct = default)
-    {
-        string fileName = Path.GetFileName(sourceFileFullPath);
-        string newFileName = Path.Combine(targetDirectory, fileName);
-
-        if (!_fileSystem.File.Exists(sourceFileFullPath))
-        {
-            _logger.LogWarning("Source file not found: {FilePath}", sourceFileFullPath);
-            return new CopyAsyncResult(false, newFileName);
-        }
-
-        if (!ValidateDirectory(targetDirectory).Succeeded)
-        {
-            _logger.LogWarning("Could not find or create target directory: {TargeDirectory}", targetDirectory);
-            return new CopyAsyncResult(false, newFileName);
-        }
-
-        if (_fileSystem.File.Exists(newFileName))
-        {
-            _logger.LogInformation("Target file already exists: {TargeFile}", newFileName);
-            return new CopyAsyncResult(true, newFileName);
-        }
-
-        try
-        {
-            
-            _fileSystem.File.Copy(sourceFileFullPath, newFileName, false);
-        }
-        catch(Exception ex)
-        {
-            _logger.LogError("Exception when copying file: {ExceptionMessage}", ex.Message);
-            return new CopyAsyncResult(false, newFileName);
-        }
-
-        await Task.FromResult(true);
-        return new CopyAsyncResult(true, newFileName);
-    }
+    }    
 
     public Result<DateTime> GetImageDate(string fileFullPath)
     {
