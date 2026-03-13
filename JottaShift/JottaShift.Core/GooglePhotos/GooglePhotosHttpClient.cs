@@ -8,13 +8,13 @@ namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosHttpClient : IGooglePhotosHttpClient
 {
-    private readonly IFileStorage _fileStorage;
+    private readonly IFileStorageService _fileStorage;
     private readonly IHttpClientWrapper _http;
     private readonly IUserCredentialManager _userCredentialManager;
     private readonly ILogger<GooglePhotosHttpClient> _logger;
 
     public GooglePhotosHttpClient(
-        IFileStorage fileStorage,
+        IFileStorageService fileStorage,
         IHttpClientWrapper http,
         IUserCredentialManager userCredentialManager,
         ILogger<GooglePhotosHttpClient> logger)

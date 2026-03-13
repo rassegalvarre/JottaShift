@@ -13,7 +13,7 @@ public class FileExportFixture : IDisposable
 {
     public readonly string SourceDirectoryRoot = @"C:\source";
     public readonly string TargetDirectoryRoot = @"C:\backup";   
-    public Mock<IFileStorage> FileStorageMock => new();
+    public Mock<IFileStorageService> FileStorageMock => new();
     public Mock<IGooglePhotosRepository> GooglePhotosRepositoryMock => new();
     public Mock<IJottacloudRepository> JottacloudRepositoryMock => new();
 
@@ -55,7 +55,7 @@ public class FileExportFixture : IDisposable
     };
 
     public FileExportOrchestrator CreateFileExportOrchestrator(
-        IFileStorage? fileStorage = null,
+        IFileStorageService? fileStorage = null,
         IGooglePhotosRepository? googlePhotosRepository = null,
         IJottacloudRepository? jottacoudRepository = null,
         ISteamRepository? steamRepository = null

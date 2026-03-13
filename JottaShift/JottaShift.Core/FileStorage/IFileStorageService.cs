@@ -1,6 +1,6 @@
 ﻿namespace JottaShift.Core.FileStorage;
 
-public interface IFileStorage
+public interface IFileStorageService
 {
     Result IsValidFileName(string fileNameWithExtension);
 

@@ -11,7 +11,7 @@ namespace JottaShift.Core.FileExport;
 public sealed class FileExportOrchestrator(
     FileExportJobs _fileExportJobs,
     ILogger<FileExportOrchestrator> _logger,
-    IFileStorage _fileStorage,
+    IFileStorageService _fileStorage,
     IGooglePhotosRepository _googlePhotosRepository,
     IJottacloudRepository _jottacloudRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator

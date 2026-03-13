@@ -12,7 +12,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task UploadPhotoAsync_ShouldReturnFailedResult_WhenInvalidFileNameAndContent()
     {
-        var mockFileStorage = new Mock<IFileStorage>();
+        var mockFileStorage = new Mock<IFileStorageService>();
         mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
             .Returns(Result<string>.Failure("Invalid name"));
 
@@ -32,7 +32,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task UploadPhotoAsync_ShouldReturnFailedResult_WhenFailedToGetUserCredentials()
     {
-        var mockFileStorage = new Mock<IFileStorage>();
+        var mockFileStorage = new Mock<IFileStorageService>();
         mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
             .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
 
@@ -58,7 +58,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
     public async Task UploadPhotoAsync_ShouldReturnFailedResult_WhenUploadFailed()
     {
 
-        var mockFileStorage = new Mock<IFileStorage>();
+        var mockFileStorage = new Mock<IFileStorageService>();
         mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
             .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
 
@@ -88,7 +88,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task UploadPhotoAsync_ShouldReturnUploadToken_WhenUploadSucceeded()
     {
-        var mockFileStorage = new Mock<IFileStorage>();
+        var mockFileStorage = new Mock<IFileStorageService>();
         mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
             .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
 

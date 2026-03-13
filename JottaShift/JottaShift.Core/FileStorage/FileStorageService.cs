@@ -8,7 +8,7 @@ namespace JottaShift.Core.FileStorage;
 
 public sealed class FileStorageService(
     IFileSystem _fileSystem,
-    ILogger<FileStorageService> _logger) : IFileStorage
+    ILogger<FileStorageService> _logger) : IFileStorageService
 {
     public Result IsValidFileName(string fileNameWithExtension)
     {

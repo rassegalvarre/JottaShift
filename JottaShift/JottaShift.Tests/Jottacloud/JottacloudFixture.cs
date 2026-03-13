@@ -27,10 +27,10 @@ public class JottacloudFixture : IDisposable
     }
 
     public JottacloudRepository CreateJottacloudRepository(
-        IFileStorage? fileStorage = null,
+        IFileStorageService? fileStorage = null,
         IJottacloudHttpClient? jottacloudClient = null)
     {
-        fileStorage ??= new Mock<IFileStorage>().Object;
+        fileStorage ??= new Mock<IFileStorageService>().Object;
         jottacloudClient ??= new Mock<IJottacloudHttpClient>().Object;
 
         return new JottacloudRepository(

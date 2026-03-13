@@ -41,7 +41,7 @@ var host = Host.CreateDefaultBuilder(args)
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         services.AddScoped<IFileSystem, FileSystem>();
-        services.AddScoped<IFileStorage, FileStorageService>();
+        services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddSingleton<IGooglePhotosLibraryFacade, GooglePhotosLibraryFacade>();
         services.AddScoped<IGooglePhotosHttpClient, GooglePhotosHttpClient>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();

@@ -30,11 +30,11 @@ public class GooglePhotosFixture : IDisposable
     };
 
     public GooglePhotosHttpClient CreateGooglePhotosHttpClient(
-        IFileStorage? fileStorage = null,
+        IFileStorageService? fileStorage = null,
         IHttpClientWrapper? httpClientWrapper = null,
         IUserCredentialManager? userCredentialManager= null)
     {
-        fileStorage ??= new Mock<IFileStorage>().Object;
+        fileStorage ??= new Mock<IFileStorageService>().Object;
         httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;
         userCredentialManager ??= new Mock<IUserCredentialManager>().Object;
 

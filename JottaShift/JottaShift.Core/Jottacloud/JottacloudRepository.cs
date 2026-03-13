@@ -7,7 +7,7 @@ namespace JottaShift.Core.Jottacloud;
 
 public class JottacloudRepository(
     ILogger<JottacloudRepository> _logger,
-    IFileStorage _fileStorage,
+    IFileStorageService _fileStorage,
     IJottacloudHttpClient _client,
     JottacloudSettings _settings) : IJottacloudRepository
 {

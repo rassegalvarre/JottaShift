@@ -48,7 +48,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<Album>.Success(album));
 
-        var fileStorage = new Mock<IFileStorage>();
+        var fileStorage = new Mock<IFileStorageService>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
             .Returns((string folder, string fileName, bool recursive) =>
                 Result<string?>.Success(Path.Combine(folder, fileName)));
@@ -85,7 +85,7 @@ public class JottacloudRepositoryTests(JottacloudFixture _fixture)
         jottacloudClient.Setup(c => c.GetAlbumAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<Album>.Success(album));
 
-        var fileStorage = new Mock<IFileStorage>();
+        var fileStorage = new Mock<IFileStorageService>();
         fileStorage.Setup(fs => fs.SearchFileByExactName(It.IsAny<string>(), It.IsAny<string>()))
             .Returns(Result<string?>.Success(null));
 
