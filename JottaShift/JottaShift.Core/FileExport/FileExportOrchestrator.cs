@@ -359,8 +359,8 @@ public sealed class FileExportOrchestrator(
     {
         if (job.DeleteSourceFiles)
         {
-            bool deleted = _fileStorage.DeleteFile(sourceFilePath);
-            if (!deleted)
+            var deletedResult = _fileStorage.DeleteFile(sourceFilePath);
+            if (!deletedResult.Succeeded)
             {
                 _logger.LogError(
                     "Failed to delete source file: {FilePath}",
@@ -373,8 +373,8 @@ public sealed class FileExportOrchestrator(
     {
         if (job.DeleteSourceFiles && result.Succeeded)
         {
-            bool deleted = _fileStorage.DeleteDirectoryContent(job.SourceDirectoryPath);
-            if (!deleted)
+            var deletedResult = _fileStorage.DeleteDirectoryContent(job.SourceDirectoryPath);
+            if (!deletedResult.Succeeded)
             {
                 _logger.LogError(
                     "Failed to delete source directory contents: {FilePath}",

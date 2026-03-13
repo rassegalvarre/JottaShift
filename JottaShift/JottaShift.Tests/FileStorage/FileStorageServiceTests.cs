@@ -9,6 +9,105 @@ namespace JottaShift.Tests.FileStorage;
 
 public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixture<FileStorageFixture>
 {
+    #region DeleteDirectoryContent
+    [Theory]
+    [InlineData("")]
+    [InlineData("some-invalid-path-string")]
+    [InlineData(@"C:\valid\path")]
+    public void DeleteDirectoryContent_ReturnFailure_WhenDirectoryDoesNotExists(string targetDirectoryPath)
+    {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.BaseDirectory, new MockDirectoryData() },
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var result = fileStorageService.DeleteDirectoryContent(targetDirectoryPath);
+
+        Assert.False(result.Succeeded);
+        Assert.NotNull(result.ErrorMessage);
+        Assert.True(fileSystemMock.Directory.Exists(_fixture.BaseDirectory));
+    }
+
+    [Fact]
+    public void DeleteDirectoryContent_ShouldDeleteContent_KeepRoot()
+    {
+        var firstSubDirectory = Path.Combine(_fixture.BaseDirectory, "lorem");
+        var secondSubDirectory = Path.Combine(_fixture.BaseDirectory, "ipsum");
+        var thirdSubDirectory = Path.Combine(_fixture.BaseDirectory, "dolor");
+        var fourthSubDirectory = Path.Combine(_fixture.BaseDirectory, "lamet");
+
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.BaseDirectory, new MockDirectoryData() },
+            { firstSubDirectory, new MockDirectoryData() },
+            { secondSubDirectory, new MockDirectoryData() },
+            { Path.Combine(thirdSubDirectory, Path.GetRandomFileName()), new MockFileData([]) },
+            { Path.Combine(fourthSubDirectory, Path.GetRandomFileName()), new MockFileData([]) }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var result = fileStorageService.DeleteDirectoryContent(_fixture.BaseDirectory);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(fileSystemMock.AllFiles);
+
+        Assert.True(fileSystemMock.Directory.Exists(_fixture.BaseDirectory));
+        Assert.False(fileSystemMock.Directory.Exists(firstSubDirectory));
+        Assert.False(fileSystemMock.Directory.Exists(secondSubDirectory));
+        Assert.False(fileSystemMock.Directory.Exists(thirdSubDirectory));
+        Assert.False(fileSystemMock.Directory.Exists(fourthSubDirectory));
+    }
+    #endregion
+
+    #region DeleteFile
+    [Fact]
+    public void DeleteFile_ShouldReturnSuccess_WhenFileDoesNotExist()
+    {
+        var fileStorageService = _fixture.CreateFileStorageService();
+
+        var result = fileStorageService.DeleteFile(_fixture.SomeValidFileFullPath);
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public void DeleteFile_ShouldReturnFailure_WhenFilePathIsInvalidPath()
+    {
+        var fileStorageService = _fixture.CreateFileStorageService();
+
+        var result = fileStorageService.DeleteFile("some-string-that-is-not-a-valid-path");
+
+        Assert.False(result.Succeeded);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
+    public void DeleteFile_ShouldReturnSuccess_WhenFileWasDeleted()
+    {
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.SomeValidFileFullPath, new MockFileData([]) }
+        });
+
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystem);
+
+        var result = fileStorageService.DeleteFile(_fixture.SomeValidFileFullPath);
+
+        Assert.True(result.Succeeded);
+        Assert.Null(result.ErrorMessage);
+
+        Assert.False(fileSystem.File.Exists(_fixture.SomeValidFileFullPath));
+    }
+    #endregion
+
     #region IsValidFileName
     [Theory]
     [InlineData("")]
@@ -178,41 +277,6 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             searchRecursively: false);
         Assert.False(topDirectoryresult.Succeeded);
         Assert.Null(topDirectoryresult.Value);
-    }
-
-    [Fact]
-    public void DeleteDirectoryContent_ShouldDeleteContent_KeepRoot()
-    {
-        var directory = @"C:\archive";
-        var firstSubDirectory = Path.Combine(directory, "lorem");
-        var secondSubDirectory = Path.Combine(directory, "ipsum");
-        var thirdSubDirectory = Path.Combine(directory, "dolor");
-        var fourthSubDirectory = Path.Combine(directory, "lamet");
-
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { directory, new MockDirectoryData() },
-            { firstSubDirectory, new MockDirectoryData() },
-            { secondSubDirectory, new MockDirectoryData() },
-            { Path.Combine(thirdSubDirectory, Path.GetRandomFileName()), new MockFileData([]) },
-            { Path.Combine(fourthSubDirectory, Path.GetRandomFileName()), new MockFileData([]) }
-        });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        var result = fileStorageService.DeleteDirectoryContent(directory);
-        
-        Assert.True(result);
-        Assert.Empty(fileSystemMock.AllFiles);       
-
-        Assert.True(fileSystemMock.Directory.Exists(directory));
-        Assert.False(fileSystemMock.Directory.Exists(firstSubDirectory));
-        Assert.False(fileSystemMock.Directory.Exists(secondSubDirectory));
-        Assert.False(fileSystemMock.Directory.Exists(thirdSubDirectory));
-        Assert.False(fileSystemMock.Directory.Exists(fourthSubDirectory));   
     }
 
     [Fact]

@@ -10,6 +10,79 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorageService
 {
+    public Result DeleteDirectoryContent(string directoryFullPath)
+    {
+        if (!_fileSystem.Directory.Exists(directoryFullPath))
+        {
+            _logger.LogError("Directory does not exist and content cannot be deleted: {Directory}",
+                directoryFullPath);
+            return Result.Failure("Directory not found");
+        }
+
+        try
+        {
+            foreach (var file in _fileSystem.Directory.EnumerateFiles(directoryFullPath))
+            {
+                var path = Path.GetDirectoryName(file);
+                _fileSystem.File.Delete(file);
+            }
+
+            foreach (var dir in _fileSystem.Directory.EnumerateDirectories(directoryFullPath))
+            {
+                _fileSystem.Directory.Delete(dir, recursive: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Could not delete directory {DirectoryPath}. Exception: {ExceptionMessage}",
+                directoryFullPath,
+                ex.Message);
+        }
+
+        bool isEmpty = !_fileSystem.Directory.EnumerateFileSystemEntries(directoryFullPath).Any();
+
+        if (!isEmpty)
+        {
+            _logger.LogWarning("Did not succeed in deleting all the content of directory {Directory}",
+                directoryFullPath);
+        }
+
+        return isEmpty ?
+            Result.Success() :
+            Result.Failure("Directory content was not successfully deleted");
+    }
+
+    public Result DeleteFile(string fileFullPath)
+    {
+        if (!Path.IsPathFullyQualified(fileFullPath))
+        {
+            _logger.LogError("The provided file-path is not valid: {FilePath}", fileFullPath);
+            return Result.Failure("Invalid file path");
+        }
+
+        if (!_fileSystem.File.Exists(fileFullPath))
+        {
+            _logger.LogWarning("Attempted to delete a file that does not exist: {FilePath}",
+                fileFullPath);
+            return Result.Success();
+        }
+
+        try
+        {
+            _fileSystem.File.Delete(fileFullPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception occured when deleting file with path {FilePath}",
+                fileFullPath);
+        }
+
+        return _fileSystem.File.Exists(fileFullPath) == false ?
+            Result.Success() :
+            Result.Failure("File was not deleted");
+    }
+
+
     public Result IsValidFileName(string fileNameWithExtension)
     {
         if (string.IsNullOrWhiteSpace(fileNameWithExtension))
@@ -89,56 +162,7 @@ public sealed class FileStorageService(
         }
 
         return Result<string?>.Failure("File not found");
-    }
-
-    public bool DeleteFile(string fileFullPath)
-    {
-        try
-        {
-            _fileSystem.File.Delete(fileFullPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Could not delete file {FilePath}. Exception: {ExceptionMessage}",
-                fileFullPath,
-                ex.Message);
-        }
-
-        return _fileSystem.File.Exists(fileFullPath) == false;
-    }
-
-    public bool DeleteDirectoryContent(string directoryFullPath)
-    {
-        try
-        {
-            foreach (var file in _fileSystem.Directory.EnumerateFiles(directoryFullPath))
-            {
-                var path = Path.GetDirectoryName(file);
-                _fileSystem.File.Delete(file);                
-            }
-            
-            foreach (var dir in _fileSystem.Directory.EnumerateDirectories(directoryFullPath))
-            {
-                _fileSystem.Directory.Delete(dir, recursive: true);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Could not delete directory {DirectoryPath}. Exception: {ExceptionMessage}",
-                directoryFullPath,
-                ex.Message);
-        }
-
-        bool isEmpty = !_fileSystem.Directory.EnumerateFileSystemEntries(directoryFullPath).Any();
-
-        if (!isEmpty)
-        {
-            _logger.LogWarning("Did not succeed in deleting all the content of directory {Directory}",
-                directoryFullPath);
-        }
-
-        return isEmpty;
-    }
+    }   
 
     public async Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, CancellationToken ct = default)
     {

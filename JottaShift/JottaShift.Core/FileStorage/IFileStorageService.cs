@@ -6,6 +6,10 @@
 public interface IFileStorageService
 {
     // Done
+    Result DeleteDirectoryContent(string directoryFullPath);
+
+    Result DeleteFile(string fileFullPath);
+
     Result IsValidFileName(string fileNameWithExtension);
 
     Result<string> GetFileName(string fileFullPath);
@@ -22,9 +26,6 @@ public interface IFileStorageService
     IEnumerable<string> EnumerateFiles(string directoryFullPath);
 
     // TODO
-    bool DeleteFile(string fileFullPath);
-
-    bool DeleteDirectoryContent(string directoryFullPath);
 
     bool FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024);
 
