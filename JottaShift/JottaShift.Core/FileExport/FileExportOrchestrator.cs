@@ -390,7 +390,7 @@ public sealed class FileExportOrchestrator(
             _logger.LogWarning("Job with key {JobId} is disabled and will not be started", job.Id);
             return Result.Failure("Job is disabled");
         }
-        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.SourceDirectoryPath, false)))
+        else if (!_fileStorage.ValidateDirectory(job.SourceDirectoryPath).Succeeded)
         {
             _logger.LogError(
                 "Source directory with name @{DirectoryName} for job with id {JobId} does not exist",
@@ -398,7 +398,7 @@ public sealed class FileExportOrchestrator(
                 job.Id);
             return Result.Failure("Source directory does not exist");
         }
-        else if (!_fileStorage.ValidateDirectory(new DirectoryOptions(job.TargetDirectoryPath, true)))
+        else if (!_fileStorage.ValidateDirectory(job.TargetDirectoryPath).Succeeded)
         {
             _logger.LogError(
                 "Could not create target directory with name @{DirectoryName} for job with id {JobId}",

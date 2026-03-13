@@ -138,6 +138,49 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
     #endregion
 
+    #region ValidateDirectory
+    [Fact]
+    public void ValidateDirectory_ShouldBeValidated_WhenFolderExists()
+    {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.BaseDirectory, new MockDirectoryData() }
+        });
+
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
+
+        var result = fileStorageService.ValidateDirectory(_fixture.BaseDirectory);
+
+        ResultAssert.Success(result);
+    }
+
+    [Fact]
+    public void ValidateDirectory_ShouldBeValidated_WhenFolderIsCreated()
+    {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
+
+        var fileStorageService = _fixture.CreateFileStorageService();
+
+        var result = fileStorageService.ValidateDirectory(_fixture.BaseDirectory);
+
+        ResultAssert.Success(result);
+        Assert.True(
+            fileSystemMock.Directory.Exists(_fixture.BaseDirectory));
+    }
+
+    [Fact]
+    public void ValidateDirectory_ShouldNotBeValidated_WhenFolderCannotBeCreated()
+    {
+        string invalidDirectoryName = $"some-invalid-{Path.GetInvalidPathChars().First()}-directory-name";
+        
+        var fileStorageService = _fixture.CreateFileStorageService();
+
+        var result = fileStorageService.ValidateDirectory(invalidDirectoryName);
+        
+        ResultAssert.Failure(result);
+    }
+    #endregion
+
     #region GetFileName
     [Theory]
     [InlineData("")]
@@ -402,79 +445,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             searchRecursively: false);
 
         ResultAssert.ValueFailure(topDirectoryresult);
-    }
-
-    [Fact]
-    public void ValidateDirectory_ShouldBeValidated_WhenFolderExists()
-    {
-        var directory = AppContext.BaseDirectory;
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { directory, new MockDirectoryData() }
-        });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        var options = new DirectoryOptions(directory, false);
-
-        var result = fileStorageService.ValidateDirectory(options);
-
-        Assert.True(result);
-    }
-
-    [Fact]
-    public void ValidateDirectory_ShouldBeValidated_WhenFolderIsCreated()
-    {
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        var options = new DirectoryOptions(
-            Path.Combine(AppContext.BaseDirectory, Path.GetRandomFileName()),
-            true);
-
-        var result = fileStorageService.ValidateDirectory(options);
-
-        Assert.True(result);
-    }
-
-    [Fact]
-    public void ValidateDirectory_ShouldNotBeValidated_WhenFolderDoesNotExist()
-    {
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        var options = new DirectoryOptions(
-            Path.Combine(AppContext.BaseDirectory, Path.GetRandomFileName()),
-            false);
-
-        var result = fileStorageService.ValidateDirectory(options);
-
-        Assert.False(result);
-    }
-
-    [Fact]
-    public void ValidateDirectory_ShouldNotBeValidated_WhenFolderCannotBeCreated()
-    {
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        var options = new DirectoryOptions(string.Empty, true);
-
-        var result = fileStorageService.ValidateDirectory(options);
-
-        Assert.False(result);
-    }
+    }    
 
     [Fact]
     public void EnumerateDirectories_ShouldEnumerate_EmptyCollectionOnInvalidPath()

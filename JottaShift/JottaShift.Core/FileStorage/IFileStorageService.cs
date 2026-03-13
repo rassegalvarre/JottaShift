@@ -12,6 +12,8 @@ public interface IFileStorageService
 
     Result IsValidFileName(string fileNameWithExtension);
 
+    Result ValidateDirectory(string directoryFullPath);
+
     Result<string> GetFileName(string fileFullPath);
     
     Result<DateTime> GetImageDate(string fileFullPath);
@@ -32,8 +34,6 @@ public interface IFileStorageService
     bool FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024);
 
     bool DoesFileMetadataMatch(string pathA, string pathB);
-
-    bool ValidateDirectory(DirectoryOptions options);
 
     Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, CancellationToken ct = default);
 }

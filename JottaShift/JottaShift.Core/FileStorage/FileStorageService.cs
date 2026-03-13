@@ -105,6 +105,45 @@ public sealed class FileStorageService(
         return Result.Success();
     }
 
+    public Result ValidateDirectory(string directoryFullPath)
+    {
+        if (!Path.IsPathFullyQualified(directoryFullPath))
+        {
+            _logger.LogError("The provided directory path is not valid: {DirectoryPath}", directoryFullPath);
+            return Result.Failure("Invalid directory path");
+        }
+
+        if (_fileSystem.Directory.Exists(directoryFullPath))
+        {
+            return Result.Success();
+        }
+       
+        try
+        {
+            var directory = _fileSystem.Directory.CreateDirectory(directoryFullPath);
+
+            if (_fileSystem.Directory.Exists(directory.FullName))
+            {
+                _logger.LogInformation(
+                    "Created directory {DirectoryFullPath}", directory.FullName);
+                return Result.Success();
+            }
+            else
+            {
+                _logger.LogError("Directory was reported as created, but not found on disk. Path: {DirectoryPath}",
+                    directory.FullName);
+                return Result.Failure("Directory was not created");
+            }
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex,
+                "An exception occured when creating directory {DirectoryFullPath}",
+                directoryFullPath);
+            return Result.Failure("An exception occured when creating the directory");
+        }        
+    }
+
     public Result<string> GetFileName(string fileFullPath)
     {
         if (!Path.IsPathRooted(fileFullPath) || !Path.IsPathFullyQualified(fileFullPath))
@@ -175,7 +214,7 @@ public sealed class FileStorageService(
             return new CopyAsyncResult(false, newFileName);
         }
 
-        if (!ValidateDirectory(new DirectoryOptions(targetDirectory, true)))
+        if (!ValidateDirectory(targetDirectory).Succeeded)
         {
             _logger.LogWarning("Could not find or create target directory: {TargeDirectory}", targetDirectory);
             return new CopyAsyncResult(false, newFileName);
@@ -363,35 +402,6 @@ public sealed class FileStorageService(
         }
 
         return _fileSystem.Directory.EnumerateFiles(directoryFullPath, "*", SearchOption.AllDirectories);
-    }
-
-    public bool ValidateDirectory(DirectoryOptions options)
-    {
-        bool validated = false;
-        if (_fileSystem.Directory.Exists(options.directoryFullPath))
-        {
-            validated = true;
-        }
-        else if (options.createIfNotExists)
-        {
-            try
-            {
-                var directory = _fileSystem.Directory.CreateDirectory(options.directoryFullPath);
-                validated = directory.Exists;
-                _logger.LogInformation(
-                    "Created directory @{DirectoryFullPath}", options.directoryFullPath);
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(
-                    "An exception occured when creating directory @{DirectoryFullPath}. Exception: @{ExceptionMessage}",
-                    options.directoryFullPath,
-                    ex.Message);
-                validated = false;
-            }
-        }
-
-        return validated;
     }
 
     public bool FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024) // 1 MiB default
