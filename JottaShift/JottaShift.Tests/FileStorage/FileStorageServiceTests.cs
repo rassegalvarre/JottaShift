@@ -1,6 +1,4 @@
-﻿using JottaShift.Core.FileStorage;
-using JottaShift.Tests.TestData;
-using Microsoft.Extensions.Logging;
+﻿using JottaShift.Tests.TestData;
 using Moq;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
@@ -79,9 +77,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { _fixture.BaseDirectory, new MockDirectoryData() },
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var result = fileStorageService.DeleteDirectoryContent(targetDirectoryPath);
 
@@ -107,9 +103,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { Path.Combine(fourthSubDirectory, Path.GetRandomFileName()), new MockFileData([]) }
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var result = fileStorageService.DeleteDirectoryContent(_fixture.BaseDirectory);
 
@@ -211,9 +205,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { fileB, new MockFileData(fileBContent) },
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
 
@@ -239,9 +231,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { fileB, new MockFileData(fileBContent) },
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
 
@@ -267,9 +257,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { fileB, new MockFileData(fileBContent) },
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(fileA, fileB);
 
@@ -280,9 +268,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     [Trait("Dependency", "FileSystem")]
     public void FilesAreBitPerfectMatch_DoesMatch_WhenCopyOfImage()
     {
-        var fileStorageService = new FileStorageService(
-            new FileSystem(),
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(new FileSystem());
 
         var filesAreBitPerfectMatch = fileStorageService.FilesAreBitPerfectMatch(TestDataHelper.Duck, TestDataHelper.DuckCopy);
 
@@ -466,9 +452,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     {
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var imageDateResult = fileStorageService.GetImageDate(string.Empty);
 
@@ -492,9 +476,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { fileNameWithDefaultDate, fileDataWithDefaultDate },
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         // Test <LastWriteTime = DateTime.Now>
         var imageDateResult = fileStorageService.GetImageDate(fileNameWithCurrentDate);
@@ -509,11 +491,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     [Trait("Dependency", "FileSystem")]
     public void GetImageDate_ReturnsDateTakenExiffTag_WhenFileFound()
     {
-        var fileSystem = new FileSystem();
-
-        var fileStorageService = new FileStorageService(
-            fileSystem,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(new FileSystem());
 
         var imageDateResult = fileStorageService.GetImageDate(TestDataHelper.Duck);
 
@@ -535,9 +513,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { filename, new MockFileData([]) }
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var imageDateResult = fileStorageService.GetImageDate(filename);
 
@@ -553,9 +529,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     [Fact]
     public void GetImageResolution_ShouldReturnFailure_WhenFileNotFound()
     {
-        var fileStorageService = new FileStorageService(
-           new MockFileSystem(),
-           new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService();
 
         var resolutionResult = fileStorageService.GetImageResolution(_fixture.SomeValidFileName);
 
@@ -581,9 +555,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     [Trait("Dependency", "FileSystem")]
     public void GetImageResolution_GetResolutionForTestFile()
     {
-        var fileStorageService = new FileStorageService(
-           new FileSystem(),
-           new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(new FileSystem());
 
         var resolutionResult = fileStorageService.GetImageResolution(TestDataHelper.Duck);
 
@@ -611,9 +583,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { Path.Combine(directoryWithFile, "2010", fileName), new MockFileData([]) },
         });
 
-        var fileStorageService = new FileStorageService(
-           fileSystemMock,
-           new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         // Find file when searched recursivley
         var recursiveResult = fileStorageService.SearchFileByExactName(
@@ -639,9 +609,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     {
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var collection = fileStorageService.EnumerateFiles(string.Empty);
 
@@ -662,9 +630,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { Path.Combine(baseDirectory, Path.GetRandomFileName()), new MockDirectoryData() }
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var collection = fileStorageService.EnumerateDirectories(baseDirectory);
 
@@ -694,9 +660,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { Path.Combine(thirdSubLevelDirectory, Path.GetRandomFileName()), new MockDirectoryData() }
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var collection = fileStorageService.EnumerateDirectories(baseDirectory);
 
@@ -710,9 +674,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     {
         var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var collection = fileStorageService.EnumerateFiles(string.Empty);
 
@@ -730,9 +692,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { Path.Combine(directory, Path.GetRandomFileName()), new MockFileData([]) }
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var collection = fileStorageService.EnumerateFiles(directory);
 
@@ -767,9 +727,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
             { Path.Combine(thirdSubLevelDirectory, Path.GetRandomFileName()), new MockFileData([]) }
         });
 
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystemMock);
 
         var collection = fileStorageService.EnumerateFiles(baseDirectory);
 
