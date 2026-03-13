@@ -12,7 +12,7 @@ public class SteamRepositoryTests(SteamFixture _fixture, HttpClientWrapperFixtur
         const uint appId = 990080;
         const string appName = "Hogwarts Legacy";
 
-        var steamRepository = _fixture.CreateSteamRepository(
+        var steamRepository = await _fixture.CreateSteamRepository(
             _httpFixture.CreateHttpClientWrapper());
 
         var result = await steamRepository.GetAppNameFromId(appId);
@@ -24,7 +24,7 @@ public class SteamRepositoryTests(SteamFixture _fixture, HttpClientWrapperFixtur
     [Trait("Dependency", "Steam.Api")]
     public async Task GetGameName_ReturnsEmptyString_WhenInvalidId()
     {
-        var steamRepository = _fixture.CreateSteamRepository(
+        var steamRepository = await _fixture.CreateSteamRepository(
             _httpFixture.CreateHttpClientWrapper());
 
         var result = await steamRepository.GetAppNameFromId(0);
