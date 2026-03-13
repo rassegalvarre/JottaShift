@@ -16,6 +16,8 @@ public interface IFileStorageService
     
     Result<DateTime> GetImageDate(string fileFullPath);
 
+    Result<string> GetImageResolution(string fileFullPath);
+
     Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true); // TODO: Remove nullable
 
     Task<Result<byte[]>> GetFileBytesAsync(string fileFullPath);
@@ -32,8 +34,6 @@ public interface IFileStorageService
     bool DoesFileMetadataMatch(string pathA, string pathB);
 
     bool ValidateDirectory(DirectoryOptions options);
-
-    string GetImageResolution(string fileFullPath);
 
     Task<CopyAsyncResult> CopyAsync(string sourceFileFullPath, string targetDirectory, CancellationToken ct = default);
 }

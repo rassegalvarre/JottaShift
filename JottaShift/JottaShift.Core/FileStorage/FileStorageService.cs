@@ -265,19 +265,34 @@ public sealed class FileStorageService(
         }
     }
 
-    public string GetImageResolution(string fileFullPath)
-    {        
-        var directories = GetMetadataDirectories(fileFullPath);
-
-        if (TryGetTagValue(directories, "Image Width", out string width) &&
-            TryGetTagValue(directories, "Image Height", out string height))
+    public Result<string> GetImageResolution(string fileFullPath)
+    {
+        if (!_fileSystem.File.Exists(fileFullPath))
         {
-            string widthStr = width.Split(' ')[0];
-            string heightStr = height.Split(' ')[0];
-            return $"{widthStr}x{heightStr}";
+            _logger.LogError("Could not find file with path {FilePath}", fileFullPath);
+            return Result<string>.Failure("File not found");
         }
 
-        return string.Empty;
+        var directories = GetMetadataDirectories(fileFullPath);
+
+        if (TryGetTagValue(directories, "Image Width", out string widthTagValue) &&
+            TryGetTagValue(directories, "Image Height", out string heightTagValue))
+        {
+            // Dimension-value in metadata-tag is returned as "<value> pixels", e.g. "1080 pixels"
+            // Strip away the string-portion and return conventional resolution string, e.g. "1920x1080"
+            if (int.TryParse(widthTagValue.Split(' ')[0], out int width) && 
+                int.TryParse(heightTagValue.Split(' ')[0], out int height))
+            {
+                return Result<string>.Success($"{width}x{height}");
+            }
+            else
+            {
+                return Result<string>.Failure("Extracted width and height is not valid");
+            }
+
+        }
+
+        return Result<string>.Failure("Could not find and extract metadata tag containing image resolution");
     }
 
     private bool TryGetDateFromFilename(string fileName, out DateTime date)

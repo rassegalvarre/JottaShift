@@ -170,9 +170,9 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
     #endregion
 
-    #region GetFileContent
+    #region GetFileBytesAsync
     [Fact]
-    public async Task GetFileContent_ShouldReturnFailedResult_WhenFileNotFound()
+    public async Task GetFileBytesAsync_ShouldReturnFailedResult_WhenFileNotFound()
     {
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
         {
@@ -186,7 +186,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
 
     [Fact]
-    public async Task GetFileContent_ShouldReturnFailedResult_WhenFileIsEmpty()
+    public async Task GetFileBytesAsync_ShouldReturnFailedResult_WhenFileIsEmpty()
     {
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
         {
@@ -200,7 +200,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
 
     [Fact]
-    public async Task GetFileContent_ShouldReturnFailedResult_WhenExceptionIsThrown()
+    public async Task GetFileBytesAsync_ShouldReturnFailedResult_WhenExceptionIsThrown()
     {
         var mockFileSystem = new Mock<IFileSystem>();
         mockFileSystem.Setup(fs => fs.File.Exists(It.IsAny<string>()))
@@ -218,7 +218,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
 
     [Fact]
-    public async Task GetFileContent_ShouldReturnSuccessfullResult_WhenContentIsValid()
+    public async Task GetFileBytesAsync_ShouldReturnSuccessfullResult_WhenContentIsValid()
     {
         byte[] fileContent = [1, 2, 3, 4, 5];
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
@@ -232,7 +232,138 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         ResultAssert.ValueSuccess(contentResult, fileContent);
     }
     #endregion
-    
+
+    #region GetImageDate
+    [Fact]
+    public void GetImageDate_ReturnsFailedResult_WhenFileNotFound()
+    {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var imageDateResult = fileStorageService.GetImageDate(string.Empty);
+
+        ResultAssert.ValueFailure(imageDateResult);
+    }
+
+    [Fact]
+    public void GetImageDate_ReturnsFailedResult_WhenFileHasNoValidDate()
+    {
+        string fileNameWithCurrentDate = Path.GetRandomFileName();
+
+        string fileNameWithDefaultDate = Path.GetRandomFileName();
+        var fileDataWithDefaultDate = new MockFileData(fileNameWithDefaultDate)
+        {
+            LastWriteTime = default
+        };
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { fileNameWithCurrentDate, new MockFileData([]) },
+            { fileNameWithDefaultDate, fileDataWithDefaultDate },
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        // Test <LastWriteTime = DateTime.Now>
+        var imageDateResult = fileStorageService.GetImageDate(fileNameWithCurrentDate);
+        ResultAssert.ValueFailure(imageDateResult);
+
+        // Test <LastWriteTime = default>
+        imageDateResult = fileStorageService.GetImageDate(fileNameWithDefaultDate);
+        ResultAssert.ValueFailure(imageDateResult);
+    }
+
+    [Fact]
+    [Trait("Dependency", "FileSystem")]
+    public void GetImageDate_ReturnsDateTakenExiffTag_WhenFileFound()
+    {
+        var fileSystem = new FileSystem();
+
+        var fileStorageService = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var imageDateResult = fileStorageService.GetImageDate(TestDataHelper.Duck);
+
+        ResultAssert.Success(imageDateResult);
+
+        Assert.Equal(2025, imageDateResult.Value.Year);
+        Assert.Equal(5, imageDateResult.Value.Month);
+        Assert.Equal(17, imageDateResult.Value.Day);
+        Assert.Equal(13, imageDateResult.Value.Hour);
+        Assert.Equal(42, imageDateResult.Value.Minute);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetImageFilenameTestData))]
+    public void GetImageDate_ReturnsDateFromFileName_WhenNoMetadataFound(string filename, int expectedYear, int expectedMonth, int expectedDay)
+    {
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { filename, new MockFileData([]) }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var imageDateResult = fileStorageService.GetImageDate(filename);
+
+        ResultAssert.Success(imageDateResult);
+
+        Assert.Equal(expectedYear, imageDateResult.Value.Year);
+        Assert.Equal(expectedMonth, imageDateResult.Value.Month);
+        Assert.Equal(expectedDay, imageDateResult.Value.Day);
+    }
+    #endregion
+
+    #region GetImageResolution
+    [Fact]
+    public void GetImageResolution_ShouldReturnFailure_WhenFileNotFound()
+    {
+        var fileStorageService = new FileStorageService(
+           new MockFileSystem(),
+           new Mock<ILogger<FileStorageService>>().Object);
+
+        var resolutionResult = fileStorageService.GetImageResolution(_fixture.SomeValidFileName);
+
+        ResultAssert.ValueFailure(resolutionResult);
+    }
+
+    [Fact]
+    public void GetImageResolution_ShouldReturnFailure_WhenFileDoesNotContainMetadata()
+    {
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.SomeValidFileName, new MockFileData([]) }
+        });
+
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystem);
+
+        var resolutionResult = fileStorageService.GetImageResolution(_fixture.SomeValidFileName);
+
+        ResultAssert.ValueFailure(resolutionResult);
+    }
+
+    [Fact]
+    [Trait("Dependency", "FileSystem")]
+    public void GetImageResolution_GetResolutionForTestFile()
+    {
+        var fileStorageService = new FileStorageService(
+           new FileSystem(),
+           new Mock<ILogger<FileStorageService>>().Object);
+
+        var resolutionResult = fileStorageService.GetImageResolution(TestDataHelper.Duck);
+
+        ResultAssert.ValueSuccess(resolutionResult, "4096x3072");
+    }
+    #endregion
+
     [Fact]
     public void SearchFileByExactName_ReturnsFirstMatchingFilePath_WhenFileNameFound()
     {
@@ -483,96 +614,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         var collection = fileStorageService.EnumerateFiles(baseDirectory);
 
         Assert.Equal(10, collection.Count());
-    }
-
-    #region GetImageDate
-    [Fact]
-    public void GetImageDate_ReturnsFailedResult_WhenFileNotFound()
-    {
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>());
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        var imageDateResult = fileStorageService.GetImageDate(string.Empty);
-
-        ResultAssert.ValueFailure(imageDateResult);
-    }
-
-    [Fact]
-    public void GetImageDate_ReturnsFailedResult_WhenFileHasNoValidDate()
-    {
-        string fileNameWithCurrentDate = Path.GetRandomFileName();
-
-        string fileNameWithDefaultDate = Path.GetRandomFileName();
-        var fileDataWithDefaultDate = new MockFileData(fileNameWithDefaultDate)
-        {
-            LastWriteTime = default
-        };
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>()
-        {
-            { fileNameWithCurrentDate, new MockFileData([]) },
-            { fileNameWithDefaultDate, fileDataWithDefaultDate },
-        });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        // Test <LastWriteTime = DateTime.Now>
-        var imageDateResult = fileStorageService.GetImageDate(fileNameWithCurrentDate);
-        ResultAssert.ValueFailure(imageDateResult);
-
-        // Test <LastWriteTime = default>
-        imageDateResult = fileStorageService.GetImageDate(fileNameWithDefaultDate);
-        ResultAssert.ValueFailure(imageDateResult);
-    }
-
-    [Fact]
-    [Trait("Dependency", "FileSystem")]
-    public void GetImageDate_ReturnsDateTakenExiffTag_WhenFileFound()
-    {
-        var fileSystem = new FileSystem();
-
-        var fileStorageService = new FileStorageService(
-            fileSystem,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        var imageDateResult = fileStorageService.GetImageDate(TestDataHelper.Duck);
-
-        ResultAssert.Success(imageDateResult);
-
-        Assert.Equal(2025, imageDateResult.Value.Year);
-        Assert.Equal(5, imageDateResult.Value.Month);
-        Assert.Equal(17, imageDateResult.Value.Day);
-        Assert.Equal(13, imageDateResult.Value.Hour);
-        Assert.Equal(42, imageDateResult.Value.Minute);
-    }
-
-    [Theory]
-    [MemberData(nameof(GetImageFilenameTestData))]
-    public void GetImageDate_ReturnsDateFromFileName_WhenNoMetadataFound(string filename, int expectedYear, int expectedMonth, int expectedDay)
-    {
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
-        {
-            { filename, new MockFileData([]) }
-        });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
-            new Mock<ILogger<FileStorageService>>().Object);
-
-        var imageDateResult = fileStorageService.GetImageDate(filename);
-
-        ResultAssert.Success(imageDateResult);
-
-        Assert.Equal(expectedYear, imageDateResult.Value.Year);
-        Assert.Equal(expectedMonth, imageDateResult.Value.Month);
-        Assert.Equal(expectedDay, imageDateResult.Value.Day);
-    }
-    #endregion
+    }   
 
     public static IEnumerable<object[]> GetImageFilenameTestData()
     {
@@ -819,18 +861,5 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         bool metadataMatches = fileStorageService.DoesFileMetadataMatch(TestDataHelper.Duck, TestDataHelper.DuckCopy);
 
         Assert.True(metadataMatches);
-    }
-
-    [Fact]
-    [Trait("Dependency", "FileSystem")]
-    public void GetImageResolution_GetResolutionForTestFile()
-    {
-        var fileStorageService = new FileStorageService(
-           new FileSystem(),
-           new Mock<ILogger<FileStorageService>>().Object);
-
-        string resolution = fileStorageService.GetImageResolution(TestDataHelper.Duck);
-
-        Assert.Equal("4096x3072", resolution);
-    }
+    }   
 }
