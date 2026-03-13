@@ -28,7 +28,7 @@ public class GooglePhotosHttpClient : IGooglePhotosHttpClient
 
     public async Task<Result<string>> UploadPhotoAsync(string fileFullPah)
     {
-        var fileContentResult = await _fileStorage.GetFileContent(fileFullPah);
+        var fileContentResult = await _fileStorage.GetFileBytesAsync(fileFullPah);
         var fileNameResult = _fileStorage.GetFileName(fileFullPah);
 
         if (!fileContentResult.Succeeded || fileContentResult.Value is null)

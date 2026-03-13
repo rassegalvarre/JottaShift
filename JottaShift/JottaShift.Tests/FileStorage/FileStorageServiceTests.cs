@@ -83,7 +83,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         });
         var fileStorage = _fixture.CreateFileStorageService(fileSystem);
 
-        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+        var contentResult = await fileStorage.GetFileBytesAsync(_fixture.SomeValidFileFullPath);
         
         Assert.False(contentResult.Succeeded);
         Assert.Null(contentResult.Value);
@@ -98,7 +98,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         });
         var fileStorage = _fixture.CreateFileStorageService(fileSystem);
 
-        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+        var contentResult = await fileStorage.GetFileBytesAsync(_fixture.SomeValidFileFullPath);
 
         Assert.False(contentResult.Succeeded);
         Assert.Null(contentResult.Value);
@@ -116,7 +116,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         var fileStorage = _fixture.CreateFileStorageService(mockFileSystem.Object);
 
-        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+        var contentResult = await fileStorage.GetFileBytesAsync(_fixture.SomeValidFileFullPath);
 
         Assert.False(contentResult.Succeeded);
         Assert.Null(contentResult.Value);
@@ -133,7 +133,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         });
         var fileStorage = _fixture.CreateFileStorageService(fileSystem);
 
-        var contentResult = await fileStorage.GetFileContent(_fixture.SomeValidFileFullPath);
+        var contentResult = await fileStorage.GetFileBytesAsync(_fixture.SomeValidFileFullPath);
 
         Assert.True(contentResult.Succeeded);
         Assert.Equal(fileContnet, contentResult.Value);

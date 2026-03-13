@@ -16,7 +16,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
         mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
             .Returns(Result<string>.Failure("Invalid name"));
 
-        mockFileStorage.Setup(m => m.GetFileContent(It.IsAny<string>()))
+        mockFileStorage.Setup(m => m.GetFileBytesAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<byte[]>.Failure("Invalid data"));
 
         var googlePhotosHttpClient = _fixture.CreateGooglePhotosHttpClient(
@@ -36,7 +36,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
         mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
             .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
 
-        mockFileStorage.Setup(m => m.GetFileContent(It.IsAny<string>()))
+        mockFileStorage.Setup(m => m.GetFileBytesAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<byte[]>.Success([]));
 
         var mockUserCredentialManager = new Mock<IUserCredentialManager>();
@@ -62,7 +62,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
         mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
             .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
 
-        mockFileStorage.Setup(m => m.GetFileContent(It.IsAny<string>()))
+        mockFileStorage.Setup(m => m.GetFileBytesAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<byte[]>.Success([]));
 
         var mockUserCredentialManager = new Mock<IUserCredentialManager>();
@@ -92,7 +92,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
         mockFileStorage.Setup(m => m.GetFileName(It.IsAny<string>()))
             .Returns(Result<string>.Success(_fixture.ValidPhotoFileName));
 
-        mockFileStorage.Setup(m => m.GetFileContent(It.IsAny<string>()))
+        mockFileStorage.Setup(m => m.GetFileBytesAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<byte[]>.Success([]));
 
         var mockUserCredentialManager = new Mock<IUserCredentialManager>();

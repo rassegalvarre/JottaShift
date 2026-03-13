@@ -6,7 +6,7 @@ public interface IFileStorageService
 
     Result<string> GetFileName(string fileFullPath);
     
-    Task<Result<byte[]>> GetFileContent(string fileFullPath);
+    Task<Result<byte[]>> GetFileBytesAsync(string fileFullPath);
 
     Result<string?> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true);
 

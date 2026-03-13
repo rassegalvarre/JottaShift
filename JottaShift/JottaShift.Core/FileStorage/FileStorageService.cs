@@ -48,7 +48,7 @@ public sealed class FileStorageService(
         return Result<string>.Success(fileName);
     }
 
-    public async Task<Result<byte[]>> GetFileContent(string fileFullPath)
+    public async Task<Result<byte[]>> GetFileBytesAsync(string fileFullPath)
     {
         if (!_fileSystem.File.Exists(fileFullPath))
         {
