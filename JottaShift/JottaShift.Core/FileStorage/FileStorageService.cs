@@ -10,59 +10,6 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorageService
 {
-    public Result<string> CopyFile(string sourceFileFullPath, string targetDirectory)
-    {
-        var fileNameResult = GetFileName(sourceFileFullPath);
-        if (!fileNameResult.Succeeded || fileNameResult.Value is null)
-        {
-            _logger.LogWarning("The name of the provided source file is invalid: {FilePath}",
-                sourceFileFullPath);
-            return Result<string>.Failure("Invalid source file path");
-        }
-
-        string newFileName = Path.Combine(targetDirectory, fileNameResult.Value);
-
-        if (!_fileSystem.File.Exists(sourceFileFullPath))
-        {
-            _logger.LogWarning("Source file not found: {FilePath}", sourceFileFullPath);
-            return Result<string>.Failure("Source file not found");
-        }
-
-        if (!ValidateDirectory(targetDirectory).Succeeded)
-        {
-            _logger.LogWarning("Could not find or create target directory: {TargeDirectory}", targetDirectory);
-            return Result<string>.Failure("Target directory does not exist");
-        }
-
-        if (_fileSystem.File.Exists(newFileName))
-        {
-            _logger.LogInformation("Target file already exists: {TargeFile}", newFileName);
-            return Result<string>.Success(newFileName);
-        }
-
-        try
-        {
-            _fileSystem.File.Copy(sourceFileFullPath, newFileName, false);
-
-            if (_fileSystem.File.Exists(newFileName))
-            {
-                return Result<string>.Success(newFileName);
-            }
-            else
-            {
-                _logger.LogError("File-copy was executed, but target file was not created. Target file: {TargetFileName}",
-                    newFileName);
-                return Result<string>.Failure("File was not copied");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Exception when copying file to target: {TargetFileName}", newFileName);
-            return Result<string>.Failure("Error when copying file");
-        }
-    }
-
-
     public Result DeleteDirectoryContent(string directoryFullPath)
     {
         if (!_fileSystem.Directory.Exists(directoryFullPath))
@@ -173,11 +120,11 @@ public sealed class FileStorageService(
     }
 
 
-    public Result FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024) // 1 MiB default
+    public Result FilesAreBitPerfectMatch(string fileFullPathA, string fileFullPathB, int bufferSize = 1024 * 1024)
     {
         // Quick size check – if lengths differ they can’t be identical.
-        var infoA = _fileSystem.FileInfo.New(pathA);
-        var infoB = _fileSystem.FileInfo.New(pathB);
+        var infoA = _fileSystem.FileInfo.New(fileFullPathA);
+        var infoB = _fileSystem.FileInfo.New(fileFullPathB);
         if (infoA.Length != infoB.Length)
         {
             _logger.LogError("Files A and B have different sizes. {FileA} compared to {FileB}",
@@ -187,8 +134,8 @@ public sealed class FileStorageService(
         }
 
         // Open both streams for sequential reading.
-        using var fsA = _fileSystem.FileStream.New(pathA, FileMode.Open, FileAccess.Read, FileShare.Read);
-        using var fsB = _fileSystem.FileStream.New(pathB, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var fsA = _fileSystem.FileStream.New(fileFullPathA, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var fsB = _fileSystem.FileStream.New(fileFullPathB, FileMode.Open, FileAccess.Read, FileShare.Read);
         var bufferA = new byte[bufferSize];
         var bufferB = new byte[bufferSize];
 
@@ -277,6 +224,58 @@ public sealed class FileStorageService(
         }        
     }
 
+    public Result<string> CopyFile(string sourceFileFullPath, string targetDirectory)
+    {
+        var fileNameResult = GetFileName(sourceFileFullPath);
+        if (!fileNameResult.Succeeded || fileNameResult.Value is null)
+        {
+            _logger.LogWarning("The name of the provided source file is invalid: {FilePath}",
+                sourceFileFullPath);
+            return Result<string>.Failure("Invalid source file path");
+        }
+
+        string newFileName = Path.Combine(targetDirectory, fileNameResult.Value);
+
+        if (!_fileSystem.File.Exists(sourceFileFullPath))
+        {
+            _logger.LogWarning("Source file not found: {FilePath}", sourceFileFullPath);
+            return Result<string>.Failure("Source file not found");
+        }
+
+        if (!ValidateDirectory(targetDirectory).Succeeded)
+        {
+            _logger.LogWarning("Could not find or create target directory: {TargeDirectory}", targetDirectory);
+            return Result<string>.Failure("Target directory does not exist");
+        }
+
+        if (_fileSystem.File.Exists(newFileName))
+        {
+            _logger.LogInformation("Target file already exists: {TargeFile}", newFileName);
+            return Result<string>.Success(newFileName);
+        }
+
+        try
+        {
+            _fileSystem.File.Copy(sourceFileFullPath, newFileName, false);
+
+            if (_fileSystem.File.Exists(newFileName))
+            {
+                return Result<string>.Success(newFileName);
+            }
+            else
+            {
+                _logger.LogError("File-copy was executed, but target file was not created. Target file: {TargetFileName}",
+                    newFileName);
+                return Result<string>.Failure("File was not copied");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception when copying file to target: {TargetFileName}", newFileName);
+            return Result<string>.Failure("Error when copying file");
+        }
+    }
+
     public Result<string> GetFileName(string fileFullPath)
     {
         if (!Path.IsPathRooted(fileFullPath) || !Path.IsPathFullyQualified(fileFullPath))
@@ -320,7 +319,7 @@ public sealed class FileStorageService(
         }
     }
 
-    public Result<string> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true)
+    public Result<string> SearchFileByExactName(string directoryFullPath, string fileName, bool searchRecursively = true)
     {
         var pattern = fileName;
 
@@ -328,7 +327,7 @@ public sealed class FileStorageService(
             ? SearchOption.AllDirectories
             : SearchOption.TopDirectoryOnly;
 
-        foreach (var path in _fileSystem.Directory.EnumerateFiles(folderPath, pattern, option))
+        foreach (var path in _fileSystem.Directory.EnumerateFiles(directoryFullPath, pattern, option))
         {
             return Result<string>.Success(path);
         }

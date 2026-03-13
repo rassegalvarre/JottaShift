@@ -2,27 +2,31 @@
 
 public interface IFileStorageService
 {
-    Result<string> CopyFile(string sourceFileFullPath, string targetDirectory);
-
     Result DeleteDirectoryContent(string directoryFullPath);
 
     Result DeleteFile(string fileFullPath);
     
     Result DoesFileMetadataMatch(string filePathA, string filePathB);
 
-    Result FilesAreBitPerfectMatch(string pathA, string pathB, int bufferSize = 1024 * 1024);
+    /// <param name="bufferSize">1 MiB default</param>
+    Result FilesAreBitPerfectMatch(string fileFullPathA, string fileFullPathB, int bufferSize = 1024 * 1024);
 
     Result IsValidFileName(string fileNameWithExtension);
 
     Result ValidateDirectory(string directoryFullPath);
 
-    Result<string> GetFileName(string fileFullPath);
-    
+    /// <returns>A <see cref="Result{T}"/> containing the full path of the copied target file</returns>
+    Result<string> CopyFile(string sourceFileFullPath, string targetDirectory);
+   
+    Result<string> GetFileName(string fileFullPath);    
+
     Result<DateTime> GetImageDate(string fileFullPath);
 
+    /// <returns>A <see cref="Result{T}"/> containing the resolution in the format of "[width]x[height]", e.g. "1920x1080"</returns>
     Result<string> GetImageResolution(string fileFullPath);
 
-    Result<string> SearchFileByExactName(string folderPath, string fileName, bool searchRecursively = true);
+    /// <returns>A <see cref="Result{T}"/> containing the full path of file found</returns>
+    Result<string> SearchFileByExactName(string directoryFullPath, string fileName, bool searchRecursively = true);
 
     Task<Result<byte[]>> GetFileBytesAsync(string fileFullPath);
 
