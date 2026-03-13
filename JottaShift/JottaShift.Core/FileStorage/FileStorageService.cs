@@ -12,8 +12,15 @@ public sealed class FileStorageService(
 {
     public Result<string> CopyFile(string sourceFileFullPath, string targetDirectory)
     {
-        string fileName = Path.GetFileName(sourceFileFullPath);
-        string newFileName = Path.Combine(targetDirectory, fileName);
+        var fileNameResult = GetFileName(sourceFileFullPath);
+        if (!fileNameResult.Succeeded || fileNameResult.Value is null)
+        {
+            _logger.LogWarning("The name of the provided source file is invalid: {FilePath}",
+                sourceFileFullPath);
+            return Result<string>.Failure("Invalid source file path");
+        }
+
+        string newFileName = Path.Combine(targetDirectory, fileNameResult.Value);
 
         if (!_fileSystem.File.Exists(sourceFileFullPath))
         {
