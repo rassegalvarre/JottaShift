@@ -4,6 +4,13 @@ namespace JottaShift.Tests.Configuration;
 
 public class AppSettingsTests(AppSettingsFixture _fixture) : IClassFixture<AppSettingsFixture>
 {
+    //[Fact]
+    //[Trait("Dependency", "Env")]
+    //public async Task GetAppSettingsPath_ShouldReturnJsonForMachine()
+    //{
+
+    //}
+
     [Fact]
     public async Task GetAppSettingsAsync_ShouldReturn_DeserializedInstance()
     {

@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace JottaShift.Core.Configuration;
 
-public class EnvironmentVariableManager()
+public class EnvironmentManager()
 {
     private const string _googlePhotosLibraryApiProjectId = "GOOGLEPHOTOSLIBRARAPI_PROJECTID";
     private const string _googlePhotosLibraryApiClientId = "GOOGLEPHOTOSLIBRARAPI_CLIENTID";

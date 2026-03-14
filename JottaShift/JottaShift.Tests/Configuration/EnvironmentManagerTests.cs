@@ -2,25 +2,25 @@
 
 namespace JottaShift.Tests.Configuration;
 
-public class EnvironmentVariableManagerTests
+public class EnvironmentManagerTests
 {
     [Fact]
     [Trait("Dependency", "Env")]
     public void ValidateAllEnvironmentVariablesForApplication()
     {
         Assert.False(string.IsNullOrEmpty(
-            EnvironmentVariableManager.GooglePhotosLibraryApiClientId));
+            EnvironmentManager.GooglePhotosLibraryApiClientId));
 
         Assert.False(string.IsNullOrEmpty(
-            EnvironmentVariableManager.GooglePhotosLibraryApiClientSecret));
+            EnvironmentManager.GooglePhotosLibraryApiClientSecret));
 
         Assert.False(string.IsNullOrEmpty(
-            EnvironmentVariableManager.GooglePhotosLibraryApiProjectId));
+            EnvironmentManager.GooglePhotosLibraryApiProjectId));
 
         Assert.False(string.IsNullOrEmpty(
-            EnvironmentVariableManager.SteamWebApiClientApiKey));
+            EnvironmentManager.SteamWebApiClientApiKey));
 
         Assert.False(string.IsNullOrEmpty(
-            EnvironmentVariableManager.SteamWebApiStoreLanguage));
+            EnvironmentManager.SteamWebApiStoreLanguage));
     }
 }
