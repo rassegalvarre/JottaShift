@@ -7,10 +7,21 @@ namespace JottaShift.Core.Configuration;
 
 public class AppSettings
 {
-    public static string AppSettingsFullPath => Path.Combine(
+    public static string AppSettingsBaseFullPath => Path.Combine(
         AppContext.BaseDirectory,
-        "Configuration",
-        "appsettings.json");
+        "Configuration");
+
+    public static string GetAppSettingsFileFullPath()
+    {
+        string appSettingsFileName = "appsettings.json";
+        var machineNameResult = EnvironmentManager.GetKnownMachineName();
+        if (machineNameResult.Succeeded && machineNameResult.Value is not null)
+        {
+            appSettingsFileName = $"appsettings.{machineNameResult.Value}.json";
+        }
+
+        return Path.Combine(AppSettingsBaseFullPath, appSettingsFileName);
+    }
 
     public required FileExportJobs FileExportJobs { get; init; }
     public required GooglePhotosLibraryApiCredentials GooglePhotosLibraryApiCredentials { get; init; }

@@ -17,7 +17,8 @@ Console.WriteLine("JottaShift initiating..");
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((hostingContext, config) =>
     {
-        config.AddJsonFile(AppSettings.AppSettingsFullPath, optional: false, reloadOnChange: true);
+        config.AddJsonFile(AppSettings.GetAppSettingsFileFullPath(),
+            optional: false, reloadOnChange: true);
     })
     .ConfigureServices((hostContext, services) =>
     {
