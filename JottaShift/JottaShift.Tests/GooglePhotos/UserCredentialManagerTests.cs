@@ -3,7 +3,6 @@ using JottaShift.Tests.Configuration;
 
 namespace JottaShift.Tests.GooglePhotos;
 
-// TODO: Add test for GetAccessTokenAsync after GetUserCredentialAsync has been ran
 [Trait("Dependency", "Google.Api")]
 public class UserCredentialManagerTests(AppSettingsFixture _appSettingsFixture)
     : IClassFixture<AppSettingsFixture>
@@ -31,5 +30,11 @@ public class UserCredentialManagerTests(AppSettingsFixture _appSettingsFixture)
 
         Assert.Single(
             Directory.GetFiles(userCredentialManager.CredentialDirectoryPath));
+
+
+        // Assert that GetAccessTokenAsync return the same token when quried before expiration
+        var accessToken = await userCredentialManager.GetAccessTokenAsync();
+        ResultAssert.ValueSuccess(accessToken,
+            userCredentialResult.Value!.Token.AccessToken);
     }
 }
