@@ -7,10 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Configuration\appsettings.BRUTUS.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Configuration\appsettings.SKJOLD.json">
+    <Content Include="Configuration\appsettings.*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Configuration\appsettings.json">
