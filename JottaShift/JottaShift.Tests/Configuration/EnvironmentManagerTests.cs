@@ -24,7 +24,7 @@ public class EnvironmentManagerTests
     {
         var found = EnvironmentManager.TryGetEnvironmentVariable(key, out string value);
 
-        Assert.True(found);
+        Assert.True(found, $"Environment variable {key} is not set");
         Assert.False(string.IsNullOrEmpty(value));
     }
 }
