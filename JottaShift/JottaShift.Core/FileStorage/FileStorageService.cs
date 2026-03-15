@@ -25,11 +25,13 @@ public sealed class FileStorageService(
             {
                 var path = Path.GetDirectoryName(file);
                 _fileSystem.File.Delete(file);
+                _logger.LogInformation("Deleted file: {File}", file);
             }
 
             foreach (var dir in _fileSystem.Directory.EnumerateDirectories(directoryFullPath))
             {
                 _fileSystem.Directory.Delete(dir, recursive: true);
+                _logger.LogInformation("Deleted directory: {Directory}", dir);
             }
         }
         catch (Exception ex)
@@ -70,6 +72,7 @@ public sealed class FileStorageService(
         try
         {
             _fileSystem.File.Delete(fileFullPath);
+            _logger.LogInformation("Deleted file: {FilePath}", fileFullPath);
         }
         catch (Exception ex)
         {

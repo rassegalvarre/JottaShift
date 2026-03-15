@@ -91,6 +91,7 @@ public class JottacloudAdapterTests(JottacloudFixture _fixture)
         Assert.EndsWith(expectedStructuredDirectory, directory);
     }
 
+    // TODO: Add test for filename with full path
     [Theory]
     [InlineData("no_conflict.pdf", "no_conflict.pdf")]
     [InlineData("VID_20250411(Conflict).mp4", "VID_20250411.mp4")]

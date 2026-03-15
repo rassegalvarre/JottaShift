@@ -250,70 +250,83 @@ public sealed class FileExportOrchestrator(
         //return result.Complete();
     }
 
-    // Todo: Handle (Conflict) files and dirs. Ignore?
+    // Todo: Handle (Conflict) files and dirs.
     public async Task<Result> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
-        return Result.Failure("Not implemened");
-        //const string jobKey = DefaultJobKeys.JottacloudTimeline;
-        //FileTransferJobResult result;
+        var job = _fileExportJobs.JottacloudTimelineExportJob;
 
-        //if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
-        //{
-        //    _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-        //    result = new FileTransferJobResult(jobKey);
-        //    result.Invalid();
-        //    return result;
-        //}
+        var validationResult = ValidateFileTransferJob(job);
+        if (!validationResult.Succeeded)
+        {
+            return validationResult;
+        }
 
-        //result = _fileExportJobValidator.ValidateFileTransferJob(job);
-        //if (result.PreValidationFailed)
-        //{
-        //    _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-        //    return result;
-        //}
+        bool hasError = false;
 
-        //result.Start();
+        foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
+        {
+            var imageDateResult = _fileStorage.GetImageDate(file);
+            if (!imageDateResult.Succeeded)
+            {
+                hasError = true;
+                _logger.LogError("Files does not have a valid date property {FilePath}", file);
+                continue;
+            }
 
-        //foreach (var file in _fileStorage.EnumerateFiles(result.SourceDirectoryPath))
-        //{
-        //    result.PrepareOperation(file);
-        //    var timestamp = _fileStorage.GetImageDate(file);
-        //    var structuredDestinationDirectory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(timestamp, job.TargetDirectoryPath, CultureInfo.CurrentCulture);
+            var structuredDestinationDirectory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(
+                imageDateResult.Value, job.TargetDirectoryPath, _culture);
 
-        //    result.StartOperation();
-            
-        //    var copyResult = await _fileStorage.CopyAsync(file, structuredDestinationDirectory, ct);
+            var copyResult = _fileStorage.CopyFile(file, structuredDestinationDirectory);
 
-        //    if (!copyResult.Success)
-        //    {
-        //        return result.FailOperation($"File transfer failed");
-        //    }
+            if (!copyResult.Succeeded || copyResult.Value is null)
+            {
+                hasError = true;
+                _logger.LogError("Could not copy file with path {FilePath}. Error: {ErrorMessage}",
+                    file, copyResult.ErrorMessage);
+                continue;
+            }
 
-        //    if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
-        //    {
-        //        _logger.LogError(
-        //            "File was copied, but file content does not match: {FilePath}",
-        //            copyResult.targetFileFullPath);
-        //        return result.FailOperation($"Mismatched file content");
-        //    }
+            var fileMatchResult = _fileStorage.FilesAreBitPerfectMatch(file, copyResult.Value);
+            if (!fileMatchResult.Succeeded)
+            {
+                hasError = true;
+                _logger.LogError("File was copied, but file content does not match. Copied file: {FilePath}",
+                    copyResult.Value);
+                continue;
+            }
 
-        //    if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
-        //    {
-        //        _logger.LogError(
-        //            "File was copied, but metadata does not match: {FilePath}",
-        //            copyResult.targetFileFullPath);
-        //        return result.FailOperation($"Mismatched file metadata");
-        //    }
+            var metadataMatchResult = _fileStorage.DoesFileMetadataMatch(file, copyResult. Value);
+            if (!metadataMatchResult.Succeeded)
+            {
+                hasError = true;
+                _logger.LogError("File was copied, but metadata does not match. Copied file: {FilePath}",
+                    copyResult.Value);
+                continue;
+            }
 
-        //    DeleteSourceFile(file, job);
+            var deleteSourceResult = DeleteSourceFile(job, file);
+            if (!deleteSourceResult.Succeeded)
+            {
+                hasError = true;
+                _logger.LogError("Failed to delete source file: {FilePath}", file);
+                continue;
+            }
 
-        //    result.CompleteOperation(copyResult.targetFileFullPath);
-        //    _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
-        //}
+            _logger.LogInformation("Copied file and deleted source. New path: {CopiedFilePath}",
+                copyResult.Value);
+        }
 
-        //DeleteSourceDirectory(job, result);
+        if (!hasError)
+        {
+            var deleteDirectoryResult = DeleteSourceDirectoryContent(job);
+            if (!deleteDirectoryResult.Succeeded)
+            {
+                _logger.LogError("Failed to delete source directory content: {FilePath}",
+                    job.SourceDirectoryPath);
+            }
+        }
 
-        //return result.Complete();
+        return Result.Success();
     }
 
     public string GetAlphabeticParentDirectoryName(string directoryName)
@@ -355,32 +368,24 @@ public sealed class FileExportOrchestrator(
             .FirstOrDefault(n => n.StartsWith(firstLetter)) ?? alphabeticParentDirectoryNames[0];
     }
 
-    private void DeleteSourceFile(FileTransferJob job, string sourceFilePath)
+    private Result DeleteSourceFile(FileTransferJob job, string sourceFilePath)
     {
         if (job.DeleteSourceFiles)
         {
-            var deletedResult = _fileStorage.DeleteFile(sourceFilePath);
-            if (!deletedResult.Succeeded)
-            {
-                _logger.LogError(
-                    "Failed to delete source file: {FilePath}",
-                    sourceFilePath);
-            }
+            return _fileStorage.DeleteFile(sourceFilePath);            
         }
+
+        return Result.Success();
     }
 
-    private void DeleteSourceDirectory(FileTransferJob job, Result result)
+    private Result DeleteSourceDirectoryContent(FileTransferJob job)
     {
-        if (job.DeleteSourceFiles && result.Succeeded)
+        if (job.DeleteSourceFiles)
         {
-            var deletedResult = _fileStorage.DeleteDirectoryContent(job.SourceDirectoryPath);
-            if (!deletedResult.Succeeded)
-            {
-                _logger.LogError(
-                    "Failed to delete source directory contents: {FilePath}",
-                    job.SourceDirectoryPath);
-            }
+            return _fileStorage.DeleteDirectoryContent(job.SourceDirectoryPath);
         }
+
+        return Result.Success();
     }
 
     private Result ValidateFileTransferJob(FileTransferJob job)
