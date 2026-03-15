@@ -90,4 +90,23 @@ public class JottacloudAdapterTests(JottacloudFixture _fixture)
 
         Assert.EndsWith(expectedStructuredDirectory, directory);
     }
+
+    [Theory]
+    [InlineData("no_conflict.pdf", "no_conflict.pdf")]
+    [InlineData("VID_20250411(Conflict).mp4", "VID_20250411.mp4")]
+    [InlineData("DSC06380 (Conflict 2025-04-11 19.15.54).JPG", "DSC06380.JPG")]
+    [InlineData("P_20250411_135044 (Conflict 2025-04-11 19.15.54).jpg", "P_20250411_135044.jpg")]
+    [InlineData("V_20250411_135044 (Conflict 2025-04-11 19.15.54).mp4", "V_20250411_135044.mp4")]
+    [InlineData("IMG_20140325_113330 (Conflict 2025-04-11 19.15.54).jpg", "IMG_20140325_113330.jpg")]
+    [InlineData(
+        "Some Word document(BB's conflicted copy 2024-07-05).docx",
+        "Some Word document.docx")]
+    public void CheckAndHandleConflictedFileName_ShouldCleanConflicts(
+        string conflictedFileName,
+        string expectedFileName)
+    {
+        var cleaned = JottacloudAdapter.CheckAndCleanConflictedFileName(conflictedFileName);
+
+        Assert.Equal(expectedFileName, cleaned);
+    }
 }

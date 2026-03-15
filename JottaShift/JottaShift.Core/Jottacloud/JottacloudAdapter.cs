@@ -1,12 +1,13 @@
-﻿using System.Globalization;
-using JottaShift.Core.Jottacloud.Models.Domain;
+﻿using JottaShift.Core.Jottacloud.Models.Domain;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace JottaShift.Core.Jottacloud;
 
 /// <summary>
 /// Provides utility methods for adapting and transforming data from Jottacloud.
 /// </summary>
-public static class JottacloudAdapter
+public static partial class JottacloudAdapter
 {
     public static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 
@@ -48,4 +49,24 @@ public static class JottacloudAdapter
 
         return Path.Combine(storagePath, structuredDirectory);
     }
+
+    /// <summary>
+    /// Remove the conflict-tag of a filename if it exists..
+    /// </summary>
+    /// <remarks>
+    /// Jottacloud will tag conflicted files with (Conflict...) in the filename.
+    /// Example filename marked as conflict: P_20250411_135044 (Conflict 2025-04-11 19.15.54).jpg"</remarks>
+    /// <returns></returns>
+    public static string CheckAndCleanConflictedFileName(string fileName)
+    {
+        if (fileName.Contains("conflict", StringComparison.CurrentCultureIgnoreCase))
+        {
+            return ConflictedFileNameRegex().Replace(fileName, "");
+        }
+
+        return fileName;
+    }
+
+    [GeneratedRegex(@"\s*\([^)]*\)")]
+    private static partial Regex ConflictedFileNameRegex();
 }
