@@ -4,18 +4,24 @@ public class EnvironmentManager()
 {
     private static readonly string[] _knownMachineNames = ["BRUTUS", "SKJOLD"];
 
-    private const string _googlePhotosLibraryApiProjectId = "GOOGLEPHOTOSLIBRARAPI_PROJECTID";
-    private const string _googlePhotosLibraryApiClientId = "GOOGLEPHOTOSLIBRARAPI_CLIENTID";
-    private const string _googlePhotosLibraryApiClientSecret = "GOOGLEPHOTOSLIBRARAPI_CLIENTSECRET";
-    private const string _steamWebApiClientApiKey = "STEAMWEBAPI_CLIENTAPIKEY";
-    private const string _steamWebApiStoreLanguage = "STEAMWEBAPI_STORELANGUAGE";
+    public const string GooglePhotosLibraryApiProjectId = "GOOGLEPHOTOSLIBRARAPI_PROJECTID";
+    public const string GooglePhotosLibraryApiClientId = "GOOGLEPHOTOSLIBRARAPI_CLIENTID";
+    public const string GooglePhotosLibraryApiClientSecret = "GOOGLEPHOTOSLIBRARAPI_CLIENTSECRET";
+    public const string SteamWebApiClientApiKey = "STEAMWEBAPI_CLIENTAPIKEY";
+    public const string SteamWebApiStoreLanguage = "STEAMWEBAPI_STORELANGUAGE";
 
-    // TODO: Convert to Result<string>
-    public static string? GooglePhotosLibraryApiProjectId => Environment.GetEnvironmentVariable(_googlePhotosLibraryApiProjectId);
-    public static string? GooglePhotosLibraryApiClientId => Environment.GetEnvironmentVariable(_googlePhotosLibraryApiClientId);
-    public static string? GooglePhotosLibraryApiClientSecret => Environment.GetEnvironmentVariable(_googlePhotosLibraryApiClientSecret);
-    public static string? SteamWebApiClientApiKey => Environment.GetEnvironmentVariable(_steamWebApiClientApiKey);
-    public static string? SteamWebApiStoreLanguage => Environment.GetEnvironmentVariable(_steamWebApiStoreLanguage);
+    public static bool TryGetEnvironmentVariable(string key, out string value)
+    {
+        var foundValue = Environment.GetEnvironmentVariable(key);
+        if (foundValue == null)
+        {
+            value = string.Empty;
+            return false;
+        }
+
+        value = foundValue;
+        return true;
+    }
 
     public static Result<string> GetKnownMachineName()
     {

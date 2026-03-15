@@ -19,6 +19,25 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
 
     private UserCredential? _userCredential;
 
+    private Result PopulateCredentials(GooglePhotosLibraryApiCredentials credentials)
+    {
+        if (EnvironmentManager.TryGetEnvironmentVariable(
+            EnvironmentManager.GooglePhotosLibraryApiProjectId, out string projectId) &&
+            EnvironmentManager.TryGetEnvironmentVariable(
+            EnvironmentManager.GooglePhotosLibraryApiClientId, out string clientId) &&
+            EnvironmentManager.TryGetEnvironmentVariable(
+            EnvironmentManager.GooglePhotosLibraryApiClientSecret, out string clientSecret))
+        {
+            _apiCredentials.installed.project_id = projectId;
+            _apiCredentials.installed.client_id = clientId;
+            _apiCredentials.installed.client_secret = clientSecret;
+
+            return Result.Success();
+        }
+
+        return Result.Failure("Missing environment variable for Google API");
+    }
+
     public async Task<Result<UserCredential>> GetUserCredentialAsync()
     {
         if (_userCredential != null)
@@ -34,16 +53,11 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
             return Result<UserCredential>.Success(_userCredential);
         }
 
-        if (EnvironmentManager.GooglePhotosLibraryApiProjectId == null ||
-            EnvironmentManager.GooglePhotosLibraryApiClientId == null ||
-            EnvironmentManager.GooglePhotosLibraryApiClientSecret == null)
+        var credentialsResult = PopulateCredentials(_apiCredentials);
+        if (!credentialsResult.Succeeded)
         {
-            return Result<UserCredential>.Failure("Required environment variables for Google Photos API are not set.");
+            return credentialsResult.ForwardFailure<UserCredential>();
         }
-
-        _apiCredentials.installed.project_id = EnvironmentManager.GooglePhotosLibraryApiProjectId;
-        _apiCredentials.installed.client_id = EnvironmentManager.GooglePhotosLibraryApiClientId;
-        _apiCredentials.installed.client_secret = EnvironmentManager.GooglePhotosLibraryApiClientSecret;
 
         var json = JsonSerializer.Serialize(_apiCredentials);
         using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));

@@ -15,6 +15,11 @@ public record Result
         Succeeded = false,
         ErrorMessage = errorMessage
     };
+
+    public Result<T> ForwardFailure<T>()
+    {
+        return Result<T>.Failure(ErrorMessage ?? "Failure");
+    }
 }
 
 public record Result<T> : Result

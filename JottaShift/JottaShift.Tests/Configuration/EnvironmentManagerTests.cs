@@ -13,23 +13,18 @@ public class EnvironmentManagerTests
         ResultAssert.ValueSuccess(result, Environment.MachineName);
     }
 
-    [Fact]
+    [Theory]
+    [InlineData(EnvironmentManager.GooglePhotosLibraryApiProjectId)]
+    [InlineData(EnvironmentManager.GooglePhotosLibraryApiClientId)]
+    [InlineData(EnvironmentManager.GooglePhotosLibraryApiClientSecret)]
+    [InlineData(EnvironmentManager.SteamWebApiClientApiKey)]
+    [InlineData(EnvironmentManager.SteamWebApiStoreLanguage)]
     [Trait("Dependency", "Env")]
-    public void ValidateAllEnvironmentVariablesForApplication()
+    public void ValidateAllEnvironmentVariablesForApplication(string key)
     {
-        Assert.False(string.IsNullOrEmpty(
-            EnvironmentManager.GooglePhotosLibraryApiClientId));
+        var found = EnvironmentManager.TryGetEnvironmentVariable(key, out string value);
 
-        Assert.False(string.IsNullOrEmpty(
-            EnvironmentManager.GooglePhotosLibraryApiClientSecret));
-
-        Assert.False(string.IsNullOrEmpty(
-            EnvironmentManager.GooglePhotosLibraryApiProjectId));
-
-        Assert.False(string.IsNullOrEmpty(
-            EnvironmentManager.SteamWebApiClientApiKey));
-
-        Assert.False(string.IsNullOrEmpty(
-            EnvironmentManager.SteamWebApiStoreLanguage));
+        Assert.True(found);
+        Assert.False(string.IsNullOrEmpty(value));
     }
 }
