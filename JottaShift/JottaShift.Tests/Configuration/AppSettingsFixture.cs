@@ -14,7 +14,8 @@ public class AppSettingsFixture : IDisposable
             return _appSettings;
         }
 
-        var appSettingsFileStream = File.OpenRead(AppSettings.AppSettingsFullPath);
+        var appSettingsFilePath = AppSettings.GetAppSettingsFileFullPath();
+        var appSettingsFileStream = File.OpenRead(appSettingsFilePath);
         var appSettingsInstance = await JsonSerializer.DeserializeAsync<AppSettings>(appSettingsFileStream);
 
         _appSettings = appSettingsInstance;

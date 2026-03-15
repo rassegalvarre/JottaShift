@@ -6,11 +6,11 @@ public class EnvironmentManagerTests
 {
     [Fact]
     [Trait("Dependency", "Env")]
-    public void GetKnownMachineName_ShouldReturnKnownName()
+    public void GetKnownMachineName_ShouldReturnKnownNameForCurrentMachine()
     {
         var result = EnvironmentManager.GetKnownMachineName();
 
-        ResultAssert.ValueSuccess(result, "BRUTUS");
+        ResultAssert.ValueSuccess(result, Environment.MachineName);
     }
 
     [Fact]

@@ -1,7 +1,4 @@
-﻿using System.IO.Abstractions;
-using System.Text.Json;
-
-namespace JottaShift.Core.Configuration;
+﻿namespace JottaShift.Core.Configuration;
 
 public class EnvironmentManager()
 {
