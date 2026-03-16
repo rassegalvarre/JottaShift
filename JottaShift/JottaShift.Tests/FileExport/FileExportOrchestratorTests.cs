@@ -16,6 +16,7 @@ public class FileExportOrchestratorTests(
     ) : IClassFixture<FileExportFixture>, 
         IClassFixture<GooglePhotosFixture>
 {
+    #region GetAlphabeticParentDirectoryName
     public static List<object[]> GetAlphabeticParentDirectoryNameTestData() => new()
     {
         new[] { "?Æ:;(", "0 - Numerisk" },
@@ -58,7 +59,9 @@ public class FileExportOrchestratorTests(
 
         Assert.Equal(expected, alphabeticParentDirectoryName);
     }
+    #endregion
 
+    #region ExportJottacloudTimeline
     [Fact(Skip = "Not refactored")]
     public async Task ExportAsync_ShouldExportAndRestrucutureTimeline()
     {
@@ -113,7 +116,9 @@ public class FileExportOrchestratorTests(
         Assert.False(fileSystemMock.File.Exists(duckSource));
         Assert.False(fileSystemMock.File.Exists(waterfallSource));
     }
+    #endregion
 
+    #region ExportSteamScreenshots
     [Theory(Skip = "Not refactored")]
     [InlineData(1, "Pung", "P - Papa")]
     [InlineData(12345, "Duum", "D - Delta")]
@@ -154,7 +159,9 @@ public class FileExportOrchestratorTests(
         Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
             $"Expected file at path {expectedTargetPath} was not found.");
     }
+    #endregion
 
+    #region ExportChromecastPhotos
     [Fact(Skip = "Not refactored")]
     [Trait("API", "Google")]
     public async Task ExportChromecastPhotosAsync_ShouldExportPhots_ToAlbumName()
@@ -177,7 +184,9 @@ public class FileExportOrchestratorTests(
         //ResultAssert.Success(result);
         // Assert.Equal(2, result.GooglePhotosUploadOperationResults.Count());
     }
+    #endregion
 
+    #region ExportDesktopWallpapers
     [Fact(Skip = "Not refactored")]
     public async Task ExportDesktopWallpapersAsync_ShouldExportWallpapers_ToDirectoryBasedOnResolution()
     {
@@ -209,4 +218,5 @@ public class FileExportOrchestratorTests(
         Assert.True(fileSystem.File.Exists(expectedTargetPath));
         Assert.False(fileSystem.File.Exists(sourceFilePath));
     }
+    #endregion
 }
