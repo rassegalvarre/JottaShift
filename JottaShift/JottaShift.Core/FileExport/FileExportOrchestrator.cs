@@ -276,7 +276,8 @@ public sealed class FileExportOrchestrator(
             var structuredDestinationDirectory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(
                 imageDateResult.Value, job.TargetDirectoryPath, _culture);
 
-            var copyResult = _fileStorage.CopyFile(file, structuredDestinationDirectory);
+            var cleanedFileName = JottacloudAdapter.CheckAndCleanConflictedFileName(file);
+            var copyResult = _fileStorage.CopyFile(cleanedFileName, structuredDestinationDirectory);
 
             if (!copyResult.Succeeded || copyResult.Value is null)
             {
