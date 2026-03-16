@@ -62,6 +62,44 @@ public class FileExportOrchestratorTests(
     #endregion
 
     #region ExportJottacloudTimeline
+    // Test-paths need to match patch defined in FileExportFixture.DefaultJobs
+    [Theory]
+    [InlineData(
+        @"C:\source\timeline\img_20201106.jpg", 
+        @"C:\backup\timeline\2020\11 November\img_20201106.jpg")]
+    [InlineData(
+        @"C:\source\timeline\img_20201106(Conflict 2026-03-16).jpg",
+        @"C:\backup\timeline\2020\11 November\img_20201106.jpg")]
+    [InlineData(
+        @"C:\source\timeline\img_20201106 (Conflict 2026-03-16).jpg",
+        @"C:\backup\timeline\2020\11 November\img_20201106.jpg")]
+    [InlineData(
+        @"C:\source\timeline\videos\2020\vid_20201106 (Conflict 2026-03-16).jpg", 
+        @"C:\backup\timeline\2020\11 November\vid_20201106.jpg")]
+    public async Task ExportJottacloudTimeline_ShouldCopyFileWithStructuredPath(
+        string sourceFilePath,
+        string expectedFilePath)
+    {
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { sourceFilePath, new MockFileData([])  }
+        });
+        var fileStorage = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+        
+        var orchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorage);
+
+        var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
+
+        // Assert
+        ResultAssert.Success(result);
+
+        Assert.False(fileSystem.File.Exists(sourceFilePath));
+        Assert.True(fileSystem.File.Exists(expectedFilePath));
+    }
+
     [Fact(Skip = "Not refactored")]
     public async Task ExportAsync_ShouldExportAndRestrucutureTimeline()
     {

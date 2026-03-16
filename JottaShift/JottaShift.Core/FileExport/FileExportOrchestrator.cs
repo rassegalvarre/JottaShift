@@ -277,7 +277,8 @@ public sealed class FileExportOrchestrator(
                 imageDateResult.Value, job.TargetDirectoryPath, _culture);
 
             var cleanedFileName = JottacloudAdapter.CheckAndCleanConflictedFileName(file);
-            var copyResult = _fileStorage.CopyFile(cleanedFileName, structuredDestinationDirectory);
+            var copyResult = _fileStorage.CopyFile(
+                file, structuredDestinationDirectory, cleanedFileName);
 
             if (!copyResult.Succeeded || copyResult.Value is null)
             {

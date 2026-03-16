@@ -16,7 +16,7 @@ public interface IFileStorageService
     Result ValidateDirectory(string directoryFullPath);
 
     /// <returns>A <see cref="Result{T}"/> containing the full path of the copied target file</returns>
-    Result<string> CopyFile(string sourceFileFullPath, string targetDirectory);
+    Result<string> CopyFile(string sourceFileFullPath, string targetDirectory, string? newFileName = null);
    
     Result<string> GetFileName(string fileFullPath);    
 
