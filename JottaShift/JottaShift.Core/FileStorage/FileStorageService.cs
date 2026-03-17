@@ -455,8 +455,8 @@ public sealed class FileStorageService(
             var patterns = new[]
             {
                 @"(?:img|photo|picture|photo)_?(\d{8})",      // img_20250215 or img20250215
-                @"(\d{4})-(\d{2})-(\d{2})",                    // 2025-02-15
-                @"(\d{4})(\d{2})(\d{2})"                       // 20250215
+                @"(\d{4})(\d{2})(\d{2})",                     // 20250215
+                @"(\d{4})-(\d{2})-(\d{2})"                    // 2025-02-15
             };
 
             foreach (var pattern in patterns)

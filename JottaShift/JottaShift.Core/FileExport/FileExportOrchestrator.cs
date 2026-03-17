@@ -276,9 +276,21 @@ public sealed class FileExportOrchestrator(
             var structuredDestinationDirectory = JottacloudAdapter.PhotoStorageStructuredDirectoryPath(
                 imageDateResult.Value, job.TargetDirectoryPath, _culture);
 
-            var cleanedFileName = JottacloudAdapter.CheckAndCleanConflictedFileName(file);
+            var cleanedFilePath = JottacloudAdapter.CheckAndCleanConflictedFileName(file);
+            var cleanedFileNameResult = _fileStorage.GetFileName(cleanedFilePath);
+            if (!cleanedFileNameResult.Succeeded || cleanedFileNameResult.Value == null)
+            {
+                hasError = true;
+                _logger.LogError("Filename was cleaned but is no longer valid. " +
+                    "Previous name: {FileName}. " +
+                    "Cleaned name: {FilePath}. " +
+                    "Error: {ErrorMessage}",
+                    file, cleanedFileNameResult.Value, cleanedFileNameResult.ErrorMessage);
+                continue;
+            }
+
             var copyResult = _fileStorage.CopyFile(
-                file, structuredDestinationDirectory, cleanedFileName);
+                file, structuredDestinationDirectory, cleanedFileNameResult.Value);
 
             if (!copyResult.Succeeded || copyResult.Value is null)
             {

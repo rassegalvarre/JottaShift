@@ -43,6 +43,11 @@ public static class TestDataHelper
 
         // Alternative formats
         new ImageFilenameData("pic-2025-05-17-001.jpg", 2025, 5, 17),
+
+        // Conflicted Jottacloud filenamed
+        new ImageFilenameData("vid_20201106(Conflict 2026-03-16).jpg", 2020, 11, 6),
+        new ImageFilenameData("vid_20201106 (Conflict 2026-03-16).jpg", 2020, 11, 6)
+
     };
 
     public record ImageFilenameData(string Filename, int Year, int Month, int Day);
