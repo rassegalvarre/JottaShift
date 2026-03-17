@@ -63,6 +63,60 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         Assert.True(fileSystemMock.File.Exists(_fixture.SomeValidFileFullPath));
         Assert.True(fileSystemMock.File.Exists(destinationFileFullPath));
     }
+
+    [Theory]
+    [InlineData(@"noExtension")]
+    [InlineData(@"\withInvalidChar.doc")]
+    [InlineData(@"folder\fileName.jpg")]
+    [InlineData(@"C:\fully-qualified\file.pdf")]
+    [InlineData(@"C:\no-file\directory-only")]
+
+    public void CopyFile_ShouldReturnFailure_WhenNewFileFileNameIsInvalid(string newFileName)
+    {
+        var targetDirectory = Path.Combine(_fixture.BaseDirectory);
+        string expectedValue = Path.Combine(_fixture.BaseDirectory, newFileName);
+
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.SomeValidFileFullPath, new MockFileData([]) }
+        });
+
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystem);
+
+        var result = fileStorageService.CopyFile(
+            _fixture.SomeValidFileFullPath,
+            targetDirectory,
+            newFileName);
+
+        ResultAssert.ValueFailure(result);
+        Assert.False(fileSystem.FileExists(expectedValue));
+    }
+
+    [Theory]
+    [InlineData(@"simpleFileName.jpg")]
+    [InlineData(@"img_20200615.jpg")]
+    [InlineData(@"some-document.pdf")]
+
+    public void CopyFile_ShouldReturnSuccess_WhenNewFileFileNameIsValid(string newFileName)
+    {
+        var targetDirectory = Path.Combine(_fixture.BaseDirectory);
+        string expectedValue = Path.Combine(_fixture.BaseDirectory, newFileName);
+
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { _fixture.SomeValidFileFullPath, new MockFileData([]) }
+        });
+
+        var fileStorageService = _fixture.CreateFileStorageService(fileSystem);
+
+        var result = fileStorageService.CopyFile(
+            _fixture.SomeValidFileFullPath,
+            targetDirectory,
+            newFileName);
+
+        ResultAssert.ValueSuccess(result, expectedValue);
+        Assert.True(fileSystem.FileExists(expectedValue));
+    }
     #endregion
 
     #region DeleteDirectoryContent

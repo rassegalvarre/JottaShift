@@ -234,16 +234,6 @@ public sealed class FileStorageService(
     {
         if (!string.IsNullOrEmpty(newFileName))
         {
-            if (Path.IsPathFullyQualified(newFileName))
-            {
-                var newFileNameExtractionResult = GetFileName(newFileName);
-                if (!newFileNameExtractionResult.Succeeded)
-                {
-                    return newFileNameExtractionResult.ForwardFailure<string>();
-                }
-
-                newFileName = newFileNameExtractionResult.Value;
-            }
             var isNewNameValid = IsValidFileName(newFileName);
             if (!isNewNameValid.Succeeded)
             {
@@ -287,9 +277,9 @@ public sealed class FileStorageService(
         {
             _fileSystem.File.Copy(sourceFileFullPath, newFileFullPath, false);
 
-            if (_fileSystem.File.Exists(newFileName))
+            if (_fileSystem.File.Exists(newFileFullPath))
             {
-                return Result<string>.Success(newFileName);
+                return Result<string>.Success(newFileFullPath);
             }
             else
             {
