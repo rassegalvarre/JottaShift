@@ -5,7 +5,6 @@ using JottaShift.Tests.GooglePhotos;
 using JottaShift.Tests.TestData;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Globalization;
 using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests.FileExport;
