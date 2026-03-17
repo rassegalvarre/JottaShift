@@ -63,6 +63,7 @@ public class FileExportFixture : IDisposable
     {
         fileStorage ??= FileStorageMock.Object;
         googlePhotosRepository ??= GooglePhotosRepositoryMock.Object;
+        jottacoudRepository ??= JottacloudRepositoryMock.Object;
         steamRepository ??= SteamRepositoryMock.Object;
 
         return new FileExportOrchestrator(
