@@ -51,12 +51,12 @@ public static partial class JottacloudAdapter
     }
 
     /// <summary>
-    /// Remove the conflict-tag of a filename if it exists..
+    /// Remove the conflict-tag of a filename if it exists. 
     /// </summary>
     /// <remarks>
     /// Jottacloud will tag conflicted files with (Conflict...) in the filename.
     /// Example filename marked as conflict: P_20250411_135044 (Conflict 2025-04-11 19.15.54).jpg"</remarks>
-    /// <returns></returns>
+    /// <returns>Cleaned filename including path (if supplied)</returns>
     public static string CheckAndCleanConflictedFileName(string fileName)
     {
         if (fileName.Contains("conflict", StringComparison.CurrentCultureIgnoreCase))

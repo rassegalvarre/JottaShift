@@ -227,17 +227,33 @@ public sealed class FileStorageService(
         }        
     }
 
-    public Result<string> CopyFile(string sourceFileFullPath, string targetDirectory)
+    public Result<string> CopyFile(
+        string sourceFileFullPath,
+        string targetDirectory,
+        string? newFileName = null)
     {
-        var fileNameResult = GetFileName(sourceFileFullPath);
-        if (!fileNameResult.Succeeded || fileNameResult.Value is null)
+        if (!string.IsNullOrEmpty(newFileName))
         {
-            _logger.LogWarning("The name of the provided source file is invalid: {FilePath}",
-                sourceFileFullPath);
-            return Result<string>.Failure("Invalid source file path");
+            var isNewNameValid = IsValidFileName(newFileName);
+            if (!isNewNameValid.Succeeded)
+            {
+                return isNewNameValid.ForwardFailure<string>();
+            }
+        }
+        else
+        {
+            var fileNameResult = GetFileName(sourceFileFullPath);
+            if (!fileNameResult.Succeeded || fileNameResult.Value is null)
+            {
+                _logger.LogWarning("The name of the provided source file is invalid: {FilePath}",
+                    sourceFileFullPath);
+                return fileNameResult.ForwardFailure<string>();
+            }
+            
+            newFileName = fileNameResult.Value;
         }
 
-        string newFileName = Path.Combine(targetDirectory, fileNameResult.Value);
+        string newFileFullPath = Path.Combine(targetDirectory, newFileName);
 
         if (!_fileSystem.File.Exists(sourceFileFullPath))
         {
@@ -251,7 +267,7 @@ public sealed class FileStorageService(
             return Result<string>.Failure("Target directory does not exist");
         }
 
-        if (_fileSystem.File.Exists(newFileName))
+        if (_fileSystem.File.Exists(newFileFullPath))
         {
             _logger.LogInformation("Target file already exists: {TargeFile}", newFileName);
             return Result<string>.Success(newFileName);
@@ -259,11 +275,11 @@ public sealed class FileStorageService(
 
         try
         {
-            _fileSystem.File.Copy(sourceFileFullPath, newFileName, false);
+            _fileSystem.File.Copy(sourceFileFullPath, newFileFullPath, false);
 
-            if (_fileSystem.File.Exists(newFileName))
+            if (_fileSystem.File.Exists(newFileFullPath))
             {
-                return Result<string>.Success(newFileName);
+                return Result<string>.Success(newFileFullPath);
             }
             else
             {
@@ -439,8 +455,8 @@ public sealed class FileStorageService(
             var patterns = new[]
             {
                 @"(?:img|photo|picture|photo)_?(\d{8})",      // img_20250215 or img20250215
-                @"(\d{4})-(\d{2})-(\d{2})",                    // 2025-02-15
-                @"(\d{4})(\d{2})(\d{2})"                       // 20250215
+                @"(\d{4})(\d{2})(\d{2})",                     // 20250215
+                @"(\d{4})-(\d{2})-(\d{2})"                    // 2025-02-15
             };
 
             foreach (var pattern in patterns)

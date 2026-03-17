@@ -5,7 +5,6 @@ using JottaShift.Tests.GooglePhotos;
 using JottaShift.Tests.TestData;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Globalization;
 using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests.FileExport;
@@ -62,59 +61,115 @@ public class FileExportOrchestratorTests(
     #endregion
 
     #region ExportJottacloudTimeline
-    [Fact(Skip = "Not refactored")]
-    public async Task ExportAsync_ShouldExportAndRestrucutureTimeline()
+    // Test-paths need to match patch defined in FileExportFixture.DefaultJobs
+    [Theory]
+    [InlineData(
+        @"C:\source\timeline\img_20201201.jpg", 
+        @"C:\backup\timeline\2020\12 December\img_20201201.jpg")]
+    [InlineData(
+        @"C:\source\timeline\img_20201201(Conflict 2026-03-16).jpg",
+        @"C:\backup\timeline\2020\12 December\img_20201201.jpg")]
+    [InlineData(
+        @"C:\source\timeline\images(Conflict 2026-03-16)\img_20201201.jpg",
+        @"C:\backup\timeline\2020\12 December\img_20201201.jpg")]
+    [InlineData(
+        @"C:\source\timeline\videos\2020\vid_20201201.mp4", 
+        @"C:\backup\timeline\2020\12 December\vid_20201201.mp4")]
+    public async Task ExportJottacloudTimeline_ShouldCopySingleFileWithStructuredPath(
+        string sourceFilePath,
+        string expectedFilePath)
+    {
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { sourceFilePath, new MockFileData([]) }
+        });
+        var fileStorage = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+        
+        var orchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorage);
+
+        var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
+
+        // Assert
+        ResultAssert.Success(result);
+
+        Assert.False(fileSystem.File.Exists(sourceFilePath));
+        Assert.True(fileSystem.File.Exists(expectedFilePath));
+        Assert.Empty(fileSystem.Directory.EnumerateFileSystemEntries(
+            _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob.SourceDirectoryPath));
+    }
+
+    [Fact]
+    public async Task ExportAsync_ShoulNotDeleteSourceDirectoryContent_WhenOneCopyFails()
     {
         var job = _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob;
-        var duckSource = Path.Combine(
-            job.SourceDirectoryPath,
-            "2025",
-            "02",
-            "21",
-            Path.GetFileName(TestDataHelper.Duck));
-        var duckTarget = Path.Combine(
-            job.TargetDirectoryPath,
-            "2025",
-            "05 May",
-            Path.GetFileName(TestDataHelper.Duck));
-        var duckContent = await File.ReadAllBytesAsync(TestDataHelper.Duck);
 
-        var waterfallSource = Path.Combine(
-            job.SourceDirectoryPath,
-            "lorem ipsum",
-            "dolor lamet",
-            Path.GetFileName(TestDataHelper.Waterfall));
-        var waterfallTarget = Path.Combine(
-            job.TargetDirectoryPath,
-            "2025",
-            "05 May",
-            Path.GetFileName(TestDataHelper.Waterfall));
-        var waterfallContent = await File.ReadAllBytesAsync(TestDataHelper.Waterfall);
-
-        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
         {
-            { job.SourceDirectoryPath, new MockDirectoryData() },
-            { duckSource, new MockFileData(duckContent) },
-            { waterfallSource, new MockFileData(waterfallContent) },
+            { Path.Combine(job.SourceDirectoryPath, "img_20200101.jpg"), new MockFileData([]) },
+            { Path.Combine(job.SourceDirectoryPath, "sub-dir", "vid_20210612.mp4"), new MockFileData([]) },
+            { Path.Combine(job.SourceDirectoryPath, "sub-dir", "<invalid-name"), new MockFileData([]) }
         });
-
-        var fileStorageService = new FileStorageService(
-            fileSystemMock,
+        var fileStorage = new FileStorageService(
+            fileSystem,
             new Mock<ILogger<FileStorageService>>().Object);
 
-        var timelineExportService = _fixture.CreateFileExportOrchestrator(
-            fileStorage: fileStorageService);
+        var orchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorage);
 
-        var culture = CultureInfo.GetCultureInfo("en-GB");
-        timelineExportService.SetCulture(culture);
+        var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
 
-        var result = await timelineExportService.ExportJottacloudTimelineAsync(CancellationToken.None);
-
+        // Assert
         ResultAssert.Success(result);
-        Assert.True(fileSystemMock.File.Exists(duckTarget));
-        Assert.True(fileSystemMock.File.Exists(waterfallTarget));
-        Assert.False(fileSystemMock.File.Exists(duckSource));
-        Assert.False(fileSystemMock.File.Exists(waterfallSource));
+
+        Assert.NotEmpty(fileSystem.Directory.EnumerateFileSystemEntries(
+            _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob.SourceDirectoryPath));
+    }
+
+    [Fact]
+    public async Task ExportAsync_ShouldReturnSuccessAndCreateDirectories_WhenNotExists()
+    {
+        var job = _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob;
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>());
+
+        var fileStorage = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var orchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorage);
+
+        var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
+
+        // Assert
+        ResultAssert.Success(result);
+        Assert.True(fileSystem.Directory.Exists(job.SourceDirectoryPath));
+        Assert.True(fileSystem.Directory.Exists(job.TargetDirectoryPath));
+    }
+
+    [Fact]
+    public async Task ExportAsync_ShouldReturnSuccess_WhenNoFilesInSource()
+    {
+        var job = _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob;
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { job.SourceDirectoryPath, new MockDirectoryData() },
+           
+        });
+
+        var fileStorage = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var orchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorage);
+
+        var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
+
+        // Assert
+        ResultAssert.Success(result);
     }
     #endregion
 
