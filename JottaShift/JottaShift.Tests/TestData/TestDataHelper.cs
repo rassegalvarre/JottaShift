@@ -47,7 +47,6 @@ public static class TestDataHelper
         // Conflicted Jottacloud filenamed
         new ImageFilenameData("vid_20201106(Conflict 2026-03-16).jpg", 2020, 11, 6),
         new ImageFilenameData("vid_20201106 (Conflict 2026-03-16).jpg", 2020, 11, 6)
-
     };
 
     public record ImageFilenameData(string Filename, int Year, int Month, int Day);
