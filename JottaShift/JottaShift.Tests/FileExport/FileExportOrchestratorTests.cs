@@ -65,17 +65,17 @@ public class FileExportOrchestratorTests(
     // Test-paths need to match patch defined in FileExportFixture.DefaultJobs
     [Theory]
     [InlineData(
-        @"C:\source\timeline\img_20201106.jpg", 
-        @"C:\backup\timeline\2020\11 November\img_20201106.jpg")]
+        @"C:\source\timeline\img_20201201.jpg", 
+        @"C:\backup\timeline\2020\12 December\img_20201201.jpg")]
     [InlineData(
-        @"C:\source\timeline\img_20201106(Conflict 2026-03-16).jpg",
-        @"C:\backup\timeline\2020\11 November\img_20201106.jpg")]
+        @"C:\source\timeline\img_20201201(Conflict 2026-03-16).jpg",
+        @"C:\backup\timeline\2020\12 December\img_20201201.jpg")]
     [InlineData(
-        @"C:\source\timeline\img_20201106 (Conflict 2026-03-16).jpg",
-        @"C:\backup\timeline\2020\11 November\img_20201106.jpg")]
+        @"C:\source\timeline\img_20201201 (Conflict 2026-03-16).jpg",
+        @"C:\backup\timeline\2020\12 December\img_20201201.jpg")]
     [InlineData(
-        @"C:\source\timeline\videos\2020\vid_20201106 (Conflict 2026-03-16).jpg", 
-        @"C:\backup\timeline\2020\11 November\vid_20201106.jpg")]
+        @"C:\source\timeline\videos\2020\vid_20201201 (Conflict 2026-03-16).jpg", 
+        @"C:\backup\timeline\2020\12 December\vid_20201201.jpg")]
     public async Task ExportJottacloudTimeline_ShouldCopyFileWithStructuredPath(
         string sourceFilePath,
         string expectedFilePath)
@@ -142,9 +142,6 @@ public class FileExportOrchestratorTests(
 
         var timelineExportService = _fixture.CreateFileExportOrchestrator(
             fileStorage: fileStorageService);
-
-        var culture = CultureInfo.GetCultureInfo("en-GB");
-        timelineExportService.SetCulture(culture);
 
         var result = await timelineExportService.ExportJottacloudTimelineAsync(CancellationToken.None);
 

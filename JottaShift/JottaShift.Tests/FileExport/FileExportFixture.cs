@@ -6,11 +6,14 @@ using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Globalization;
 
 namespace JottaShift.Tests.FileExport;
 
 public class FileExportFixture : IDisposable
 {
+    public readonly CultureInfo DefaultTestCulture = CultureInfo.GetCultureInfo("en-GB");
+
     public readonly string SourceDirectoryRoot = @"C:\source";
     public readonly string TargetDirectoryRoot = @"C:\backup";   
     public Mock<IFileStorageService> FileStorageMock => new();
@@ -66,13 +69,17 @@ public class FileExportFixture : IDisposable
         jottacoudRepository ??= JottacloudRepositoryMock.Object;
         steamRepository ??= SteamRepositoryMock.Object;
 
-        return new FileExportOrchestrator(
+        var orchestrator = new FileExportOrchestrator(
             DefaultFileExportJobs,
             new Mock<ILogger<FileExportOrchestrator>>().Object,
             fileStorage,
             googlePhotosRepository, 
             jottacoudRepository,
             steamRepository);
+
+        orchestrator.SetCulture(DefaultTestCulture);
+
+        return orchestrator;
     }
 
     public void Dispose()
