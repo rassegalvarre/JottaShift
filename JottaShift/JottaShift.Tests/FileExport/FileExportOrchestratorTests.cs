@@ -55,7 +55,7 @@ public class FileExportOrchestratorTests(
     {
         var orchestrator = _fixture.CreateFileExportOrchestrator();
 
-        var alphabeticParentDirectoryName = orchestrator.GetAlphabeticParentDirectoryName(directoryName);
+        var alphabeticParentDirectoryName = FileExportOrchestrator.GetAlphabeticParentDirectoryName(directoryName);
 
         Assert.Equal(expected, alphabeticParentDirectoryName);
     }
@@ -162,7 +162,7 @@ public class FileExportOrchestratorTests(
     }
 
     [Fact]
-    public async Task ExportAsync_ShouldReturnSuccessAndCreateDirectories_WhenNotExists()
+    public async Task ExportAsync_ShouldReturnSuccessAndCreateDirectories_WhenNoneExists()
     {
         var job = _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob;
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>());
@@ -207,29 +207,30 @@ public class FileExportOrchestratorTests(
     #endregion
 
     #region ExportSteamScreenshots
-    [Theory(Skip = "Not refactored")]
+    [Theory]
     [InlineData(1, "Pung", "P - Papa")]
     [InlineData(12345, "Duum", "D - Delta")]
     [InlineData(987653, "Super Mawio", "S - Sierra")]
-    public async Task ExportSteamScreenshotsAsync_ShouldExportSteamScreenshots_ToDirectoryWithAppName(
+    public async Task ExportSteamScreenshotsAsync_ShouldExportSingleSteamScreenshot_ToDirectoryWithAppName(
         uint appId,
         string appName,
         string parentDirectoryName)
     {
         var jobSettings = _fixture.DefaultFileExportJobs.SteamScreenshotsExportJob;
 
-        var mockFileData = new Dictionary<string, MockFileData>();
+        string imageFileName = "some-image.png";
+        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, appId.ToString(), imageFileName);
+        var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, imageFileName);
+
         var steamRepositoryMock = new Mock<ISteamRepository>();
-
-        var fileByteContent = File.ReadAllBytes(TestDataHelper.Duck);
-        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, appId.ToString(), "image.png");
-        mockFileData.Add(sourceFilePath, new MockFileData(fileByteContent));
-
         steamRepositoryMock
             .Setup(repo => repo.GetAppNameFromId(appId))
             .ReturnsAsync(Result<string>.Success(appName));
 
-        var fileSystemMock = new MockFileSystem(mockFileData);
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { sourceFilePath, new MockFileData([]) }
+        });
 
         var fileStorageService = new FileStorageService(
             fileSystemMock,
@@ -240,7 +241,6 @@ public class FileExportOrchestratorTests(
             steamRepository: steamRepositoryMock.Object);
 
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
-        var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, "image.png");
 
         ResultAssert.Success(result);
         Assert.False(fileSystemMock.File.Exists(sourceFilePath));

@@ -190,104 +190,143 @@ public sealed class FileExportOrchestrator(
         //return result.Complete();
     }
 
-    public async Task<Result> ExportSteamScreenshotsAsync(CancellationToken ct = default)
+    public async Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
     {
-        return Result.Failure("Not implemented");
+        var job = _fileExportJobs.SteamScreenshotsExportJob;
 
-        //var job = _
-        //FileTransferJobResult result;
+        var validationResult = ValidateFileTransferJob(job);
+        if (!validationResult.Succeeded)
+        {
+            return FileTransferJobResult.FromFailedResult(validationResult, FileTransferJobResultStatus.InvalidJob);
+        }
 
-        //if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
-        //{
-        //    _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-        //    result = new FileTransferJobResult(jobKey);
-        //    result.Invalid();
-        //    return result;
-        //}
+        List<FileTransferResult> fileTransferResults = [];
 
-        //result = _fileExportJobValidator.ValidateFileTransferJob(job);
-        //if (result.PreValidationFailed)
-        //{
-        //    _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-        //    return result;
-        //}
+        foreach (var sourceDirectory in _fileStorage.EnumerateDirectories(job.SourceDirectoryPath))
+        {
+            var directoryNameResult = _fileStorage.GetDirectoryName(sourceDirectory);
+            if (!directoryNameResult.Succeeded || directoryNameResult.Value is null)
+            {
+                _logger.LogWarning(
+                    "Skipping directory with path @{DirectoryPath} since directory name could not be retrieved",
+                    sourceDirectory);
+                continue;
+            }
 
-        //result.Start();
-        //foreach (var directory in _fileStorage.EnumerateDirectories(job.SourceDirectoryPath))
-        //{
-        //    var directoryNameToCharArray = Path.GetFileName(directory)?.ToCharArray();
-        //    if (!uint.TryParse(directoryNameToCharArray, out uint appId))
-        //    {
-        //        _logger.LogWarning(
-        //            "Skipping directory with name @{DirectoryName} since it does not match expected format of a Steam appId",
-        //            directory);
-        //        continue;
-        //    }
+            var directoryNameToCharArray = directoryNameResult.Value.ToCharArray();
+            if (!uint.TryParse(directoryNameToCharArray, out uint appId))
+            {
+                _logger.LogWarning(
+                    "Skipping directory with name @{DirectoryName} since it does not match expected format of a Steam AppId",
+                    sourceDirectory);
+                continue;
+            }
 
-        //    var appName = await _steamRepository.GetAppNameFromId(appId);
+            var appNameResult = await _steamRepository.GetAppNameFromId(appId);
+            if (!appNameResult.Succeeded || appNameResult.Value is null)
+            {
+                _logger.LogWarning("Could not find Steam app name for appId {AppId}", appId);
+                continue;
+            }
+            
+            string appName = appNameResult.Value;
+            string parentDirectory = GetAlphabeticParentDirectoryName(appName);
+            string targetDirectoryForApp = Path.Combine(
+                job.TargetDirectoryPath,
+                parentDirectory,
+                appName);
 
-        //    if (string.IsNullOrEmpty(appName))
-        //    {
-        //        _logger.LogWarning("Could not find Steam app name for appId {AppId}", appId);
-        //        continue;
-        //    }
+            foreach (var file in _fileStorage.EnumerateFiles(sourceDirectory))
+            {
+                FileTransferResult fileTransferResult;
+                if (file.Contains("thumbnails"))
+                {
+                    var deleteThumbnailsResult = DeleteSourceFile(job, file);
 
-            //string parentDirectory = GetAlphabeticParentDirectoryName(appName);
-            //string targetDirectoryForApp = Path.Combine(
-            //    job.TargetDirectoryPath,
-            //    parentDirectory,
-            //    appName);
+                    if (deleteThumbnailsResult.Succeeded)
+                    {
+                        fileTransferResult = FileTransferResult.Success(file, sourceFileDeleted: true);
+                    }
+                    else
+                    {
+                        _logger.LogError("Could not delete thumbnail file with path {FilePath}. Error: {ErrorMessage}",
+                            file, deleteThumbnailsResult.ErrorMessage);
 
-            //if (!_fileStorage.ValidateDirectory(new DirectoryOptions(targetDirectoryForApp, true)))
-            //{
-            //    _logger.LogError(
-            //        "Could not create target directory with name @{DirectoryName}",
-            //        targetDirectoryForApp);
+                        fileTransferResult = FileTransferResult.FromFailedResult(
+                            deleteThumbnailsResult, FileTransferResultStatus.TransferFailed, file);
+                    }
 
-            //    return result.FailOperation("Cannot create target directory");
-            //}
+                    fileTransferResults.Add(fileTransferResult);
+                    continue;
+                }
 
-            //foreach (var file in _fileStorage.EnumerateFiles(directory))
-            //{
-            //    if (file.Contains("thumbnails"))
-            //    {
-            //        DeleteSourceFile(file, job);
-            //        continue;
-            //    }
+                var copyResult = _fileStorage.CopyFile(file, targetDirectoryForApp);
+                if (!copyResult.Succeeded || copyResult.Value is null)
+                {
+                    _logger.LogError("Could not copy file with path {FilePath}. Error: {ErrorMessage}",
+                        file, copyResult.ErrorMessage);
 
-            //    result.PrepareOperation(file);
-            //    var copyResult = await _fileStorage.CopyAsync(file, targetDirectoryForApp, ct);
-            //    if (!copyResult.Success)
-            //    {
-            //        return result.FailOperation($"File transfer failed for file {file}");
-            //    }
-            //    if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
-            //    {
-            //        _logger.LogError(
-            //            "File was copied, but file content does not match: {FilePath}",
-            //            copyResult.targetFileFullPath);
-            //        return result.FailOperation($"Mismatched file content for file {file}");
-            //    }
-            //    if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
-            //    {
-            //        _logger.LogError(
-            //            "File was copied, but metadata does not match: {FilePath}",
-            //            copyResult.targetFileFullPath);
-            //        return result.FailOperation($"Mismatched file metadata for file {file}");
-            //    }
+                    fileTransferResult = FileTransferResult.FromFailedResult(
+                            copyResult, FileTransferResultStatus.TransferFailed, file);
+                    fileTransferResults.Add(fileTransferResult);
+                    continue;
+                }
 
-            //    DeleteSourceFile(file, job);
+                var filesAreBitPerfectMatchResult = _fileStorage.FilesAreBitPerfectMatch(file, copyResult.Value);
+                if (!filesAreBitPerfectMatchResult.Succeeded)
+                {
+                    _logger.LogError(
+                        "File was copied, but file content does not match: {FilePath}",
+                        copyResult.Value);
+                    
+                    fileTransferResult = FileTransferResult.FromFailedResult(
+                        filesAreBitPerfectMatchResult, FileTransferResultStatus.NewFileCorrupted, file);
+                    fileTransferResults.Add(fileTransferResult);
+                    continue;
+                }
 
-            //    result.CompleteOperation(copyResult.targetFileFullPath);
-            //    _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
-            //}
+                var metadataMatchResult = _fileStorage.DoesFileMetadataMatch(file, copyResult.Value);
+                if (!metadataMatchResult.Succeeded)
+                {
+                    _logger.LogError("File was copied, but metadata does not match: {FilePath}",
+                        copyResult.Value);
+                    fileTransferResult = FileTransferResult.FromFailedResult(
+                        filesAreBitPerfectMatchResult, FileTransferResultStatus.NewFileCorrupted, file);
+                    fileTransferResults.Add(fileTransferResult);
+                    continue;
+                }
 
-        //    _logger.LogInformation("Processed Steam-directory {Directory}", directory);
-        //}
-        
-        //DeleteSourceDirectory(job, result);
+                var deleteSourceResult = DeleteSourceFile(job, file);
+                if (!deleteSourceResult.Succeeded)
+                {
+                    _logger.LogError("Failed to delete source file: {FilePath}", file);
+                    continue;
+                }
 
-        //return result.Complete();
+                fileTransferResult = FileTransferResult.Success(file, copyResult.Value, deleteSourceResult.Succeeded);
+                fileTransferResults.Add(fileTransferResult);
+
+                _logger.LogInformation("Copied file and deleted source. New path: {CopiedFilePath}",
+                    copyResult.Value);
+            }
+
+            _logger.LogInformation("Processed Steam-directory {Directory}", sourceDirectory);
+        }
+
+        var jobResult = FileTransferJobResult.FromTransferResults(fileTransferResults);
+        if (jobResult.Status == FileTransferJobResultStatus.AllFilesTransferredSuccessfully)
+        {
+            var deleteDirectoryResult = DeleteSourceDirectoryContent(job);
+            if (!deleteDirectoryResult.Succeeded)
+            {
+                _logger.LogError("Failed to delete source directory content: {FilePath}",
+                    job.SourceDirectoryPath);
+            }
+
+            jobResult.SourceDirectoryDeleted = deleteDirectoryResult.Succeeded;
+        }
+
+        return jobResult;
     }
 
     public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
@@ -300,7 +339,7 @@ public sealed class FileExportOrchestrator(
             return FileTransferJobResult.FromFailedResult(validationResult, FileTransferJobResultStatus.InvalidJob);
         }
 
-        List<FileTransferResult> fileTransferResults = new();
+        List<FileTransferResult> fileTransferResults = [];
 
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
@@ -420,7 +459,7 @@ public sealed class FileExportOrchestrator(
             : Result<string>.Failure($"Unknown resolution: {imageResolution}");
     }
 
-    public string GetAlphabeticParentDirectoryName(string directoryName)
+    public static string GetAlphabeticParentDirectoryName(string directoryName)
     {      
         string firstLetter = directoryName.ToCharArray()[0]
             .ToString();

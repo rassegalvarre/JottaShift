@@ -17,7 +17,9 @@ public interface IFileStorageService
 
     /// <returns>A <see cref="Result{T}"/> containing the full path of the copied target file</returns>
     Result<string> CopyFile(string sourceFileFullPath, string targetDirectory, string? newFileName = null);
-   
+
+    Result<string> GetDirectoryName(string directoryFullPath);
+
     Result<string> GetFileName(string fileFullPath);    
 
     Result<DateTime> GetImageDate(string fileFullPath);

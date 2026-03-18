@@ -295,6 +295,19 @@ public sealed class FileStorageService(
         }
     }
 
+    // TODO: Write test
+    public Result<string> GetDirectoryName(string directoryFullPath)
+    {
+        if (!Path.IsPathRooted(directoryFullPath) || !Path.IsPathFullyQualified(directoryFullPath))
+        {
+            return Result<string>.Failure("Directory path must be absolute and fully qualified");
+        }
+
+        var directoryName = Path.GetFileName(directoryFullPath);        
+
+        return Result<string>.Success(directoryName);
+    }
+
     public Result<string> GetFileName(string fileFullPath)
     {
         if (!Path.IsPathRooted(fileFullPath) || !Path.IsPathFullyQualified(fileFullPath))
