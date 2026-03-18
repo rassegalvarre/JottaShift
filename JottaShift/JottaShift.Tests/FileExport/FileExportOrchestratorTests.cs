@@ -1,5 +1,6 @@
 ﻿using JottaShift.Core;
 using JottaShift.Core.FileExport;
+using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.Steam;
 using JottaShift.Tests.GooglePhotos;
@@ -440,20 +441,21 @@ public class FileExportOrchestratorTests(
     #endregion
 
     #region ExportDesktopWallpapers
-    [Fact(Skip = "Not refactored")]
-    public async Task ExportDesktopWallpapersAsync_ShouldExportWallpapers_ToDirectoryBasedOnResolution()
+    [Fact]
+    [Trait("Dependency", "FileSystem")]
+    public async Task ExportDesktopWallpapersAsync_ShouldExportImageWithKnownResolution_ToDirectoryBasedOnResolution()
     {
-        var imageBytes = await File.ReadAllBytesAsync(TestDataHelper.Egypt);
-
         var job = _fixture.DefaultFileExportJobs.ScreenshotsExportJob;
-        string sourceFilePath = Path.Combine(job.SourceDirectoryPath, Path.GetFileName(TestDataHelper.Egypt));
-        string expectedTargetPath = Path.Combine(job.TargetDirectoryPath, "4K", "egypt.jpg");
+
+        string sourceImageFileName = Path.GetFileName(TestDataHelper.Egypt);
+        var sourceImageContentBytes = await File.ReadAllBytesAsync(TestDataHelper.Egypt);
+
+        string sourceFilePath = Path.Combine(job.SourceDirectoryPath, sourceImageFileName);
+        string expectedTargetPath = Path.Combine(job.TargetDirectoryPath, "4K", sourceImageFileName);
 
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
-            { job.SourceDirectoryPath, new MockDirectoryData() },
-            { job.TargetDirectoryPath, new MockDirectoryData() },
-            { sourceFilePath, new MockFileData(imageBytes) },
+            { sourceFilePath, new MockFileData(sourceImageContentBytes) },
         });
 
         var fileStorageService = new FileStorageService(
@@ -463,13 +465,41 @@ public class FileExportOrchestratorTests(
         var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(fileStorage: fileStorageService);
 
         var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
-        //var operation = result.Operations.FirstOrDefault();
-        ResultAssert.Success(result);
-        //Assert.True(result.Operations.Count > 0);
-        //Assert.True(operation?.Success == true);
-        //Assert.Equal(expectedTargetPath, operation.TargetFilePath);
-        Assert.True(fileSystem.File.Exists(expectedTargetPath));
+
+        FileTransferResultAssert.SuccessfullJob(result);
+
         Assert.False(fileSystem.File.Exists(sourceFilePath));
+        Assert.True(fileSystem.File.Exists(expectedTargetPath));
+    }
+
+    [Fact]
+    [Trait("Dependency", "FileSystem")]
+    public async Task ExportDesktopWallpapersAsync_ShouldIgnoreImageWithUnknownResolution()
+    {
+        var job = _fixture.DefaultFileExportJobs.ScreenshotsExportJob;
+
+        string sourceImageFileName = Path.GetFileName(TestDataHelper.Duck);
+        var sourceImageContentBytes = await File.ReadAllBytesAsync(TestDataHelper.Duck);
+
+        string sourceFilePath = Path.Combine(job.SourceDirectoryPath, sourceImageFileName);
+
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { sourceFilePath, new MockFileData(sourceImageContentBytes) },
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(fileStorage: fileStorageService);
+
+        var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
+
+        FileTransferResultAssert.FailedJob(result);
+        Assert.Single(result.Value!);
+        Assert.Equal(FileTransferResultStatus.InvalidSourceFile, result.Value!.First().Status);
+        Assert.True(fileSystem.File.Exists(sourceFilePath));
     }
     #endregion
 }
