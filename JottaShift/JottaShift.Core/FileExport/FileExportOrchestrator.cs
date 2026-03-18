@@ -104,90 +104,57 @@ public sealed class FileExportOrchestrator(
         return Result.Success();
     }
 
-    public async Task<Result> ExportDesktopWallpapersAsync(CancellationToken ct = default)
+    public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
     {
-        return Result.Failure("Not implemented");
+        var job = _fileExportJobs.ScreenshotsExportJob;
 
-        //const string jobKey = DefaultJobKeys.DesktopWallpapers;
-        //FileTransferJobResult result;
+        var validationResult = ValidateFileTransferJob(job);
+        if (!validationResult.Succeeded)
+        {
+            return FileTransferJobResult.FromFailedResult(validationResult, FileTransferJobResultStatus.InvalidJob);
+        }
 
-        //if (!_fileExportJobValidator.TryGetFileTransferJob(jobKey, out var job))
-        //{
-        //    _logger.LogError("Job with key {JobKey} does not exists", jobKey);
-        //    result = new FileTransferJobResult(jobKey);
-        //    result.Invalid();
-        //    return result;
-        //}
+        List<FileTransferResult> fileTransferResults = [];
 
-        //result = _fileExportJobValidator.ValidateFileTransferJob(job);
-        //if (result.PreValidationFailed)
-        //{
-        //    _logger.LogError("Job with key {JobKey} failed pre-validation and cannot be started", jobKey);
-        //    return result;
-        //}
+        foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
+        {
+            FileTransferResult fileTransferResult;
 
-        //result.Start();
+            var imageResolutionResult = _fileStorage.GetImageResolution(file);
+            if (!imageResolutionResult.Succeeded || imageResolutionResult.Value is null)
+            {
+                _logger.LogWarning(
+                    "Skipping file with path @{FilePath} since image resolution could not be retrieved",
+                    file);
 
-        //foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
-        //{
-        //    var imageResolution = _fileStorage.GetImageResolution(file);
-        //    string targetDirectoryForResolution = GetDirectoryNameForImageResolution(imageResolution);
+                fileTransferResult = FileTransferResult.FromFailedResult(
+                    imageResolutionResult, FileTransferResultStatus.InvalidSourceFile, file);
+                fileTransferResults.Add(fileTransferResult);
+                continue;
+            }
 
-        //    if (imageResolution.EndsWith("1440"))
-        //    {
-        //        targetDirectoryForResolution = "QHD";
-        //    }
-        //    else if (imageResolution.EndsWith("2160"))
-        //    {
-        //        targetDirectoryForResolution = "4K";
-        //    }
-        //    else if (imageResolution.EndsWith("1080"))
-        //    {
-        //        targetDirectoryForResolution = "FullHD";
-        //    }
-        //    else
-        //    {
-        //        _logger.LogWarning(
-        //            "Skipping file with name @{FileName} since it does not match expected format of ending with resolution",
-        //            file);
+            var targetDirectoryResult = GetDirectoryNameForImageResolution(imageResolutionResult.Value);
+            if (!targetDirectoryResult.Succeeded || targetDirectoryResult.Value is null)
+            {
+                _logger.LogWarning(
+                    "Skipping file with path @{FilePath} since it does not match expected resolutions",
+                    file);
 
-        //        continue;
-        //    }
+                fileTransferResult = FileTransferResult.FromFailedResult(
+                    imageResolutionResult, FileTransferResultStatus.InvalidSourceFile, file);
+                fileTransferResults.Add(fileTransferResult);
+                continue;
+            }
+            
+            string fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryResult.Value);
 
-        //    result.PrepareOperation(file);
+            var copyResult = _fileStorage.CopyFile(file, fullTargetDirectoryPath);
 
-        //    string fullTargetDirectoryPath = Path.Combine(job.TargetDirectoryPath, targetDirectoryForResolution);
+            fileTransferResult = PostFileCopyValidation(job, file, copyResult);
+            fileTransferResults.Add(fileTransferResult);         
+        }
 
-        //    result.StartOperation();
-        //    var copyResult = await _fileStorage.CopyAsync(file, fullTargetDirectoryPath, ct);
-        //    if (!copyResult.Success)
-        //    {
-        //        return result.FailOperation($"File transfer failed for file {file}");
-        //    }
-        //    if (!_fileStorage.FilesAreBitPerfectMatch(file, copyResult.targetFileFullPath))
-        //    {
-        //        _logger.LogError(
-        //            "File was copied, but file content does not match: {FilePath}",
-        //            copyResult.targetFileFullPath);
-        //        return result.FailOperation($"Mismatched file content for file {file}");
-        //    }
-        //    if (!_fileStorage.DoesFileMetadataMatch(file, copyResult.targetFileFullPath))
-        //    {
-        //        _logger.LogError(
-        //            "File was copied, but metadata does not match: {FilePath}",
-        //            copyResult.targetFileFullPath);
-        //        return result.FailOperation($"Mismatched file metadata for file {file}");
-        //    }
-
-        //    DeleteSourceFile(file, job);
-
-        //    result.CompleteOperation(copyResult.targetFileFullPath);
-        //    _logger.LogInformation("Copied file: {FilePath}", copyResult.targetFileFullPath);
-        //}
-
-        //DeleteSourceDirectory(job, result);
-
-        //return result.Complete();
+        return PostFileTransferValidation(job, fileTransferResults);
     }
 
     public async Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
