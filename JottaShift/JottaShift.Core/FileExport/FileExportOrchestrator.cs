@@ -16,6 +16,46 @@ public sealed class FileExportOrchestrator(
     IJottacloudRepository _jottacloudRepository,
     ISteamRepository _steamRepository) : IFileExportOrchestrator
 {
+    #region Directory naming conventions
+    private static readonly Dictionary<string, string> ResolutionDirectoryMap = new()
+    {
+        ["2160"] = "4K",
+        ["1440"] = "QHD",
+        ["1080"] = "FullHD"
+    };
+
+    private static readonly string[] AlphabeticParentDirectoryNames =
+    [
+        "0 - Numerisk",
+        "A - Alpha",
+        "B - Bravo",
+        "C - Charlie",
+        "D - Delta",
+        "E - Echo",
+        "F - Foxtrot",
+        "G - Golf",
+        "H - Hotel",
+        "I - India",
+        "J - Juliett",
+        "K - Kilo",
+        "L - Lima",
+        "M - Mike",
+        "N - November",
+        "O - Oscar",
+        "P - Papa",
+        "Q - Quebec",
+        "R - Romeo",
+        "S - Sierra",
+        "T - Tango",
+        "U - Uniform",
+        "V - Victor",
+        "W - Whiskey",
+        "X - X‑ray",
+        "Y - Yankee",
+        "Z - Zulu"
+    ];
+    #endregion
+
     private CultureInfo _culture { get; set; } = CultureInfo.CurrentCulture;
 
     public void SetCulture(CultureInfo culture)
@@ -342,44 +382,6 @@ public sealed class FileExportOrchestrator(
 
         return Result.Success();
     }
-
-    private static readonly Dictionary<string, string> ResolutionDirectoryMap = new()
-    {
-        ["2160"] = "4K",
-        ["1440"] = "QHD",
-        ["1080"] = "FullHD"
-    };
-
-    private static readonly string[] AlphabeticParentDirectoryNames =
-    {
-           "0 - Numerisk",
-            "A - Alpha",
-            "B - Bravo",
-            "C - Charlie",
-            "D - Delta",
-            "E - Echo",
-            "F - Foxtrot",
-            "G - Golf",
-            "H - Hotel",
-            "I - India",
-            "J - Juliett",
-            "K - Kilo",
-            "L - Lima",
-            "M - Mike",
-            "N - November",
-            "O - Oscar",
-            "P - Papa",
-            "Q - Quebec",
-            "R - Romeo",
-            "S - Sierra",
-            "T - Tango",
-            "U - Uniform",
-            "V - Victor",
-            "W - Whiskey",
-            "X - X‑ray",
-            "Y - Yankee",
-            "Z - Zulu"
-    };
 
     public static Result<string> GetDirectoryNameForImageResolution(string imageResolution)
     {
