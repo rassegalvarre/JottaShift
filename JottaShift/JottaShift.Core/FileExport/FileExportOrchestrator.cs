@@ -261,53 +261,9 @@ public sealed class FileExportOrchestrator(
                 }
 
                 var copyResult = _fileStorage.CopyFile(file, targetDirectoryForApp);
-                if (!copyResult.Succeeded || copyResult.Value is null)
-                {
-                    _logger.LogError("Could not copy file with path {FilePath}. Error: {ErrorMessage}",
-                        file, copyResult.ErrorMessage);
 
-                    fileTransferResult = FileTransferResult.FromFailedResult(
-                            copyResult, FileTransferResultStatus.TransferFailed, file);
-                    fileTransferResults.Add(fileTransferResult);
-                    continue;
-                }
-
-                var filesAreBitPerfectMatchResult = _fileStorage.FilesAreBitPerfectMatch(file, copyResult.Value);
-                if (!filesAreBitPerfectMatchResult.Succeeded)
-                {
-                    _logger.LogError(
-                        "File was copied, but file content does not match: {FilePath}",
-                        copyResult.Value);
-                    
-                    fileTransferResult = FileTransferResult.FromFailedResult(
-                        filesAreBitPerfectMatchResult, FileTransferResultStatus.NewFileCorrupted, file);
-                    fileTransferResults.Add(fileTransferResult);
-                    continue;
-                }
-
-                var metadataMatchResult = _fileStorage.DoesFileMetadataMatch(file, copyResult.Value);
-                if (!metadataMatchResult.Succeeded)
-                {
-                    _logger.LogError("File was copied, but metadata does not match: {FilePath}",
-                        copyResult.Value);
-                    fileTransferResult = FileTransferResult.FromFailedResult(
-                        filesAreBitPerfectMatchResult, FileTransferResultStatus.NewFileCorrupted, file);
-                    fileTransferResults.Add(fileTransferResult);
-                    continue;
-                }
-
-                var deleteSourceResult = DeleteSourceFile(job, file);
-                if (!deleteSourceResult.Succeeded)
-                {
-                    _logger.LogError("Failed to delete source file: {FilePath}", file);
-                    continue;
-                }
-
-                fileTransferResult = FileTransferResult.Success(file, copyResult.Value, deleteSourceResult.Succeeded);
+                fileTransferResult = PostFileCopyValidation(job, file, copyResult);
                 fileTransferResults.Add(fileTransferResult);
-
-                _logger.LogInformation("Copied file and deleted source. New path: {CopiedFilePath}",
-                    copyResult.Value);
             }
 
             _logger.LogInformation("Processed Steam-directory {Directory}", sourceDirectory);
@@ -378,54 +334,8 @@ public sealed class FileExportOrchestrator(
             var copyResult = _fileStorage.CopyFile(
                 file, structuredDestinationDirectory, cleanedFileNameResult.Value);
 
-            if (!copyResult.Succeeded || copyResult.Value is null)
-            {
-                _logger.LogError("Could not copy file with path {FilePath}. Error: {ErrorMessage}",
-                    file, copyResult.ErrorMessage);
-
-                fileTransferResult = FileTransferResult.FromFailedResult(
-                      copyResult, FileTransferResultStatus.TransferFailed, file);
-                fileTransferResults.Add(fileTransferResult);
-                continue;
-            }
-
-            var fileMatchResult = _fileStorage.FilesAreBitPerfectMatch(file, copyResult.Value);
-            if (!fileMatchResult.Succeeded)
-            {
-                _logger.LogError("File was copied, but file content does not match. Copied file: {FilePath}",
-                    copyResult.Value);
-
-                fileTransferResult = FileTransferResult.FromFailedResult(
-                    fileMatchResult, FileTransferResultStatus.NewFileCorrupted, file);
-                fileTransferResults.Add(fileTransferResult);
-                continue;
-            }
-
-            var metadataMatchResult = _fileStorage.DoesFileMetadataMatch(file, copyResult. Value);
-            if (!metadataMatchResult.Succeeded)
-            {
-                _logger.LogError("File was copied, but metadata does not match. Copied file: {FilePath}",
-                    copyResult.Value);
-
-                fileTransferResult = FileTransferResult.FromFailedResult(
-                   metadataMatchResult, FileTransferResultStatus.NewFileCorrupted, file);
-                fileTransferResults.Add(fileTransferResult);
-                continue;
-            }
-
-
-            var deleteSourceResult = DeleteSourceFile(job, file);
-            if (!deleteSourceResult.Succeeded)
-            {
-                _logger.LogError("Failed to delete source file: {FilePath}", file);
-                continue;
-            }
-
-            fileTransferResult = FileTransferResult.Success(file, copyResult.Value, deleteSourceResult.Succeeded);
+            fileTransferResult = PostFileCopyValidation(job, file, copyResult);
             fileTransferResults.Add(fileTransferResult);
-
-            _logger.LogInformation("Copied file and deleted source. New path: {CopiedFilePath}",
-                copyResult.Value);
         }
 
         var jobResult = FileTransferJobResult.FromTransferResults(fileTransferResults);
@@ -513,5 +423,54 @@ public sealed class FileExportOrchestrator(
         }
 
         return Result.Success();
+    }
+
+    private FileTransferResult PostFileCopyValidation(
+        FileTransferJob job,
+        string sourceFilePath,
+        Result<string> copyResult)
+    {
+        if (!copyResult.Succeeded || copyResult.Value is null)
+        {
+            _logger.LogError("Could not copy file with path {FilePath}. Error: {ErrorMessage}",
+                sourceFilePath, copyResult.ErrorMessage);
+
+            return FileTransferResult.FromFailedResult(
+                  copyResult, FileTransferResultStatus.TransferFailed, sourceFilePath);
+        }
+
+        var fileMatchResult = _fileStorage.FilesAreBitPerfectMatch(sourceFilePath, copyResult.Value);
+        if (!fileMatchResult.Succeeded)
+        {
+            _logger.LogError("File was copied, but file content does not match. Copied file: {FilePath}",
+                copyResult.Value);
+
+            return FileTransferResult.FromFailedResult(
+                fileMatchResult, FileTransferResultStatus.NewFileCorrupted, sourceFilePath);
+        }
+
+        var metadataMatchResult = _fileStorage.DoesFileMetadataMatch(sourceFilePath, copyResult.Value);
+        if (!metadataMatchResult.Succeeded)
+        {
+            _logger.LogError("File was copied, but metadata does not match. Copied file: {FilePath}",
+                copyResult.Value);
+
+            return FileTransferResult.FromFailedResult(
+               metadataMatchResult, FileTransferResultStatus.NewFileCorrupted, sourceFilePath);
+        }
+
+        var deleteSourceResult = DeleteSourceFile(job, sourceFilePath);
+        if (!deleteSourceResult.Succeeded)
+        {
+            _logger.LogError("File was copied, but failed to delete source file: {FilePath}",
+                sourceFilePath);
+        }
+        else
+        {
+            _logger.LogInformation("Copied file and deleted source. New path: {CopiedFilePath}",
+                copyResult.Value);
+        }
+
+        return FileTransferResult.Success(sourceFilePath, copyResult.Value, deleteSourceResult.Succeeded);
     }
 }
