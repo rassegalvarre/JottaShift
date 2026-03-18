@@ -245,7 +245,7 @@ public sealed class FileExportOrchestrator(
 
                     if (deleteThumbnailsResult.Succeeded)
                     {
-                        fileTransferResult = FileTransferResult.Success(file, sourceFileDeleted: true);
+                        fileTransferResult = FileTransferResult.Success(file, "File is excluded from transfer", true);
                     }
                     else
                     {
