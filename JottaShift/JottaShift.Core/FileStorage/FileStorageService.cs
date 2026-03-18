@@ -295,6 +295,39 @@ public sealed class FileStorageService(
         }
     }
 
+    public Result<string> GetDirectoryName(string directoryFullPath)
+    {
+        if (!Path.IsPathRooted(directoryFullPath) || !Path.IsPathFullyQualified(directoryFullPath))
+        {
+            return Result<string>.Failure("Directory path must be absolute and fully qualified");
+        }
+
+        string directoryName;
+
+        var extension = Path.GetExtension(directoryFullPath);
+        if (!string.IsNullOrEmpty(extension)) // Path is full file path
+        {        
+            var pathWithoutFile = Path.GetDirectoryName(directoryFullPath);
+            if (pathWithoutFile == null)
+            {
+                return Result<string>.Failure("Could not extract directory name from provided path");
+            }
+
+            directoryName = Path.GetFileName(pathWithoutFile);
+        }
+        else
+        {
+            directoryName = Path.GetFileName(directoryFullPath);
+        }
+
+        if (string.IsNullOrEmpty(directoryName))
+        {
+            return Result<string>.Failure("Directory name could not be extracted from the provided path");
+        }
+
+        return Result<string>.Success(directoryName);
+    }
+
     public Result<string> GetFileName(string fileFullPath)
     {
         if (!Path.IsPathRooted(fileFullPath) || !Path.IsPathFullyQualified(fileFullPath))

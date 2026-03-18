@@ -437,6 +437,33 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
     #endregion
 
+    #region GetDirectoryName    
+    [Theory]
+    [InlineData("")]
+    [InlineData("someString")]
+    [InlineData(@"someFileName.pdf")]
+    [InlineData(@"some\incomplete-path")]
+    [InlineData(@"invalid\chars<>")]
+    [InlineData(@"c:\")]
+    public void GetDirectoryName_ShouldDetectInvalidFilePaths(string directoryFullPath)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+        var directoryNameResult = fileStorage.GetDirectoryName(directoryFullPath);
+        ResultAssert.Failure(directoryNameResult);
+    }
+
+    [Theory]
+    [InlineData(@"c:\root", "root")]
+    [InlineData(@"c:\root\someDirectoryWithContent\someFileName.pdf", "someDirectoryWithContent")]
+    [InlineData(@"c:\root\someCompletePath\someDirectoryWithoutContent", "someDirectoryWithoutContent")]
+    public void GetDirectoryName_ShouldDetectValidDirectoryPaths(string directoryFullPath, string expectedDirectoryName)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+        var directoryNameResult = fileStorage.GetDirectoryName(directoryFullPath);
+        ResultAssert.ValueSuccess(directoryNameResult, expectedDirectoryName);
+    }
+    #endregion
+
     #region GetFileBytesAsync
     [Fact]
     public async Task GetFileBytesAsync_ShouldReturnFailedResult_WhenFileNotFound()

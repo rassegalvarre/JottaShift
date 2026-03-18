@@ -55,7 +55,7 @@ public class FileExportOrchestratorTests(
     {
         var orchestrator = _fixture.CreateFileExportOrchestrator();
 
-        var alphabeticParentDirectoryName = orchestrator.GetAlphabeticParentDirectoryName(directoryName);
+        var alphabeticParentDirectoryName = FileExportOrchestrator.GetAlphabeticParentDirectoryName(directoryName);
 
         Assert.Equal(expected, alphabeticParentDirectoryName);
     }
@@ -162,7 +162,7 @@ public class FileExportOrchestratorTests(
     }
 
     [Fact]
-    public async Task ExportAsync_ShouldReturnSuccessAndCreateDirectories_WhenNotExists()
+    public async Task ExportAsync_ShouldReturnSuccessAndCreateDirectories_WhenNoneExists()
     {
         var job = _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob;
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>());
@@ -207,29 +207,30 @@ public class FileExportOrchestratorTests(
     #endregion
 
     #region ExportSteamScreenshots
-    [Theory(Skip = "Not refactored")]
+    [Theory]
     [InlineData(1, "Pung", "P - Papa")]
     [InlineData(12345, "Duum", "D - Delta")]
     [InlineData(987653, "Super Mawio", "S - Sierra")]
-    public async Task ExportSteamScreenshotsAsync_ShouldExportSteamScreenshots_ToDirectoryWithAppName(
+    public async Task ExportSteamScreenshotsAsync_ShouldExportSingleSteamScreenshot_ToDirectoryWithAppName(
         uint appId,
         string appName,
         string parentDirectoryName)
     {
         var jobSettings = _fixture.DefaultFileExportJobs.SteamScreenshotsExportJob;
 
-        var mockFileData = new Dictionary<string, MockFileData>();
+        string imageFileName = "some-image.png";
+        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, appId.ToString(), imageFileName);
+        var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, imageFileName);
+
         var steamRepositoryMock = new Mock<ISteamRepository>();
-
-        var fileByteContent = File.ReadAllBytes(TestDataHelper.Duck);
-        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, appId.ToString(), "image.png");
-        mockFileData.Add(sourceFilePath, new MockFileData(fileByteContent));
-
         steamRepositoryMock
             .Setup(repo => repo.GetAppNameFromId(appId))
             .ReturnsAsync(Result<string>.Success(appName));
 
-        var fileSystemMock = new MockFileSystem(mockFileData);
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { sourceFilePath, new MockFileData([]) }
+        });
 
         var fileStorageService = new FileStorageService(
             fileSystemMock,
@@ -240,12 +241,176 @@ public class FileExportOrchestratorTests(
             steamRepository: steamRepositoryMock.Object);
 
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
-        var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, "image.png");
 
-        ResultAssert.Success(result);
+        FileTransferResultAssert.SuccessfullJob(result);
         Assert.False(fileSystemMock.File.Exists(sourceFilePath));
         Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
             $"Expected file at path {expectedTargetPath} was not found.");
+    }
+
+    [Fact]
+    public async Task ExportSteamScreenshotsAsync_ShouldSkipDirectory_WhoseNameIsInvalidSteamAppId()
+    {
+        var jobSettings = _fixture.DefaultFileExportJobs.SteamScreenshotsExportJob;
+
+        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, "invalid-app-id", "image.png");
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { sourceFilePath, new MockFileData([]) }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService);
+
+        var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
+
+        FileTransferResultAssert.SuccessfullJob(result);
+    }
+
+    [Fact]
+    public async Task ExportSteamScreenshotsAsync_ShouldSkipDirectory_WhoseAppNameIsNotFoundd()
+    {
+        var jobSettings = _fixture.DefaultFileExportJobs.SteamScreenshotsExportJob;
+
+        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, "98765", "image.png");
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { sourceFilePath, new MockFileData([]) }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var steamRepositoryMock = new Mock<ISteamRepository>();
+        steamRepositoryMock
+            .Setup(repo => repo.GetAppNameFromId(It.IsAny<uint>()))
+            .ReturnsAsync(Result<string>.Failure("Invalid app id"));
+
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService,
+            steamRepository: steamRepositoryMock.Object);
+
+        var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
+
+        FileTransferResultAssert.SuccessfullJob(result);
+    }
+
+    [Fact]
+    public async Task ExportSteamScreenshotsAsync_ShouldDeleteThumbnails()
+    {
+        var jobSettings = _fixture.DefaultFileExportJobs.SteamScreenshotsExportJob;
+
+        string sourceFilePath = Path.Combine(
+            jobSettings.SourceDirectoryPath,
+            "98765",
+            "thumbnails",
+            "image.png");
+
+        var fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            { sourceFilePath, new MockFileData([]) }
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var steamRepositoryMock = new Mock<ISteamRepository>();
+        steamRepositoryMock
+            .Setup(repo => repo.GetAppNameFromId(It.IsAny<uint>()))
+            .ReturnsAsync(Result<string>.Success("Half Knife 2"));
+
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService,
+            steamRepository: steamRepositoryMock.Object);
+
+        var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
+        var transfer = result.Value!.First()!;
+
+        FileTransferResultAssert.SuccessfullJob(result);
+        Assert.False(fileSystemMock.File.Exists(sourceFilePath));
+    }
+
+    [Fact]
+    public async Task ExportSteamScreenshotsAsync_ShouldTransferMultipleApps_AndHandleMisplacedDirectory()
+    {
+        var jobSettings = _fixture.DefaultFileExportJobs.SteamScreenshotsExportJob;
+        string basePath = jobSettings.SourceDirectoryPath;
+
+        var screenshotDirectory = new Dictionary<string, MockFileData>
+        {
+            // Half Knife 2
+            { Path.Combine(basePath, "98765", "screenshot_1.jpg"), new MockFileData([]) },
+            { Path.Combine(basePath, "98765", "screenshot_2.jpg"), new MockFileData([]) },
+            { Path.Combine(basePath, "98765", "thumbnails", "thumb.jpg"), new MockFileData([]) },
+
+            // Duum
+            { Path.Combine(basePath, "12345", "screenshot_1.jpg"), new MockFileData([]) },
+            { Path.Combine(basePath, "12345", "screenshot_2.jpg"), new MockFileData([]) },
+            { Path.Combine(basePath, "12345", "thumbnails", "thumb.jpg"), new MockFileData([]) },
+
+            // Misplaced directory that should be ignored
+            { Path.Combine(basePath, "temp", "temp.bin"), new MockFileData([]) },
+        };
+
+        var fileSystemMock = new MockFileSystem(screenshotDirectory);
+
+        var fileStorageService = new FileStorageService(
+            fileSystemMock,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var steamRepositoryMock = new Mock<ISteamRepository>();
+        steamRepositoryMock
+            .Setup(repo => repo.GetAppNameFromId(98765))
+            .ReturnsAsync(Result<string>.Success("Half Knife 2"));
+        steamRepositoryMock
+            .Setup(repo => repo.GetAppNameFromId(12345))
+            .ReturnsAsync(Result<string>.Success("Duum"));
+
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageService,
+            steamRepository: steamRepositoryMock.Object);
+
+        var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
+
+        FileTransferResultAssert.SuccessfullJob(result);
+
+        foreach(var file in screenshotDirectory)
+        {
+            if (file.Key.Contains("temp")) // Should not be included in result, but deleted from source
+            {
+                Assert.DoesNotContain(result.Value!, 
+                    v => v.SourceFileFullPath == file.Key);
+
+                Assert.False(fileSystemMock.File.Exists(file.Key),
+                    $"Misplaced file at path {file.Key} was expected to be ignored but was not found.");
+                continue;
+            }
+
+            var transferResult = result.Value!.First(r => r.SourceFileFullPath == file.Key);
+
+            // Transfer has been asserted at this stage. 
+            // Always delete source file in Steam-folder
+            Assert.False(fileSystemMock.File.Exists(transferResult.SourceFileFullPath)); 
+
+            if (file.Key.Contains("thumbnails")) // Thumbnails should be deleted and not transferred
+            {
+                Assert.False(fileSystemMock.File.Exists(transferResult.NewFileFullPath),
+                    $"Thumbnail file at path {file.Key} was expected to be deleted but was found.");
+                continue;
+            }
+            else
+            {
+                Assert.True(fileSystemMock.File.Exists(transferResult.NewFileFullPath));
+            }
+        }
     }
     #endregion
 

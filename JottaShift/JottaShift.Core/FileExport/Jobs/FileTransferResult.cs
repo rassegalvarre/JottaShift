@@ -17,7 +17,7 @@ public record FileTransferResult : Result
 
     public static FileTransferResult Success(
         string sourceFileFullPath,
-        string newFileFullPath,
+        string? newFileFullPath = null,
         bool sourceFileDeleted = false) => new()
     {
         Succeeded = true,
