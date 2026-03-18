@@ -269,20 +269,7 @@ public sealed class FileExportOrchestrator(
             _logger.LogInformation("Processed Steam-directory {Directory}", sourceDirectory);
         }
 
-        var jobResult = FileTransferJobResult.FromTransferResults(fileTransferResults);
-        if (jobResult.Status == FileTransferJobResultStatus.AllFilesTransferredSuccessfully)
-        {
-            var deleteDirectoryResult = DeleteSourceDirectoryContent(job);
-            if (!deleteDirectoryResult.Succeeded)
-            {
-                _logger.LogError("Failed to delete source directory content: {FilePath}",
-                    job.SourceDirectoryPath);
-            }
-
-            jobResult.SourceDirectoryDeleted = deleteDirectoryResult.Succeeded;
-        }
-
-        return jobResult;
+        return PostFileTransferValidation(job, fileTransferResults);
     }
 
     public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
@@ -337,21 +324,10 @@ public sealed class FileExportOrchestrator(
             fileTransferResult = PostFileCopyValidation(job, file, copyResult);
             fileTransferResults.Add(fileTransferResult);
         }
+        
+        _logger.LogInformation("Processed Jottacloud timeline directory {Directory}", job.SourceDirectoryPath);
 
-        var jobResult = FileTransferJobResult.FromTransferResults(fileTransferResults);
-        if (jobResult.Status == FileTransferJobResultStatus.AllFilesTransferredSuccessfully)
-        {
-            var deleteDirectoryResult = DeleteSourceDirectoryContent(job);
-            if (!deleteDirectoryResult.Succeeded)
-            {
-                _logger.LogError("Failed to delete source directory content: {FilePath}",
-                    job.SourceDirectoryPath);
-            }
-
-            jobResult.SourceDirectoryDeleted = deleteDirectoryResult.Succeeded;
-        }
-
-        return jobResult;
+        return PostFileTransferValidation(job, fileTransferResults);
     }
 
     public static Result<string> GetDirectoryNameForImageResolution(string imageResolution)
@@ -472,5 +448,23 @@ public sealed class FileExportOrchestrator(
         }
 
         return FileTransferResult.Success(sourceFilePath, copyResult.Value, deleteSourceResult.Succeeded);
+    }
+
+    private FileTransferJobResult PostFileTransferValidation(FileTransferJob job, List<FileTransferResult> fileTransferResults)
+    {
+        var jobResult = FileTransferJobResult.FromTransferResults(fileTransferResults);
+        if (jobResult.Status == FileTransferJobResultStatus.AllFilesTransferredSuccessfully)
+        {
+            var deleteDirectoryResult = DeleteSourceDirectoryContent(job);
+            if (!deleteDirectoryResult.Succeeded)
+            {
+                _logger.LogError("Failed to delete source directory content: {FilePath}",
+                    job.SourceDirectoryPath);
+            }
+
+            jobResult.SourceDirectoryDeleted = deleteDirectoryResult.Succeeded;
+        }
+
+        return jobResult;
     }
 }
