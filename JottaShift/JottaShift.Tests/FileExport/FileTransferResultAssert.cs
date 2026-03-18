@@ -9,12 +9,12 @@ internal static class FileTransferResultAssert
         ResultAssert.Success(jobResult);
         Assert.NotNull(jobResult.Value);
 
-        if (jobResult.Status == FileTransferJobResultStatus.NoFilesToTransfer)
+        if (jobResult.Status is FileTransferJobResultStatus.NoFilesToTransfer)
         {
             Assert.Empty(jobResult.Value);
             return;
         }
-        else if (jobResult.Status == FileTransferJobResultStatus.AllFilesTransferredSuccessfully)
+        else if (jobResult.Status is FileTransferJobResultStatus.AllFilesTransferredSuccessfully)
         {
 
             Assert.All(jobResult.Value, transferResult =>
@@ -46,9 +46,9 @@ internal static class FileTransferResultAssert
         {
             Assert.NotEmpty(jobResult.Value);
 
-            bool containsInvalidSource = jobResult.Value.Any(transferResult => transferResult.Status == FileTransferResultStatus.InvalidSourceFile);
-            bool containsTransferFailed = jobResult.Value.Any(transferResult => transferResult.Status == FileTransferResultStatus.TransferFailed);
-            bool containsNewFileCorrupted = jobResult.Value.Any(transferResult => transferResult.Status == FileTransferResultStatus.NewFileCorrupted);
+            bool containsInvalidSource = jobResult.Value.Any(transferResult => transferResult.Status is FileTransferResultStatus.InvalidSourceFile);
+            bool containsTransferFailed = jobResult.Value.Any(transferResult => transferResult.Status is FileTransferResultStatus.TransferFailed);
+            bool containsNewFileCorrupted = jobResult.Value.Any(transferResult => transferResult.Status is FileTransferResultStatus.NewFileCorrupted);
 
             Assert.True(containsInvalidSource || containsTransferFailed || containsNewFileCorrupted);
         }
