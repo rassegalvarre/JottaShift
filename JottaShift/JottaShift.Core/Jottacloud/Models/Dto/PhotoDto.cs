@@ -9,6 +9,13 @@ public record PhotoDto
     public DateTimeOffset CapturedDate { get; init; }
     public string? LocalFilePath { get; set; }
 
+    public PhotoDto(string id, string imageName, DateTimeOffset capturedDate)
+    {
+        Id = id;
+        ImageName = imageName;
+        CapturedDate = capturedDate;
+    }
+
     public PhotoDto(Photo photo)
     {
         Id = photo.Id;

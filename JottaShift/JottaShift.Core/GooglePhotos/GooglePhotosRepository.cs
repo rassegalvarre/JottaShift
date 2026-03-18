@@ -19,6 +19,7 @@ public class GooglePhotosRepository(
         return await _photosLibraryFacade.CreateAlbumAsync(albumName);
     }
  
+    // TODO: Return list of image names and their upload status
     public async Task<Result<int>> UploadPhotosToAlbumAsync(string albumName, IEnumerable<string> photosFullPaths)
     {
         var albumResult = await GetOrCreateAlbumAsync(albumName);

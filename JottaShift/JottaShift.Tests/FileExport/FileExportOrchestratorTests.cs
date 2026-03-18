@@ -2,6 +2,9 @@
 using JottaShift.Core.FileExport;
 using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
+using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.Jottacloud;
+using JottaShift.Core.Jottacloud.Models.Dto;
 using JottaShift.Core.Steam;
 using JottaShift.Tests.GooglePhotos;
 using JottaShift.Tests.TestData;
@@ -416,27 +419,45 @@ public class FileExportOrchestratorTests(
     #endregion
 
     #region ExportChromecastPhotos
-    [Fact(Skip = "Not refactored")]
-    [Trait("API", "Google")]
-    public async Task ExportChromecastPhotosAsync_ShouldExportPhots_ToAlbumName()
+    private PhotoDto GetPhotoDto(bool hasLocalPath)
     {
-        //var fileSystem = new FileSystem();
-        //var fileStorageService = new FileStorageService(
-        //    fileSystem,
-        //    new Mock<ILogger<FileStorageService>>().Object);
-        //var googlePhotosRepository = new GooglePhotosRepository(
-        //    _googlePhotosFixture.MockGooglePhotosLibraryApiCredentials,
-        //    new Mock<IGooglePhotosHttpClient>().Object,
-        //    new Mock<ILogger<GooglePhotosRepository>>().Object);
+        string imageName = Path.GetRandomFileName();
+        return new PhotoDto(Guid.NewGuid().ToString(), imageName, new DateTimeOffset()) with
+        {
+            LocalFilePath = hasLocalPath ? Path.Combine(_fixture.SourceDirectoryRoot, imageName) : null
+        };
+    }
 
-        //var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(
-        //    fileStorage: fileStorageService,
-        //    googlePhotosRepository: googlePhotosRepository);
+    [Fact]
+    public async Task ExportChromecastPhotosAsync_ShouldGetImagesFromJottacloudAlbumAndUploadToGooglePhotosWherePhotoExistsOnDisk()
+    {
+        var job = _fixture.DefaultFileExportJobs.ChromecastUploadJob;
+        
+        var album = new AlbumDto()
+        {
+            AlbumTitle = "Staging album title",
+            Photos = [
+                GetPhotoDto(true),
+                GetPhotoDto(true),
+                GetPhotoDto(false)
+            ]
+        };
 
-        //var result = await fileExportOrchestrator.ExportChromecastPhotosAsync();
+        var jottacloudRepositoryMock = new Mock<IJottacloudRepository>();
+        jottacloudRepositoryMock.Setup(r => r.GetAlbumAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<AlbumDto>.Success(album));
 
-        //ResultAssert.Success(result);
-        // Assert.Equal(2, result.GooglePhotosUploadOperationResults.Count());
+        var googlePhotosRepositoryMock = new Mock<IGooglePhotosRepository>();
+        googlePhotosRepositoryMock.Setup(r => r.UploadPhotosToAlbumAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(Result<int>.Success(2));
+
+        var orchestrator = _fixture.CreateFileExportOrchestrator(
+            googlePhotosRepository: googlePhotosRepositoryMock.Object,
+            jottacoudRepository: jottacloudRepositoryMock.Object);
+
+        var result = await orchestrator.ExportChromecastPhotosAsync();
+
+        ResultAssert.Success(result);
     }
     #endregion
 
