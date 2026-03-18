@@ -21,7 +21,7 @@ public class GooglePhotosHttpClient : IGooglePhotosHttpClient
     {
         _fileStorage = fileStorage;
         _http = http;
-        // _http.BaseAddress = new Uri("https://photoslibrary.googleapis.com/v1/");
+        _http.BaseAddress = new Uri("https://photoslibrary.googleapis.com/v1/");
 
         _userCredentialManager = userCredentialManager;
         _logger = logger;
@@ -52,12 +52,8 @@ public class GooglePhotosHttpClient : IGooglePhotosHttpClient
             return Result<string>.Failure("Failed to get access token.");
         }
 
-        //const string uploadUrl = "uploads";
-        //var requesturi = new Uri(_http.BaseAddress!, uploadUrl);
-
-        const string uploadUrl = "https://photoslibrary.googleapis.com/v1/uploads";
-
-        var request = new HttpRequestMessage(HttpMethod.Post, uploadUrl)
+        var requestUri = new Uri(_http.BaseAddress!, "uploads");
+        var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
         {
             Content = new ByteArrayContent(fileContentResult.Value),
         };
