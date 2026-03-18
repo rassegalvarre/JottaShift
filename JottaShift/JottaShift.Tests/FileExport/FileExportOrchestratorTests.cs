@@ -1,4 +1,5 @@
 ﻿using JottaShift.Core;
+using JottaShift.Core.FileExport;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.Steam;
 using JottaShift.Tests.GooglePhotos;
@@ -58,6 +59,37 @@ public class FileExportOrchestratorTests(
 
         Assert.Equal(expected, alphabeticParentDirectoryName);
     }
+    #endregion
+
+    #region GetDirectoryNameForImageResolution
+    [Theory]
+    [InlineData("2160", "4K")]
+    [InlineData("3840x2160", "4K")]
+    [InlineData("5120x1440", "QHD")]
+    [InlineData("3440x1440", "QHD")]
+    [InlineData("2560x1440", "QHD")]
+    [InlineData("2560x1080", "FullHD")]
+    [InlineData("1920x1080", "FullHD")]
+    public void GetDirectoryNameForImageResolution_ShouldReturnCorrectDirectoryName(string resolution, string expectedDirectory)
+    {
+        var directoryNameResult = FileExportOrchestrator.GetDirectoryNameForImageResolution(resolution);
+
+        ResultAssert.ValueSuccess(directoryNameResult, expectedDirectory);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("someString")]
+    [InlineData("1001")]
+    [InlineData("2560x1600")]
+    [InlineData("2880x1920")]
+    public void GetDirectoryNameForImageResolution_ShouldReturnFailure_WhenInvalidResolution(string resolution)
+    {
+        var directoryNameResult = FileExportOrchestrator.GetDirectoryNameForImageResolution(resolution);
+
+        ResultAssert.ValueFailure(directoryNameResult);
+    }
+
     #endregion
 
     #region ExportJottacloudTimeline

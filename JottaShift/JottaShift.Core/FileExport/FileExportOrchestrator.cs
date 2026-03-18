@@ -91,7 +91,7 @@ public sealed class FileExportOrchestrator(
         //foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         //{
         //    var imageResolution = _fileStorage.GetImageResolution(file);
-        //    string targetDirectoryForResolution;
+        //    string targetDirectoryForResolution = GetDirectoryNameForImageResolution(imageResolution);
 
         //    if (imageResolution.EndsWith("1440"))
         //    {
@@ -343,10 +343,16 @@ public sealed class FileExportOrchestrator(
         return Result.Success();
     }
 
-    public string GetAlphabeticParentDirectoryName(string directoryName)
+    private static readonly Dictionary<string, string> ResolutionDirectoryMap = new()
     {
-        string[] alphabeticParentDirectoryNames = [
-            "0 - Numerisk",
+        ["2160"] = "4K",
+        ["1440"] = "QHD",
+        ["1080"] = "FullHD"
+    };
+
+    private static readonly string[] AlphabeticParentDirectoryNames =
+    {
+           "0 - Numerisk",
             "A - Alpha",
             "B - Bravo",
             "C - Charlie",
@@ -373,13 +379,30 @@ public sealed class FileExportOrchestrator(
             "X - X‑ray",
             "Y - Yankee",
             "Z - Zulu"
-        ];
+    };
 
+    public static Result<string> GetDirectoryNameForImageResolution(string imageResolution)
+    {
+        if (string.IsNullOrWhiteSpace(imageResolution))
+        {
+            return Result<string>.Failure("Resolution cannot be null or empty");
+        }
+
+        var match = ResolutionDirectoryMap
+            .FirstOrDefault(kvp => imageResolution.EndsWith(kvp.Key, StringComparison.OrdinalIgnoreCase));
+
+        return !string.IsNullOrEmpty(match.Value)
+            ? Result<string>.Success(match.Value)
+            : Result<string>.Failure($"Unknown resolution: {imageResolution}");
+    }
+
+    public string GetAlphabeticParentDirectoryName(string directoryName)
+    {      
         string firstLetter = directoryName.ToCharArray()[0]
             .ToString();
 
-        return alphabeticParentDirectoryNames
-            .FirstOrDefault(n => n.StartsWith(firstLetter)) ?? alphabeticParentDirectoryNames[0];
+        return AlphabeticParentDirectoryNames
+            .FirstOrDefault(n => n.StartsWith(firstLetter)) ?? AlphabeticParentDirectoryNames[0];
     }
 
     private Result DeleteSourceFile(FileTransferJob job, string sourceFilePath)
