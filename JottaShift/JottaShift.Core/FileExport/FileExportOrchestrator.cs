@@ -290,25 +290,30 @@ public sealed class FileExportOrchestrator(
         //return result.Complete();
     }
 
-    public async Task<Result> ExportJottacloudTimelineAsync(CancellationToken ct)
+    public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
     {
         var job = _fileExportJobs.JottacloudTimelineExportJob;
 
         var validationResult = ValidateFileTransferJob(job);
         if (!validationResult.Succeeded)
         {
-            return validationResult;
+            return FileTransferJobResult.FromFailedResult(validationResult, FileTransferJobResultStatus.InvalidJob);
         }
 
-        bool hasError = false;
+        List<FileTransferResult> fileTransferResults = new();
 
         foreach (var file in _fileStorage.EnumerateFiles(job.SourceDirectoryPath))
         {
+            FileTransferResult fileTransferResult;
+
             var imageDateResult = _fileStorage.GetImageDate(file);
             if (!imageDateResult.Succeeded)
             {
-                hasError = true;
                 _logger.LogError("Files does not have a valid date property {FilePath}", file);
+
+                fileTransferResult = FileTransferResult.FromFailedResult(
+                    imageDateResult, FileTransferResultStatus.InvalidSourceFile, file);
+                fileTransferResults.Add(fileTransferResult);
                 continue;
             }
 
@@ -319,12 +324,15 @@ public sealed class FileExportOrchestrator(
             var cleanedFileNameResult = _fileStorage.GetFileName(cleanedFilePath);
             if (!cleanedFileNameResult.Succeeded || cleanedFileNameResult.Value == null)
             {
-                hasError = true;
                 _logger.LogError("Filename was cleaned but is no longer valid. " +
                     "Previous name: {FileName}. " +
                     "Cleaned name: {FilePath}. " +
                     "Error: {ErrorMessage}",
                     file, cleanedFileNameResult.Value, cleanedFileNameResult.ErrorMessage);
+
+                fileTransferResult = FileTransferResult.FromFailedResult(
+                    cleanedFileNameResult, FileTransferResultStatus.InvalidSourceFile, file);
+                fileTransferResults.Add(fileTransferResult);
                 continue;
             }
 
@@ -333,43 +341,56 @@ public sealed class FileExportOrchestrator(
 
             if (!copyResult.Succeeded || copyResult.Value is null)
             {
-                hasError = true;
                 _logger.LogError("Could not copy file with path {FilePath}. Error: {ErrorMessage}",
                     file, copyResult.ErrorMessage);
+
+                fileTransferResult = FileTransferResult.FromFailedResult(
+                      copyResult, FileTransferResultStatus.TransferFailed, file);
+                fileTransferResults.Add(fileTransferResult);
                 continue;
             }
 
             var fileMatchResult = _fileStorage.FilesAreBitPerfectMatch(file, copyResult.Value);
             if (!fileMatchResult.Succeeded)
             {
-                hasError = true;
                 _logger.LogError("File was copied, but file content does not match. Copied file: {FilePath}",
                     copyResult.Value);
+
+                fileTransferResult = FileTransferResult.FromFailedResult(
+                    fileMatchResult, FileTransferResultStatus.NewFileCorrupted, file);
+                fileTransferResults.Add(fileTransferResult);
                 continue;
             }
 
             var metadataMatchResult = _fileStorage.DoesFileMetadataMatch(file, copyResult. Value);
             if (!metadataMatchResult.Succeeded)
             {
-                hasError = true;
                 _logger.LogError("File was copied, but metadata does not match. Copied file: {FilePath}",
                     copyResult.Value);
+
+                fileTransferResult = FileTransferResult.FromFailedResult(
+                   metadataMatchResult, FileTransferResultStatus.NewFileCorrupted, file);
+                fileTransferResults.Add(fileTransferResult);
                 continue;
             }
+
 
             var deleteSourceResult = DeleteSourceFile(job, file);
             if (!deleteSourceResult.Succeeded)
             {
-                hasError = true;
                 _logger.LogError("Failed to delete source file: {FilePath}", file);
                 continue;
             }
+
+            fileTransferResult = FileTransferResult.Success(file, copyResult.Value, deleteSourceResult.Succeeded);
+            fileTransferResults.Add(fileTransferResult);
 
             _logger.LogInformation("Copied file and deleted source. New path: {CopiedFilePath}",
                 copyResult.Value);
         }
 
-        if (!hasError)
+        var jobResult = FileTransferJobResult.FromTransferResults(fileTransferResults);
+        if (jobResult.Status == FileTransferJobResultStatus.AllFilesTransferredSuccessfully)
         {
             var deleteDirectoryResult = DeleteSourceDirectoryContent(job);
             if (!deleteDirectoryResult.Succeeded)
@@ -377,9 +398,11 @@ public sealed class FileExportOrchestrator(
                 _logger.LogError("Failed to delete source directory content: {FilePath}",
                     job.SourceDirectoryPath);
             }
+
+            jobResult.SourceDirectoryDeleted = deleteDirectoryResult.Succeeded;
         }
 
-        return Result.Success();
+        return jobResult;
     }
 
     public static Result<string> GetDirectoryNameForImageResolution(string imageResolution)

@@ -125,7 +125,7 @@ public class FileExportOrchestratorTests(
         var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
 
         // Assert
-        ResultAssert.Success(result);
+        FileTransferResultAssert.SuccessfullJob(result);
 
         Assert.False(fileSystem.File.Exists(sourceFilePath));
         Assert.True(fileSystem.File.Exists(expectedFilePath));
@@ -134,7 +134,7 @@ public class FileExportOrchestratorTests(
     }
 
     [Fact]
-    public async Task ExportAsync_ShoulNotDeleteSourceDirectoryContent_WhenOneCopyFails()
+    public async Task ExportAsync_ShouldNotDeleteSourceDirectoryContent_WhenOneCopyFails()
     {
         var job = _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob;
 
@@ -154,7 +154,8 @@ public class FileExportOrchestratorTests(
         var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
 
         // Assert
-        ResultAssert.Success(result);
+        FileTransferResultAssert.FailedJob(result);
+        FileTransferResultAssert.FailedTransfer(result.Value!.Last());
 
         Assert.NotEmpty(fileSystem.Directory.EnumerateFileSystemEntries(
             _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob.SourceDirectoryPath));
@@ -176,7 +177,7 @@ public class FileExportOrchestratorTests(
         var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
 
         // Assert
-        ResultAssert.Success(result);
+        FileTransferResultAssert.SuccessfullJob(result);
         Assert.True(fileSystem.Directory.Exists(job.SourceDirectoryPath));
         Assert.True(fileSystem.Directory.Exists(job.TargetDirectoryPath));
     }
@@ -201,7 +202,7 @@ public class FileExportOrchestratorTests(
         var result = await orchestrator.ExportJottacloudTimelineAsync(CancellationToken.None);
 
         // Assert
-        ResultAssert.Success(result);
+        FileTransferResultAssert.SuccessfullJob(result);
     }
     #endregion
 
