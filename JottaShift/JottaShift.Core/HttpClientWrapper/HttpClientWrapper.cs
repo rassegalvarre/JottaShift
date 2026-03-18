@@ -24,15 +24,23 @@ public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _log
                 return new HttpSendResult<T>(response.StatusCode);
             }
 
-            var responseContentStream = await response.Content.ReadAsStreamAsync();
-
-            if (responseContentStream.Length == 0)
+            if (typeof(T) == typeof(string))
             {
-                _logger.LogInformation("Repsonse did not contain any data");
-                return new HttpSendResult<T>(response.StatusCode);
+                var responseContentString = await response.Content.ReadAsStringAsync();
+                data = (T)(object)responseContentString;
             }
+            else
+            {
+                var responseContentStream = await response.Content.ReadAsStreamAsync();
 
-            data = await JsonSerializer.DeserializeAsync<T?>(responseContentStream);
+                if (responseContentStream.Length == 0)
+                {
+                    _logger.LogInformation("Repsonse did not contain any data");
+                    return new HttpSendResult<T>(response.StatusCode);
+                }
+                
+                data = await JsonSerializer.DeserializeAsync<T?>(responseContentStream);
+            }
 
             if (data == null)
             {

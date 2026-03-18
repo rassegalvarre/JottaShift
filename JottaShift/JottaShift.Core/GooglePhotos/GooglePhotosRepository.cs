@@ -41,7 +41,7 @@ public class GooglePhotosRepository(
             var tokenResult = await _googlePhotosClient.UploadPhotoAsync(photoPath);
             if (tokenResult.Succeeded && tokenResult.Value is not null)
             {
-                uploadTokens.Add(tokenResult.Value);
+                uploadTokens.Add(tokenResult.Value); // Add Token + path to dictionary
             }
             else
             {
@@ -56,12 +56,13 @@ public class GooglePhotosRepository(
         }
 
         var batchCreateResult = await _photosLibraryFacade.AddImagesToAlbum(albumResult.Value.Id, uploadTokens);
-        if (!batchCreateResult.Succeeded || batchCreateResult.Value is null)
+        if (!batchCreateResult.Succeeded || batchCreateResult.Value is null) // Get status and UploadToken. 
         {
             _logger.LogError("Failed to add images to album {AlbumName}. Error: {ErrorMessage}", albumName, batchCreateResult.ErrorMessage);
             return Result<int>.Failure("Failed to add images to album");
         }
 
+        // Return Path, Status where token is match-key
         return Result<int>.Success(batchCreateResult.Value.NewMediaItemResults.Count);
     }
 }
