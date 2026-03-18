@@ -19,7 +19,7 @@ public class GooglePhotosRepository(
         return await _photosLibraryFacade.CreateAlbumAsync(albumName);
     }
  
-    // TODO: Return list of image names and their upload status
+    // TODO: Return new Result with List<PhotoUploadResult>
     public async Task<Result<int>> UploadPhotosToAlbumAsync(string albumName, IEnumerable<string> photosFullPaths)
     {
         var albumResult = await GetOrCreateAlbumAsync(albumName);
@@ -35,31 +35,49 @@ public class GooglePhotosRepository(
             return Result<int>.Success(0);
         }
 
-        List<string> uploadTokens = [];
+        List<PhotoUploadResult> results= [];
         foreach (var photoPath in photosFullPaths)
         {
+            var result = new PhotoUploadResult(photoPath);
+
             var tokenResult = await _googlePhotosClient.UploadPhotoAsync(photoPath);
             if (tokenResult.Succeeded && tokenResult.Value is not null)
             {
-                uploadTokens.Add(tokenResult.Value); // Add Token + path to dictionary
+                result.UploadToken = tokenResult.Value;
             }
             else
             {
+                result.StatusMessage = "Could not obtain token";
                 _logger.LogError("Failed to upload image {ImagePath} to Google Photos. Error: {ErrorMessage}",
                     photoPath, tokenResult.ErrorMessage);
             }
+            
+            results.Add(result);
         }
 
-        if (uploadTokens.Count == 0)
+        if (results.Count == 0)
         {
             return Result<int>.Failure("Failed to upload any photos");
         }
 
-        var batchCreateResult = await _photosLibraryFacade.AddImagesToAlbum(albumResult.Value.Id, uploadTokens);
-        if (!batchCreateResult.Succeeded || batchCreateResult.Value is null) // Get status and UploadToken. 
+        var uploadTokens = results
+            .Where(r => r.UploadToken != null)
+            .Select(r => r.UploadToken!);
+
+        var batchCreateResult = await _photosLibraryFacade.AddImagesToAlbum(
+            albumResult.Value.Id, uploadTokens);
+        if (!batchCreateResult.Succeeded || batchCreateResult.Value is null)
         {
             _logger.LogError("Failed to add images to album {AlbumName}. Error: {ErrorMessage}", albumName, batchCreateResult.ErrorMessage);
             return Result<int>.Failure("Failed to add images to album");
+        }
+        else
+        {
+            foreach (var item in batchCreateResult.Value.NewMediaItemResults)
+            {
+                var result = results.First(r => r.UploadToken == item.UploadToken);
+                result.FromNewMediaItemResult(item);
+            }
         }
 
         // Return Path, Status where token is match-key
