@@ -379,6 +379,8 @@ public sealed class FileStorageService(
             ? SearchOption.AllDirectories
             : SearchOption.TopDirectoryOnly;
 
+        // TODO: Handle when directory does not exists. In this case, D:\ not connected.
+        // System.IO.DirectoryNotFoundException: 'Could not find a part of the path 'D:\Jottacloud\Bilder og videoer\2020\07 Juli'.'
         foreach (var path in _fileSystem.Directory.EnumerateFiles(directoryFullPath, pattern, option))
         {
             return Result<string>.Success(path);
