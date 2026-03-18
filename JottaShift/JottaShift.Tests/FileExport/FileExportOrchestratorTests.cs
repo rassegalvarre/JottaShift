@@ -1,5 +1,6 @@
 ﻿using JottaShift.Core;
 using JottaShift.Core.FileExport;
+using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.Steam;
 using JottaShift.Tests.GooglePhotos;
@@ -469,6 +470,36 @@ public class FileExportOrchestratorTests(
 
         Assert.False(fileSystem.File.Exists(sourceFilePath));
         Assert.True(fileSystem.File.Exists(expectedTargetPath));
+    }
+
+    [Fact]
+    [Trait("Dependency", "FileSystem")]
+    public async Task ExportDesktopWallpapersAsync_ShouldIgnoreImageWithUnknownResolution()
+    {
+        var job = _fixture.DefaultFileExportJobs.ScreenshotsExportJob;
+
+        string sourceImageFileName = Path.GetFileName(TestDataHelper.Duck);
+        var sourceImageContentBytes = await File.ReadAllBytesAsync(TestDataHelper.Duck);
+
+        string sourceFilePath = Path.Combine(job.SourceDirectoryPath, sourceImageFileName);
+
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { sourceFilePath, new MockFileData(sourceImageContentBytes) },
+        });
+
+        var fileStorageService = new FileStorageService(
+            fileSystem,
+            new Mock<ILogger<FileStorageService>>().Object);
+
+        var fileExportOrchestrator = _fixture.CreateFileExportOrchestrator(fileStorage: fileStorageService);
+
+        var result = await fileExportOrchestrator.ExportDesktopWallpapersAsync();
+
+        FileTransferResultAssert.FailedJob(result);
+        Assert.Single(result.Value!);
+        Assert.Equal(FileTransferResultStatus.InvalidSourceFile, result.Value!.First().Status);
+        Assert.True(fileSystem.File.Exists(sourceFilePath));
     }
     #endregion
 }
