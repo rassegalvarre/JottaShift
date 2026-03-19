@@ -17,3 +17,13 @@ public record PhotoUploadResult(string FilePath)
         StatusMessage = result.Status.Message;
     }
 }
+
+public static class PhotoUploadResultExtensions
+{
+    public static IEnumerable<string> ExtractValidUploadTokens(this IEnumerable<PhotoUploadResult> results)
+    {
+        return results
+            .Where(r => r.UploadToken != null)
+            .Select(r => r.UploadToken!);
+    }
+}

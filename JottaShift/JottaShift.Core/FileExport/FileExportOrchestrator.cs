@@ -78,7 +78,7 @@ public sealed class FileExportOrchestrator(
         {
             _logger.LogInformation("Could not get album with id {AlbumId} for staged Chromecast photos", 
                 job.SourceJottacloudAlbumId);;
-            return Result.Failure("Could not get album");
+            return stagingAlbumResult;
         }
 
         var photosToUpload = stagingAlbumResult.Value.Photos
@@ -88,17 +88,9 @@ public sealed class FileExportOrchestrator(
         var photoUploadResult = await _googlePhotosRepository.UploadPhotosToAlbumAsync(
             job.TargetGooglePhotosAlbumName,
             photosToUpload);
-        if (!photoUploadResult.Succeeded || photoUploadResult.Value is 0)
+        if (!photoUploadResult.Succeeded)
         {
-            return Result.Failure($"No files were uploaded to Google");
-        }
-
-        if (photoUploadResult.Value != photosToUpload.Count())
-        {
-            _logger.LogError(
-                "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
-                photoUploadResult, photosToUpload.Count());
-            return Result.Failure("Some photos were not uploaded");
+            return photoUploadResult;
         }
 
         return Result.Success();
