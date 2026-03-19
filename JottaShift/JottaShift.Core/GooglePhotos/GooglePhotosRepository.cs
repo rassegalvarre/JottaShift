@@ -66,7 +66,7 @@ public class GooglePhotosRepository(
         if (!batchCreateResult.Succeeded || batchCreateResult.Value is null)
         {
             _logger.LogError("Failed to add images to album {AlbumName}. Error: {ErrorMessage}", albumName, batchCreateResult.ErrorMessage);
-            return AlbumUploadResult.FromFailedResult(batchCreateResult, albumName);
+            return AlbumUploadResult.FromFailedResult(batchCreateResult, albumName, photoUploadResults);
         }
         else
         {
