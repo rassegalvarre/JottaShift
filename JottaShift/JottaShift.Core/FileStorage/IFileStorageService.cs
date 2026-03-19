@@ -34,5 +34,8 @@ public interface IFileStorageService
 
     IEnumerable<string> EnumerateDirectories(string directoryFullPath);
 
-    IEnumerable<string> EnumerateFiles(string directoryFullPath);
+    IEnumerable<string> EnumerateFiles(
+        string directoryFullPath,
+        string searchPattern = "*",
+        SearchOption searchOption = SearchOption.AllDirectories);
 }

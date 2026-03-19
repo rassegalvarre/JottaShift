@@ -379,9 +379,7 @@ public sealed class FileStorageService(
             ? SearchOption.AllDirectories
             : SearchOption.TopDirectoryOnly;
 
-        // TODO: Handle when directory does not exists. In this case, D:\ not connected.
-        // System.IO.DirectoryNotFoundException: 'Could not find a part of the path 'D:\Jottacloud\Bilder og videoer\2020\07 Juli'.'
-        foreach (var path in _fileSystem.Directory.EnumerateFiles(directoryFullPath, pattern, option))
+        foreach (var path in EnumerateFiles(directoryFullPath, pattern, option))
         {
             return Result<string>.Success(path);
         }
@@ -542,14 +540,19 @@ public sealed class FileStorageService(
     }
 
 
-    public IEnumerable<string> EnumerateFiles(string directoryFullPath)
+    public IEnumerable<string> EnumerateFiles(
+        string directoryFullPath,
+        string searchPattern = "*",
+        SearchOption searchOption = SearchOption.AllDirectories)
     {
         if (!_fileSystem.Directory.Exists(directoryFullPath))
         {
+            _logger.LogWarning("Failed to enumerate files as directory {Directory} does not exist",
+                directoryFullPath);
             return [];
         }
 
-        return _fileSystem.Directory.EnumerateFiles(directoryFullPath, "*", SearchOption.AllDirectories);
+        return _fileSystem.Directory.EnumerateFiles(directoryFullPath, searchPattern, searchOption);
     }    
 
     private SortedDictionary<string, string> GetFileMetadata(string fileFullPath)
