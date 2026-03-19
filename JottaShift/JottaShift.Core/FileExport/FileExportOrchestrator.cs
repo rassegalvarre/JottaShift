@@ -189,7 +189,6 @@ public sealed class FileExportOrchestrator(
             string appName = _fileStorage.SanitizeStringToValidDirectoryName(appNameResult.Value);
             string parentDirectory = GetAlphabeticParentDirectoryName(appName);
 
-            // TODO: Directory name needs to be sanitized. Not valid: "Senua’s Saga: Hellblade II"
             string targetDirectoryForApp = Path.Combine(
                 job.TargetDirectoryPath,
                 parentDirectory,
