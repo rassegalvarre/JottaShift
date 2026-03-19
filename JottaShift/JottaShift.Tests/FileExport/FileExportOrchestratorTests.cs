@@ -429,7 +429,7 @@ public class FileExportOrchestratorTests(
     }
 
     [Fact]
-    public async Task ExportChromecastPhotosAsync_ShouldGetImagesFromJottacloudAlbumAndUploadToGooglePhotosWherePhotoExistsOnDisk()
+    public async Task ExportChromecastPhotosAsync_ReturnFailure_WhenIncompleteUpload()
     {
         var job = _fixture.DefaultFileExportJobs.ChromecastUploadJob;
         
@@ -443,13 +443,16 @@ public class FileExportOrchestratorTests(
             ]
         };
 
+        var photoUploadResults = album.Photos.Select(p => new PhotoUploadResult(p.LocalFilePath!));
+        var albumUploadResult = AlbumUploadResult.Failure(album.AlbumTitle, "Incomplete upload", photoUploadResults);
+
         var jottacloudRepositoryMock = new Mock<IJottacloudRepository>();
         jottacloudRepositoryMock.Setup(r => r.GetAlbumAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<AlbumDto>.Success(album));
 
         var googlePhotosRepositoryMock = new Mock<IGooglePhotosRepository>();
         googlePhotosRepositoryMock.Setup(r => r.UploadPhotosToAlbumAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
-            .ReturnsAsync(Result<int>.Success(2));
+            .ReturnsAsync(albumUploadResult);
 
         var orchestrator = _fixture.CreateFileExportOrchestrator(
             googlePhotosRepository: googlePhotosRepositoryMock.Object,
@@ -457,7 +460,7 @@ public class FileExportOrchestratorTests(
 
         var result = await orchestrator.ExportChromecastPhotosAsync();
 
-        ResultAssert.Success(result);
+        ResultAssert.Failure(result);
     }
     #endregion
 

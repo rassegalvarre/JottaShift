@@ -63,13 +63,13 @@ public sealed class FileExportOrchestrator(
         _culture = culture;
     }
 
-    public async Task<Result> ExportChromecastPhotosAsync(CancellationToken ct = default)
+    public async Task<AlbumUploadResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         var job = _fileExportJobs.ChromecastUploadJob;
         if (!job.Enabled)
         {
             _logger.LogInformation("Job {JobId} is disabled and will not run.", job.Id);
-            return Result.Success();
+            return AlbumUploadResult.Success(job.TargetGooglePhotosAlbumName, []);
         }
 
         var stagingAlbumResult = await _jottacloudRepository.GetAlbumAsync(
@@ -78,7 +78,7 @@ public sealed class FileExportOrchestrator(
         {
             _logger.LogInformation("Could not get album with id {AlbumId} for staged Chromecast photos", 
                 job.SourceJottacloudAlbumId);;
-            return Result.Failure("Could not get album");
+            return AlbumUploadResult.FromFailedResult(stagingAlbumResult, job.TargetGooglePhotosAlbumName);
         }
 
         var photosToUpload = stagingAlbumResult.Value.Photos
@@ -88,20 +88,8 @@ public sealed class FileExportOrchestrator(
         var photoUploadResult = await _googlePhotosRepository.UploadPhotosToAlbumAsync(
             job.TargetGooglePhotosAlbumName,
             photosToUpload);
-        if (!photoUploadResult.Succeeded || photoUploadResult.Value is 0)
-        {
-            return Result.Failure($"No files were uploaded to Google");
-        }
 
-        if (photoUploadResult.Value != photosToUpload.Count())
-        {
-            _logger.LogError(
-                "Did not upload all images to Google: {FilesUploaded} out of {FileCount} were uploaded",
-                photoUploadResult, photosToUpload.Count());
-            return Result.Failure("Some photos were not uploaded");
-        }
-
-        return Result.Success();
+        return photoUploadResult;
     }
 
     public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
