@@ -55,3 +55,5 @@ nunit-*.xml
 /.vs
 /JottaShift/.vs
 /JottaShift/JottaShift.Core/Configuration/appsettings.*.json
+/JottaShift/JottaShift.Console/JottaShift.Console.csproj.user
+/JottaShift/JottaShift.Console/Properties/PublishProfiles/FolderProfile.pubxml.user
