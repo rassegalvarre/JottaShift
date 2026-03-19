@@ -212,18 +212,19 @@ public class FileExportOrchestratorTests(
 
     #region ExportSteamScreenshots
     [Theory]
-    [InlineData(1, "Pung", "P - Papa")]
-    [InlineData(12345, "Duum", "D - Delta")]
-    [InlineData(987653, "Super Mawio", "S - Sierra")]
+    [InlineData(1, "1", "Pung", "P - Papa")]
+    [InlineData(12345, "12345", "Duum", "D - Delta")]
+    [InlineData(987653, "987653 (Conflict 2026-02-21 14.23.23) ", "Super Mawio", "S - Sierra")]
     public async Task ExportSteamScreenshotsAsync_ShouldExportSingleSteamScreenshot_ToDirectoryWithAppName(
         uint appId,
+        string directoryName,
         string appName,
         string parentDirectoryName)
     {
         var jobSettings = _fixture.DefaultFileExportJobs.SteamScreenshotsExportJob;
 
         string imageFileName = "some-image.png";
-        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, appId.ToString(), imageFileName);
+        string sourceFilePath = Path.Combine(jobSettings.SourceDirectoryPath, directoryName, imageFileName);
         var expectedTargetPath = Path.Combine(jobSettings.TargetDirectoryPath, parentDirectoryName, appName, imageFileName);
 
         var steamRepositoryMock = new Mock<ISteamRepository>();

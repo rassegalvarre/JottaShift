@@ -159,7 +159,9 @@ public sealed class FileExportOrchestrator(
 
         foreach (var sourceDirectory in _fileStorage.EnumerateDirectories(job.SourceDirectoryPath))
         {
-            var directoryNameResult = _fileStorage.GetDirectoryName(sourceDirectory);
+            string cleanedSourceDirectory = JottacloudAdapter.CheckAndCleanConflictedFileName(
+                sourceDirectory);
+            var directoryNameResult = _fileStorage.GetDirectoryName(cleanedSourceDirectory);
             if (!directoryNameResult.Succeeded || directoryNameResult.Value is null)
             {
                 _logger.LogWarning(
@@ -167,6 +169,7 @@ public sealed class FileExportOrchestrator(
                     sourceDirectory);
                 continue;
             }
+
 
             var directoryNameToCharArray = directoryNameResult.Value.ToCharArray();
             if (!uint.TryParse(directoryNameToCharArray, out uint appId))
