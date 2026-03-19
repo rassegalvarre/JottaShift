@@ -444,7 +444,7 @@ public class FileExportOrchestratorTests(
         };
 
         var photoUploadResults = album.Photos.Select(p => new PhotoUploadResult(p.LocalFilePath!));
-        var albumUploadResult = AlbumUploadResult.Success(album.AlbumTitle, photoUploadResults);
+        var albumUploadResult = AlbumUploadResult.Failure(album.AlbumTitle, "Incomplete upload", photoUploadResults);
 
         var jottacloudRepositoryMock = new Mock<IJottacloudRepository>();
         jottacloudRepositoryMock.Setup(r => r.GetAlbumAsync(It.IsAny<string>()))
