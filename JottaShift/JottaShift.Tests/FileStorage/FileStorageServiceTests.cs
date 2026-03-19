@@ -456,6 +456,11 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     [InlineData(@"c:\root", "root")]
     [InlineData(@"c:\root\someDirectoryWithContent\someFileName.pdf", "someDirectoryWithContent")]
     [InlineData(@"c:\root\someCompletePath\someDirectoryWithoutContent", "someDirectoryWithoutContent")]
+
+    // TODO. Should be able to handle this scenario. Will currently detect is as a file wil ".23" as extension.
+    //[InlineData(
+    //    @"c:\root\someConflictedJottaCloudDirectory (Conflict 2026-02-21 14.23.23)",
+    //    "someConflictedJottaCloudDirectory (Conflict 2026-02-21 14.23.23)")]
     public void GetDirectoryName_ShouldDetectValidDirectoryPaths(string directoryFullPath, string expectedDirectoryName)
     {
         var fileStorage = _fixture.CreateFileStorageService();
