@@ -52,6 +52,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<ISteamRepository, SteamRepository>();
         services.AddScoped<IFileExportOrchestrator, FileExportOrchestrator>();
     })
+    // TODO: In Release config, save logs to file.
     .ConfigureLogging(logging =>
     {
         logging.ClearProviders();
