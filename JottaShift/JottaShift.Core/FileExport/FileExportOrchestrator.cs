@@ -63,13 +63,13 @@ public sealed class FileExportOrchestrator(
         _culture = culture;
     }
 
-    public async Task<Result> ExportChromecastPhotosAsync(CancellationToken ct = default)
+    public async Task<AlbumUploadResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         var job = _fileExportJobs.ChromecastUploadJob;
         if (!job.Enabled)
         {
             _logger.LogInformation("Job {JobId} is disabled and will not run.", job.Id);
-            return Result.Success();
+            return AlbumUploadResult.Success(job.TargetGooglePhotosAlbumName, []);
         }
 
         var stagingAlbumResult = await _jottacloudRepository.GetAlbumAsync(
@@ -78,7 +78,7 @@ public sealed class FileExportOrchestrator(
         {
             _logger.LogInformation("Could not get album with id {AlbumId} for staged Chromecast photos", 
                 job.SourceJottacloudAlbumId);;
-            return stagingAlbumResult;
+            return AlbumUploadResult.FromFailedResult(stagingAlbumResult, job.TargetGooglePhotosAlbumName);
         }
 
         var photosToUpload = stagingAlbumResult.Value.Photos
@@ -88,12 +88,8 @@ public sealed class FileExportOrchestrator(
         var photoUploadResult = await _googlePhotosRepository.UploadPhotosToAlbumAsync(
             job.TargetGooglePhotosAlbumName,
             photosToUpload);
-        if (!photoUploadResult.Succeeded)
-        {
-            return photoUploadResult;
-        }
 
-        return Result.Success();
+        return photoUploadResult;
     }
 
     public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
