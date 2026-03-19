@@ -821,6 +821,32 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     }
     #endregion
 
+    #region SanitizeStringToValidDirectoryName
+    [Theory]
+    [InlineData("Senua’s Saga: Hellblade II")]
+    [InlineData("Folder<Name>")]
+    [InlineData("Image*.jpg")]
+    [InlineData("railingSpace ")]
+    [InlineData("TrailingDot.")]
+    [InlineData("Multiple.. ")]
+    [InlineData("")]
+    [InlineData("\t")]
+    [InlineData("\n")]
+    public void SanitizeStringToValidDirectoryName_ShouldSanitizeNameWithInvalidChars(string name)
+    {
+        var fileStorage = _fixture.CreateFileStorageService();
+
+        string sanitizedName = fileStorage.SanitizeStringToValidDirectoryName(name);
+
+        var asCharArray = sanitizedName.ToCharArray();
+        var invalidChars = Path.GetInvalidFileNameChars();
+
+        var matching = asCharArray.Intersect(invalidChars);
+
+        Assert.Empty(matching);
+    }
+    #endregion
+
     public static IEnumerable<object[]> GetImageFilenameTestData()
     {
         return TestDataHelper.ImageFilenamesWithDates.Select(data => new object[] { data.Filename, data.Year, data.Month, data.Day }).ToList();

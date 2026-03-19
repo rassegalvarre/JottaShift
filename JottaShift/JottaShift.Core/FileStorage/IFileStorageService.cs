@@ -2,6 +2,8 @@
 
 public interface IFileStorageService
 {
+    string SanitizeStringToValidDirectoryName(string directoryName);
+
     Result DeleteDirectoryContent(string directoryFullPath);
 
     Result DeleteFile(string fileFullPath);

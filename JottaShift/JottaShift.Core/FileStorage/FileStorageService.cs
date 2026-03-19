@@ -10,6 +10,18 @@ public sealed class FileStorageService(
     IFileSystem _fileSystem,
     ILogger<FileStorageService> _logger) : IFileStorageService
 {
+    public string SanitizeStringToValidDirectoryName(string directoryName)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+
+        var sanitziedName = directoryName.ToArray()
+            .Where(c => !invalidChars.Contains(c))
+            .ToArray();
+
+        return new string(sanitziedName);
+    }
+
+
     public Result DeleteDirectoryContent(string directoryFullPath)
     {
         if (!_fileSystem.Directory.Exists(directoryFullPath))
