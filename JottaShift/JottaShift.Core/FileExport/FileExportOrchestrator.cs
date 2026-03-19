@@ -170,7 +170,6 @@ public sealed class FileExportOrchestrator(
                 continue;
             }
 
-
             var directoryNameToCharArray = directoryNameResult.Value.ToCharArray();
             if (!uint.TryParse(directoryNameToCharArray, out uint appId))
             {
@@ -189,6 +188,8 @@ public sealed class FileExportOrchestrator(
             
             string appName = appNameResult.Value;
             string parentDirectory = GetAlphabeticParentDirectoryName(appName);
+
+            // TODO: Directory name needs to be sanitized. Not valid: "Senua’s Saga: Hellblade II"
             string targetDirectoryForApp = Path.Combine(
                 job.TargetDirectoryPath,
                 parentDirectory,
