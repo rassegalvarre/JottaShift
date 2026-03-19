@@ -282,7 +282,7 @@ public sealed class FileStorageService(
         if (_fileSystem.File.Exists(newFileFullPath))
         {
             _logger.LogInformation("Target file already exists: {TargeFile}", newFileName);
-            return Result<string>.Success(newFileName);
+            return Result<string>.Success(newFileFullPath);
         }
 
         try
