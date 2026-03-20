@@ -155,9 +155,7 @@ public class FileExportResultWriter(
         {
             await writer.WriteAsync(
                 $"Local file path:  {result.FilePath}\n" +
-                $"Upload token:     {result.UploadToken ?? "No token"}\n" +
-                $"Url:              {result.Url ?? "No url"}\n" +
-                $"Id:               {result.Id ?? "No id"}\n");
+                $"Url:              {result.Url ?? "No url"}\n");
 
             await writer.WriteAsync("\n");
         }
