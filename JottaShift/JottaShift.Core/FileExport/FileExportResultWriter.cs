@@ -100,7 +100,7 @@ public class FileExportResultWriter(
         if (jobResult.Value == null || !jobResult.Value.Any())
         {
             await writer.WriteLineAsync(
-                "[Files processed]" +
+                "[Files processed]\n" +
                 "No files were processed in this job.");
             return Result<string>.Success(outputFileName);
         }
