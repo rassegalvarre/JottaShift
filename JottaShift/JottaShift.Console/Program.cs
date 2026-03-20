@@ -37,11 +37,12 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton(resolver =>
            resolver.GetRequiredService<IOptions<AppSettings>>().Value.SteamWebApiCredentials);
 
-        services.AddHttpClient<IHttpClientWrapper, JottaShift.Core.HttpClientWrapper.HttpClientWrapper>(client =>
+        services.AddHttpClient<IHttpClientWrapper, HttpClientWrapper>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         services.AddScoped<IFileSystem, FileSystem>();
+        services.AddScoped<IFileWriterFactory, FileWriterFactory>();
         services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddSingleton<IGooglePhotosLibraryFacade, GooglePhotosLibraryFacade>();
         services.AddScoped<IGooglePhotosHttpClient, GooglePhotosHttpClient>();
@@ -51,6 +52,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IJottacloudRepository, JottacloudRepository>();
         services.AddScoped<ISteamRepository, SteamRepository>();
         services.AddScoped<IFileExportOrchestrator, FileExportOrchestrator>();
+        services.AddScoped<IFileExportResultWriter, FileExportResultWriter>();
     })
     // TODO: In Release config, save logs to file.
     .ConfigureLogging(logging =>
