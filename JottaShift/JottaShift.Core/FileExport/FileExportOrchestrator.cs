@@ -91,6 +91,21 @@ public sealed class FileExportOrchestrator(
             job.TargetGooglePhotosAlbumName,
             photosToUpload);
 
+        if (_fileExportJobs.SaveJobResultsToFile)
+        {
+            var saveResult = await _fileExportResultWriter.SaveChromecastUploadResult(job, photoUploadResult);
+            if (saveResult.Succeeded)
+            {
+                _logger.LogInformation("Job result for job with id {JobId} was saved to file. File path: {FilePath}",
+                    job.Id, saveResult.Value);
+            }
+            else
+            {
+                _logger.LogError("Failed to save job result to file for job with id {JobId}. Error: {ErrorMessage}",
+                    job.Id, saveResult.ErrorMessage);
+            }
+        }
+
         return photoUploadResult;
     }
 
