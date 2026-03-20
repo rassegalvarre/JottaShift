@@ -451,19 +451,20 @@ public sealed class FileExportOrchestrator(
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputFileName)); // TODO: Use FileStorage
 
+
         using var writer = new StreamWriter(outputFileName);
 
 
         await writer.WriteAsync(
             "[JottacloudTimelineExportJob]\n" +
-            $"Finished: {timestamp:yyyy-MM-dd HH:mm:ss}\n" +
-            $"Succeeded: {jobResult.Succeeded}\n" +
-            $"Error message: {jobResult.ErrorMessage ?? "No errors"}\n" +
-            $"Status: {jobResult.Status}\n" +
-            $"Source directory: {job.SourceDirectoryPath}\n" +
-            $"Target directory: {job.TargetDirectoryPath}\n" +
-            $"Delete source enabled: {job.DeleteSourceFiles}\n" +
-            $"Source deleted: {jobResult.SourceDirectoryDeleted}\n\n");
+            $"Finished:                 {timestamp:yyyy-MM-dd HH:mm:ss}\n" +
+            $"Succeeded:                {jobResult.Succeeded}\n" +
+            $"Status:                   {jobResult.Status}\n" +
+            $"Error message:            {jobResult.ErrorMessage ?? "No errors"}\n" +
+            $"Source directory:         {job.SourceDirectoryPath}\n" +
+            $"Target directory:         {job.TargetDirectoryPath}\n" +
+            $"Delete source enabled:    {job.DeleteSourceFiles}\n" +
+            $"Source deleted:           {jobResult.SourceDirectoryDeleted}\n\n");
 
         if (jobResult.Value == null || !jobResult.Value.Any())
         {
@@ -472,39 +473,53 @@ public sealed class FileExportOrchestrator(
                 "No files were processed in this job.");
             return Result<string>.Success(outputFileName);
         }
-        
-        await writer.WriteLineAsync("[Unsuccessful transfers]");
+
+        var successfulTransfers = jobResult.Value.Where(v => v.Succeeded);
         var unsuccessfulTransfers = jobResult.Value.Where(v => !v.Succeeded);
+
+        await writer.WriteLineAsync(
+            "[Transfer summary]\n" +
+            $"Succeeded:    {successfulTransfers.Count()}\n" +
+            $"Failed:       {unsuccessfulTransfers.Count()}\n");
+
         if (unsuccessfulTransfers.Any())
         {
-            foreach (var item in unsuccessfulTransfers)
-            {
-                string json = JsonSerializer.Serialize(item);
-                writer.WriteLine($"{json}\n");
-            }
-        }
-        else
-        {
-            await writer.WriteLineAsync("No transfers were marked as failed.\n");
+            await writer.WriteLineAsync("[Failed]");
+            await WriteFileTransferResults(writer, unsuccessfulTransfers);
         }
 
-        await writer.WriteLineAsync("[Successful transfers]");
-        var successfulTransfers = jobResult.Value.Where(v => v.Succeeded);
         if (successfulTransfers.Any())
         {
-            foreach (var item in successfulTransfers)
-            {
-                string json = JsonSerializer.Serialize(item);
-                writer.WriteLine($"{json}\n");
-            }
-        }
-        else
-        {
-            await writer.WriteLineAsync("No transfers were marked as successful.\n");
+            await writer.WriteLineAsync("[Succeeded]");
+            await WriteFileTransferResults(writer, successfulTransfers);
+
         }
 
         writer.Close();
 
         return Result<string>.Success(outputFileName);
+    }
+
+    private async Task WriteFileTransferResults(StreamWriter writer, IEnumerable<FileTransferResult> results)
+    {
+        foreach (var result in results)
+        {
+            await writer.WriteAsync(
+               $"Source:                {result.SourceFileFullPath}\n" +
+               $"Target:                {result.NewFileFullPath ?? "No target"}\n");
+
+            if (!result.Succeeded)
+            {
+                await writer.WriteAsync(
+                    $"Status:                {result.Status}\n" +
+                    $"Error message:         {result.ErrorMessage}\n");
+            }
+            if (result.SourceFileDeleted)
+            {
+                await writer.WriteAsync($"Source file deleted:   {result.SourceFileDeleted}\n");
+            }
+
+            await writer.WriteAsync("\n");
+        }
     }
 }
