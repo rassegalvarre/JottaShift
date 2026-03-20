@@ -505,18 +505,15 @@ public sealed class FileExportOrchestrator(
         foreach (var result in results)
         {
             await writer.WriteAsync(
-               $"Source:                {result.SourceFileFullPath}\n" +
-               $"Target:                {result.NewFileFullPath ?? "No target"}\n");
+                $"Source:           {result.SourceFileFullPath}\n" +
+                $"Target:           {result.NewFileFullPath ?? "No target"}\n" +
+                $"Source deleted:   {result.SourceFileDeleted}\n");
 
             if (!result.Succeeded)
             {
                 await writer.WriteAsync(
-                    $"Status:                {result.Status}\n" +
-                    $"Error message:         {result.ErrorMessage}\n");
-            }
-            if (result.SourceFileDeleted)
-            {
-                await writer.WriteAsync($"Source file deleted:   {result.SourceFileDeleted}\n");
+                    $"Status:           {result.Status}\n" +
+                    $"Error message:    {result.ErrorMessage}\n");
             }
 
             await writer.WriteAsync("\n");
