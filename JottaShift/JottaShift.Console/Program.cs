@@ -37,7 +37,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton(resolver =>
            resolver.GetRequiredService<IOptions<AppSettings>>().Value.SteamWebApiCredentials);
 
-        services.AddHttpClient<IHttpClientWrapper, JottaShift.Core.HttpClientWrapper.HttpClientWrapper>(client =>
+        services.AddHttpClient<IHttpClientWrapper, HttpClientWrapper>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         });
