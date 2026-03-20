@@ -130,7 +130,8 @@ public class FileExportOrchestratorTests(
 
         // Assert
         FileTransferResultAssert.SuccessfullJob(result);
-
+        
+        // TODO: Create FileAssert with these statements
         Assert.False(fileSystem.File.Exists(sourceFilePath));
         Assert.True(fileSystem.File.Exists(expectedFilePath));
         Assert.Empty(fileSystem.Directory.EnumerateFileSystemEntries(
@@ -251,6 +252,12 @@ public class FileExportOrchestratorTests(
         Assert.False(fileSystemMock.File.Exists(sourceFilePath));
         Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
             $"Expected file at path {expectedTargetPath} was not found.");
+
+        // Test saving job result
+        var resultFile = await fileExportOrchestrator.SaveFileTransferJobResult(jobSettings, result);
+        ResultAssert.Success(result);
+        Assert.True(fileSystemMock.File.Exists(resultFile.Value!),
+            $"Expected result file at path {resultFile.Value} was not found.");
     }
 
     [Fact]

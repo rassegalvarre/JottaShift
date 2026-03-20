@@ -5,6 +5,7 @@ using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using System.Text.Json;
 
 namespace JottaShift.Core.FileExport;
 
@@ -433,4 +434,77 @@ public sealed class FileExportOrchestrator(
         return jobResult;
     }
     #endregion
+
+
+
+    /// <returns>A <see cref="Result{T}"/> containing the path the job result file</returns>
+    public async Task<Result<string>> SaveFileTransferJobResult(FileTransferJob job, FileTransferJobResult jobResult)
+    {
+        if (!_fileExportJobs.SaveJobResultsToFile)
+        {
+            _logger.LogInformation("Saving job results to file is disabled. Job result will not be saved for job with id {JobId}", job.Id);
+            return Result<string>.Success(string.Empty);
+        }
+
+        var timestamp = DateTime.Now;
+        string outputFileName = Path.Combine(AppContext.BaseDirectory, "Jobs", $"{job.Id}_{timestamp:yyyyMMdd_HHmmss}.txt");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(outputFileName)); // TODO: Use FileStorage
+
+        using var writer = new StreamWriter(outputFileName);
+
+
+        await writer.WriteAsync(
+            "[JottacloudTimelineExportJob]\n" +
+            $"Finished: {timestamp:yyyy-MM-dd HH:mm:ss}\n" +
+            $"Succeeded: {jobResult.Succeeded}\n" +
+            $"Error message: {jobResult.ErrorMessage ?? "No errors"}\n" +
+            $"Status: {jobResult.Status}\n" +
+            $"Source directory: {job.SourceDirectoryPath}\n" +
+            $"Target directory: {job.TargetDirectoryPath}\n" +
+            $"Delete source enabled: {job.DeleteSourceFiles}\n" +
+            $"Source deleted: {jobResult.SourceDirectoryDeleted}\n\n");
+
+        if (jobResult.Value == null || !jobResult.Value.Any())
+        {
+            await writer.WriteLineAsync(
+                "[Files processed]" +
+                "No files were processed in this job.");
+            return Result<string>.Success(outputFileName);
+        }
+        
+        await writer.WriteLineAsync("[Unsuccessful transfers]");
+        var unsuccessfulTransfers = jobResult.Value.Where(v => !v.Succeeded);
+        if (unsuccessfulTransfers.Any())
+        {
+            foreach (var item in unsuccessfulTransfers)
+            {
+                string json = JsonSerializer.Serialize(item);
+                writer.WriteLine($"{json}\n");
+            }
+        }
+        else
+        {
+            await writer.WriteLineAsync("No transfers were marked as failed.\n");
+        }
+
+        await writer.WriteLineAsync("[Successful transfers]");
+        var successfulTransfers = jobResult.Value.Where(v => v.Succeeded);
+        if (successfulTransfers.Any())
+        {
+            foreach (var item in successfulTransfers)
+            {
+                string json = JsonSerializer.Serialize(item);
+                writer.WriteLine($"{json}\n");
+            }
+        }
+        else
+        {
+            await writer.WriteLineAsync("No transfers were marked as successful.\n");
+        }
+
+        writer.Close();
+
+        return Result<string>.Success(outputFileName);
+    }
 }

@@ -24,7 +24,7 @@ public class FileExportFixture : IDisposable
 
     public FileExportJobs DefaultFileExportJobs => new()
     {
-        SaveJobResultsToFile = false,
+        SaveJobResultsToFile = true,
         ScreenshotsExportJob = new FileTransferJob()
         {
             Id = "desktop_wallpapers",
