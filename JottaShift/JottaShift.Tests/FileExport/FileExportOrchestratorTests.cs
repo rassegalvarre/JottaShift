@@ -448,6 +448,10 @@ public class FileExportOrchestratorTests(
         var photoUploadResults = album.Photos.Select(p => new PhotoUploadResult(p.LocalFilePath!));
         var albumUploadResult = AlbumUploadResult.Failure(album.AlbumTitle, "Incomplete upload", photoUploadResults);
 
+        var fileStorageMock = new Mock<IFileStorageService>();
+        fileStorageMock.Setup(fs => fs.ValidateDirectory(It.IsAny<string>()))
+            .Returns(Result.Success());
+        
         var jottacloudRepositoryMock = new Mock<IJottacloudRepository>();
         jottacloudRepositoryMock.Setup(r => r.GetAlbumAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<AlbumDto>.Success(album));
@@ -457,6 +461,7 @@ public class FileExportOrchestratorTests(
             .ReturnsAsync(albumUploadResult);
 
         var orchestrator = _fixture.CreateFileExportOrchestrator(
+            fileStorage: fileStorageMock.Object,
             googlePhotosRepository: googlePhotosRepositoryMock.Object,
             jottacoudRepository: jottacloudRepositoryMock.Object);
 
