@@ -252,12 +252,6 @@ public class FileExportOrchestratorTests(
         Assert.False(fileSystemMock.File.Exists(sourceFilePath));
         Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
             $"Expected file at path {expectedTargetPath} was not found.");
-
-        // Test saving job result
-        var resultFile = await fileExportOrchestrator.SaveFileTransferJobResult(jobSettings, result);
-        ResultAssert.Success(result);
-        Assert.True(fileSystemMock.File.Exists(resultFile.Value!),
-            $"Expected result file at path {resultFile.Value} was not found.");
     }
 
     [Fact]
@@ -361,6 +355,7 @@ public class FileExportOrchestratorTests(
             // Half Knife 2
             { Path.Combine(basePath, "98765", "screenshot_1.jpg"), new MockFileData([]) },
             { Path.Combine(basePath, "98765", "screenshot_2.jpg"), new MockFileData([]) },
+            { Path.Combine(basePath, "98765", "screen>>shot_2.jpg"), new MockFileData([]) },
             { Path.Combine(basePath, "98765", "thumbnails", "thumb.jpg"), new MockFileData([]) },
 
             // Duum

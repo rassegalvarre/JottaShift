@@ -42,7 +42,7 @@ var host = Host.CreateDefaultBuilder(args)
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         services.AddScoped<IFileSystem, FileSystem>();
-        services.AddScoped<IFileWriter, FileWriter>();
+        services.AddScoped<IFileWriterFactory, FileWriterFactory>();
         services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddSingleton<IGooglePhotosLibraryFacade, GooglePhotosLibraryFacade>();
         services.AddScoped<IGooglePhotosHttpClient, GooglePhotosHttpClient>();
@@ -52,6 +52,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IJottacloudRepository, JottacloudRepository>();
         services.AddScoped<ISteamRepository, SteamRepository>();
         services.AddScoped<IFileExportOrchestrator, FileExportOrchestrator>();
+        services.AddScoped<IFileExportResultWriter, FileExportResultWriter>();
     })
     // TODO: In Release config, save logs to file.
     .ConfigureLogging(logging =>

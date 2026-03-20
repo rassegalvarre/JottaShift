@@ -1,22 +1,11 @@
 ﻿namespace JottaShift.Core.FileStorage;
 
-public class FileWriter(IFileStorageService _fileStorageService) : IFileWriter
+public class FileWriter : IFileWriter
 {
-    private StreamWriter? _streamWriter;
+    private readonly StreamWriter _streamWriter;
 
-    public void CreateWriter(string fileFullPath)
+    public FileWriter(string fileFullPath)
     {
-        var directoryNameResult = _fileStorageService.GetDirectoryName(fileFullPath);
-        if (!directoryNameResult.Succeeded || directoryNameResult.Value is null)
-        {
-            throw new InvalidOperationException("Invalid file-path");
-        }
-
-        if (!_fileStorageService.ValidateDirectory(directoryNameResult.Value).Succeeded)
-        {
-            throw new InvalidOperationException("Could not validate directory.");
-        }
-
         _streamWriter = new StreamWriter(fileFullPath);
     }
 
@@ -26,13 +15,13 @@ public class FileWriter(IFileStorageService _fileStorageService) : IFileWriter
         GC.SuppressFinalize(this);
     }
 
+    public async Task WriteAsync(string text)
+    {
+        await _streamWriter.WriteAsync(text);
+    }
+
     public async Task WriteLineAsync(string line)
     {
-        if (_streamWriter == null)
-        {
-            throw new InvalidOperationException("StreamWriter is not initialized. Call CreateWriter() before writing.");
-        }
-
         await _streamWriter.WriteLineAsync(line);
     }
 }

@@ -2,6 +2,6 @@
 
 public interface IFileWriter : IDisposable
 {
-    void CreateWriter(string fileFullPath);
+    Task WriteAsync(string text);
     Task WriteLineAsync(string line);
 }
