@@ -6,6 +6,6 @@ public class FileWriterFactoryMock : IFileWriterFactory
 {
     public IFileWriter CreateFileWriter(string fileFullPath)
     {
-        return new FileWriter(fileFullPath);
+        return new FileWriterMock(fileFullPath);
     }
 }
