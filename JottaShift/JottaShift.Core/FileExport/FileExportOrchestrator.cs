@@ -63,6 +63,7 @@ public sealed class FileExportOrchestrator(
         _culture = culture;
     }
 
+    #region FileExportJobs
     public async Task<AlbumUploadResult> ExportChromecastPhotosAsync(CancellationToken ct = default)
     {
         var job = _fileExportJobs.ChromecastUploadJob;
@@ -287,7 +288,9 @@ public sealed class FileExportOrchestrator(
 
         return PostFileTransferValidation(job, fileTransferResults);
     }
+    #endregion
 
+    #region Static helper methods for directory naming
     public static Result<string> GetDirectoryNameForImageResolution(string imageResolution)
     {
         if (string.IsNullOrWhiteSpace(imageResolution))
@@ -311,7 +314,9 @@ public sealed class FileExportOrchestrator(
         return AlphabeticParentDirectoryNames
             .FirstOrDefault(n => n.StartsWith(firstLetter)) ?? AlphabeticParentDirectoryNames[0];
     }
+    #endregion
 
+    #region Cleanup of staging resources
     private Result DeleteSourceFile(FileTransferJob job, string sourceFilePath)
     {
         if (job.DeleteSourceFiles)
@@ -331,7 +336,9 @@ public sealed class FileExportOrchestrator(
 
         return Result.Success();
     }
+    #endregion
 
+    #region Pre and post job validation
     private Result ValidateFileTransferJob(FileTransferJob job)
     {
         if (!job.Enabled)
@@ -425,4 +432,5 @@ public sealed class FileExportOrchestrator(
 
         return jobResult;
     }
+    #endregion
 }
