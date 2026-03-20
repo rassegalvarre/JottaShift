@@ -13,15 +13,15 @@ public class FileExportResultWriter(
         var timestamp = DateTime.Now;
         string outputFileName = Path.Combine(AppContext.BaseDirectory, "Jobs", $"{job.Id}_{timestamp:yyyyMMdd_HHmmss}.txt");
 
-        var directoryNameResult = _fileStorageService.GetDirectoryName(outputFileName);
-        if (!directoryNameResult.Succeeded || directoryNameResult.Value is null)
+        var directory = Path.GetDirectoryName(outputFileName);
+        if (string.IsNullOrEmpty(directory))
         {
-            throw new InvalidOperationException("Invalid file-path");
+            return Result<string>.Failure("Could not determine output directory.");
         }
 
-        if (!_fileStorageService.ValidateDirectory(directoryNameResult.Value).Succeeded)
+        if (!_fileStorageService.ValidateDirectory(directory).Succeeded)
         {
-            throw new InvalidOperationException("Could not validate directory.");
+            return Result<string>.Failure("Could not validate output directory.");
         }
 
         using var writer = _fileWriterFactory.CreateFileWriter(outputFileName);

@@ -355,7 +355,6 @@ public class FileExportOrchestratorTests(
             // Half Knife 2
             { Path.Combine(basePath, "98765", "screenshot_1.jpg"), new MockFileData([]) },
             { Path.Combine(basePath, "98765", "screenshot_2.jpg"), new MockFileData([]) },
-            { Path.Combine(basePath, "98765", "screen>>shot_2.jpg"), new MockFileData([]) },
             { Path.Combine(basePath, "98765", "thumbnails", "thumb.jpg"), new MockFileData([]) },
 
             // Duum

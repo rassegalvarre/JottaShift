@@ -4,6 +4,7 @@ using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
+using JottaShift.Tests.FileStorage;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Globalization;
@@ -70,9 +71,14 @@ public class FileExportFixture : IDisposable
         jottacoudRepository ??= JottacloudRepositoryMock.Object;
         steamRepository ??= SteamRepositoryMock.Object;
 
+        var fileExportResultWriter = new FileExportResultWriter(
+            fileStorage,
+            new FileWriterFactoryMock());
+
         var orchestrator = new FileExportOrchestrator(
             DefaultFileExportJobs,
             new Mock<ILogger<FileExportOrchestrator>>().Object,
+            fileExportResultWriter,
             fileStorage,
             googlePhotosRepository, 
             jottacoudRepository,

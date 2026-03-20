@@ -5,13 +5,13 @@ using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
-using System.Text.Json;
 
 namespace JottaShift.Core.FileExport;
 
 public sealed class FileExportOrchestrator(
     FileExportJobs _fileExportJobs,
     ILogger<FileExportOrchestrator> _logger,
+    IFileExportResultWriter _fileExportResultWriter,
     IFileStorageService _fileStorage,
     IGooglePhotosRepository _googlePhotosRepository,
     IJottacloudRepository _jottacloudRepository,
@@ -144,7 +144,7 @@ public sealed class FileExportOrchestrator(
             fileTransferResults.Add(fileTransferResult);         
         }
 
-        return PostFileTransferValidation(job, fileTransferResults);
+        return await PostFileTransferValidation(job, fileTransferResults);
     }
 
     public async Task<FileTransferJobResult> ExportSteamScreenshotsAsync(CancellationToken ct = default)
@@ -229,7 +229,7 @@ public sealed class FileExportOrchestrator(
             _logger.LogInformation("Processed Steam-directory {Directory}", sourceDirectory);
         }
 
-        return PostFileTransferValidation(job, fileTransferResults);
+        return await PostFileTransferValidation(job, fileTransferResults);
     }
 
     public async Task<FileTransferJobResult> ExportJottacloudTimelineAsync(CancellationToken ct)
@@ -287,7 +287,7 @@ public sealed class FileExportOrchestrator(
         
         _logger.LogInformation("Processed Jottacloud timeline directory {Directory}", job.SourceDirectoryPath);
 
-        return PostFileTransferValidation(job, fileTransferResults);
+        return await PostFileTransferValidation(job, fileTransferResults);
     }
     #endregion
 
@@ -416,7 +416,7 @@ public sealed class FileExportOrchestrator(
         return FileTransferResult.Success(sourceFilePath, copyResult.Value, deleteSourceResult.Succeeded);
     }
 
-    private FileTransferJobResult PostFileTransferValidation(FileTransferJob job, List<FileTransferResult> fileTransferResults)
+    private async Task<FileTransferJobResult> PostFileTransferValidation(FileTransferJob job, List<FileTransferResult> fileTransferResults)
     {
         var jobResult = FileTransferJobResult.FromTransferResults(fileTransferResults);
         if (jobResult.Status == FileTransferJobResultStatus.AllFilesTransferredSuccessfully)
@@ -429,6 +429,21 @@ public sealed class FileExportOrchestrator(
             }
 
             jobResult.SourceDirectoryDeleted = deleteDirectoryResult.Succeeded;
+        }
+
+        if (_fileExportJobs.SaveJobResultsToFile)
+        {
+            var saveResult = await _fileExportResultWriter.SaveFileTransferResult(job, jobResult);
+            if (saveResult.Succeeded)
+            {
+                _logger.LogInformation("Job result for job with id {JobId} was saved to file. File path: {FilePath}",
+                    job.Id, saveResult.Value);
+            }
+            else
+            {
+                _logger.LogError("Failed to save job result to file for job with id {JobId}. Error: {ErrorMessage}",
+                    job.Id, saveResult.ErrorMessage);
+            }
         }
 
         return jobResult;
