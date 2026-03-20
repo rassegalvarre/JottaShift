@@ -340,7 +340,7 @@ public sealed class FileExportOrchestrator(
             return _fileStorage.DeleteFile(sourceFilePath);            
         }
 
-        return Result.Success();
+        return Result.Failure("Deleting source files is not enabled");
     }
 
     private Result DeleteSourceDirectoryContent(FileTransferJob job)
@@ -419,8 +419,8 @@ public sealed class FileExportOrchestrator(
         var deleteSourceResult = DeleteSourceFile(job, sourceFilePath);
         if (!deleteSourceResult.Succeeded)
         {
-            _logger.LogError("File was copied, but failed to delete source file: {FilePath}",
-                sourceFilePath);
+            _logger.LogWarning("File was copied, but source file was not deleted: {CopiedFilePath}",
+                copyResult.Value);
         }
         else
         {
