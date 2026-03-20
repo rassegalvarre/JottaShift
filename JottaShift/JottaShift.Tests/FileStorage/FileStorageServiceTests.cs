@@ -60,8 +60,8 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         ResultAssert.ValueSuccess(result, destinationFileFullPath);
 
-        Assert.True(fileSystemMock.File.Exists(_fixture.SomeValidFileFullPath));
-        Assert.True(fileSystemMock.File.Exists(destinationFileFullPath));
+        fileSystemMock.AssertFileExists(_fixture.SomeValidFileFullPath);
+        fileSystemMock.AssertFileExists(destinationFileFullPath);
     }
 
     [Theory]
@@ -136,7 +136,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         var result = fileStorageService.DeleteDirectoryContent(targetDirectoryPath);
 
         ResultAssert.Failure(result);
-        Assert.True(fileSystemMock.Directory.Exists(_fixture.BaseDirectory));
+        fileSystemMock.AssertDirectoryExists(_fixture.BaseDirectory);
     }
 
     [Fact]
@@ -165,11 +165,11 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
 
         Assert.Empty(fileSystemMock.AllFiles);
 
-        Assert.True(fileSystemMock.Directory.Exists(_fixture.BaseDirectory));
-        Assert.False(fileSystemMock.Directory.Exists(firstSubDirectory));
-        Assert.False(fileSystemMock.Directory.Exists(secondSubDirectory));
-        Assert.False(fileSystemMock.Directory.Exists(thirdSubDirectory));
-        Assert.False(fileSystemMock.Directory.Exists(fourthSubDirectory));
+        fileSystemMock.AssertDirectoryExists(_fixture.BaseDirectory);
+        fileSystemMock.AssertDirectoryDoesNotExist(firstSubDirectory);
+        fileSystemMock.AssertDirectoryDoesNotExist(secondSubDirectory);
+        fileSystemMock.AssertDirectoryDoesNotExist(thirdSubDirectory);
+        fileSystemMock.AssertDirectoryDoesNotExist(fourthSubDirectory);
     }
     #endregion
 
@@ -207,7 +207,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         var result = fileStorageService.DeleteFile(_fixture.SomeValidFileFullPath);
 
         ResultAssert.Success(result);
-        Assert.False(fileSystem.File.Exists(_fixture.SomeValidFileFullPath));
+        fileSystem.AssertFileDoesNotExist(_fixture.SomeValidFileFullPath);
     }
     #endregion
 
@@ -388,8 +388,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
         var result = fileStorageService.ValidateDirectory(_fixture.BaseDirectory);
 
         ResultAssert.Success(result);
-        Assert.True(
-            fileSystemMock.Directory.Exists(_fixture.BaseDirectory));
+        fileSystemMock.AssertDirectoryExists(_fixture.BaseDirectory);
     }
 
     [Fact]

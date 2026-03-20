@@ -6,6 +6,7 @@ using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Jottacloud.Models.Dto;
 using JottaShift.Core.Steam;
+using JottaShift.Tests.FileStorage;
 using JottaShift.Tests.GooglePhotos;
 using JottaShift.Tests.TestData;
 using Microsoft.Extensions.Logging;
@@ -131,11 +132,10 @@ public class FileExportOrchestratorTests(
         // Assert
         FileTransferResultAssert.SuccessfullJob(result);
         
-        // TODO: Create FileAssert with these statements
-        Assert.False(fileSystem.File.Exists(sourceFilePath));
-        Assert.True(fileSystem.File.Exists(expectedFilePath));
-        Assert.Empty(fileSystem.Directory.EnumerateFileSystemEntries(
-            _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob.SourceDirectoryPath));
+        fileSystem.AssertFileDoesNotExist(sourceFilePath);
+        fileSystem.AssertFileExists( expectedFilePath);
+        fileSystem.AssertDirectoryIsEmpty(
+            _fixture.DefaultFileExportJobs.JottacloudTimelineExportJob.SourceDirectoryPath);
     }
 
     [Fact]
@@ -183,8 +183,8 @@ public class FileExportOrchestratorTests(
 
         // Assert
         FileTransferResultAssert.SuccessfullJob(result);
-        Assert.True(fileSystem.Directory.Exists(job.SourceDirectoryPath));
-        Assert.True(fileSystem.Directory.Exists(job.TargetDirectoryPath));
+        fileSystem.AssertDirectoryExists(job.SourceDirectoryPath);
+        fileSystem.AssertDirectoryExists(job.TargetDirectoryPath);
     }
 
     [Fact]
@@ -249,9 +249,8 @@ public class FileExportOrchestratorTests(
         var result = await fileExportOrchestrator.ExportSteamScreenshotsAsync();
 
         FileTransferResultAssert.SuccessfullJob(result);
-        Assert.False(fileSystemMock.File.Exists(sourceFilePath));
-        Assert.True(fileSystemMock.File.Exists(expectedTargetPath),
-            $"Expected file at path {expectedTargetPath} was not found.");
+        fileSystemMock.AssertFileDoesNotExist(sourceFilePath);
+        fileSystemMock.AssertFileExists(expectedTargetPath);
     }
 
     [Fact]
@@ -341,7 +340,7 @@ public class FileExportOrchestratorTests(
         var transfer = result.Value!.First()!;
 
         FileTransferResultAssert.SuccessfullJob(result);
-        Assert.False(fileSystemMock.File.Exists(sourceFilePath));
+        fileSystemMock.AssertFileDoesNotExist(sourceFilePath);
     }
 
     [Fact]
@@ -395,8 +394,7 @@ public class FileExportOrchestratorTests(
                 Assert.DoesNotContain(result.Value!, 
                     v => v.SourceFileFullPath == file.Key);
 
-                Assert.False(fileSystemMock.File.Exists(file.Key),
-                    $"Misplaced file at path {file.Key} was expected to be ignored but was not found.");
+                fileSystemMock.AssertFileDoesNotExist(file.Key);
                 continue;
             }
 
@@ -404,17 +402,16 @@ public class FileExportOrchestratorTests(
 
             // Transfer has been asserted at this stage. 
             // Always delete source file in Steam-folder
-            Assert.False(fileSystemMock.File.Exists(transferResult.SourceFileFullPath)); 
+            fileSystemMock.AssertFileDoesNotExist(transferResult.SourceFileFullPath);
 
             if (file.Key.Contains("thumbnails")) // Thumbnails should be deleted and not transferred
             {
-                Assert.False(fileSystemMock.File.Exists(transferResult.NewFileFullPath),
-                    $"Thumbnail file at path {file.Key} was expected to be deleted but was found.");
+                fileSystemMock.AssertDirectoryDoesNotExist(transferResult.NewFileFullPath);
                 continue;
             }
             else
             {
-                Assert.True(fileSystemMock.File.Exists(transferResult.NewFileFullPath));
+                fileSystemMock.AssertFileExists(transferResult.NewFileFullPath);
             }
         }
     }
@@ -499,8 +496,8 @@ public class FileExportOrchestratorTests(
 
         FileTransferResultAssert.SuccessfullJob(result);
 
-        Assert.False(fileSystem.File.Exists(sourceFilePath));
-        Assert.True(fileSystem.File.Exists(expectedTargetPath));
+        fileSystem.AssertFileDoesNotExist(sourceFilePath);
+        fileSystem.AssertFileExists(expectedTargetPath);
     }
 
     [Fact]
@@ -530,7 +527,7 @@ public class FileExportOrchestratorTests(
         FileTransferResultAssert.FailedJob(result);
         Assert.Single(result.Value!);
         Assert.Equal(FileTransferResultStatus.InvalidSourceFile, result.Value!.First().Status);
-        Assert.True(fileSystem.File.Exists(sourceFilePath));
+        fileSystem.AssertFileExists(sourceFilePath);
     }
     #endregion
 }
