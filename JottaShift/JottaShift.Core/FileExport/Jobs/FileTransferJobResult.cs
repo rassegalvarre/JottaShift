@@ -12,6 +12,7 @@ public record FileTransferJobResult : Result<IEnumerable<FileTransferResult>>
 {
     public FileTransferJobResultStatus Status { get; set; }
     public bool SourceDirectoryDeleted { get; set; } = false;
+    public string? ResultFilePath { get; set; }
 
     public static FileTransferJobResult Success(
         FileTransferJobResultStatus status,

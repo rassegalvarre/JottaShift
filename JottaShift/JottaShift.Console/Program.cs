@@ -1,10 +1,12 @@
 ﻿using JottaShift.Core.Configuration;
 using JottaShift.Core.FileExport;
+using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.HttpClientWrapper;
 using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
+using MetadataExtractor.Formats.Photoshop;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -74,7 +76,7 @@ var exportOrchestrator = scope.ServiceProvider.GetRequiredService<IFileExportOrc
 
 Console.WriteLine("Starting timeline export...");
 var timelineExportResult = await exportOrchestrator.ExportJottacloudTimelineAsync(new CancellationToken());
-Console.WriteLine("Timeline export finished with result {0}", timelineExportResult.Succeeded);
+LogFileTransferJobResult(nameof(IFileExportOrchestrator.ExportJottacloudTimelineAsync), timelineExportResult);
 
 Console.WriteLine("Starting Chromecast upload...");
 var chromecastUploadResult = await exportOrchestrator.ExportChromecastPhotosAsync(new CancellationToken());
@@ -82,10 +84,23 @@ Console.WriteLine("Chromecast upload finished with result {0}", chromecastUpload
 
 Console.WriteLine("Starting Steam screenshort export...");
 var steamExportResult = await exportOrchestrator.ExportSteamScreenshotsAsync(new CancellationToken());
-Console.WriteLine("Steam screenshot export finished with result {0}", steamExportResult.Succeeded);
+LogFileTransferJobResult(nameof(IFileExportOrchestrator.ExportSteamScreenshotsAsync), steamExportResult);
 
 Console.WriteLine("Starting wallpaper export...");
 var wallpaperExportResult = await exportOrchestrator.ExportDesktopWallpapersAsync(new CancellationToken());
 Console.WriteLine("Wallpaper export finished with result {0}", wallpaperExportResult.Succeeded);
+LogFileTransferJobResult(nameof(IFileExportOrchestrator.ExportDesktopWallpapersAsync), wallpaperExportResult);
 
 await host.StopAsync();
+
+static void LogFileTransferJobResult(string jobName, FileTransferJobResult result)
+{
+    Console.WriteLine(Environment.NewLine);
+    string resultText = result.Succeeded ? "SUCCEEDED" : "FAILED";
+    Console.WriteLine($"Job [{jobName}] {resultText} with status {result.Status}");
+    Console.WriteLine($"Files proccessed:       {result.Value?.Count() ?? 0}");
+    Console.WriteLine($"Result file location:   {result.ResultFilePath ?? "[Not saved]"}");
+    Console.WriteLine($"Error message:          {result.ErrorMessage ?? "[No error]"}");
+    Console.WriteLine($"Sources deleted:        {result.SourceDirectoryDeleted}");
+    Console.WriteLine(Environment.NewLine);
+}
