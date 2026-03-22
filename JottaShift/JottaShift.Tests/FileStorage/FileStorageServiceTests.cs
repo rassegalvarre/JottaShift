@@ -457,6 +457,7 @@ public class FileStorageServiceTests(FileStorageFixture _fixture) : IClassFixtur
     [InlineData(@"c:\root\someCompletePath\someDirectoryWithoutContent", "someDirectoryWithoutContent")]
 
     // TODO. Should be able to handle this scenario. Will currently detect is as a file wil ".23" as extension.
+    // On another hand, the filename should be cleaned beforehand, as this is in the Jottacloud domain.
     //[InlineData(
     //    @"c:\root\someConflictedJottaCloudDirectory (Conflict 2026-02-21 14.23.23)",
     //    "someConflictedJottaCloudDirectory (Conflict 2026-02-21 14.23.23)")]
