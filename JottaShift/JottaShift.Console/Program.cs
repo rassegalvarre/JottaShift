@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.IO.Abstractions;
+using System.Linq.Expressions;
 
 Console.WriteLine("JottaShift initiating..");
 
@@ -75,31 +76,45 @@ using var scope = host.Services.CreateScope();
 var exportOrchestrator = scope.ServiceProvider.GetRequiredService<IFileExportOrchestrator>();
 
 // File transfer jobs
-Console.WriteLine("Starting timeline export...");
-var timelineExportResult = await exportOrchestrator.ExportJottacloudTimelineAsync(new CancellationToken());
-LogFileTransferJobResult(nameof(IFileExportOrchestrator.ExportJottacloudTimelineAsync), timelineExportResult);
-
-Console.WriteLine("Starting Steam screenshort export...");
-var steamExportResult = await exportOrchestrator.ExportSteamScreenshotsAsync(new CancellationToken());
-LogFileTransferJobResult(nameof(IFileExportOrchestrator.ExportSteamScreenshotsAsync), steamExportResult);
-
-Console.WriteLine("Starting wallpaper export...");
-var wallpaperExportResult = await exportOrchestrator.ExportDesktopWallpapersAsync(new CancellationToken());
-Console.WriteLine("Wallpaper export finished with result {0}", wallpaperExportResult.Succeeded);
-LogFileTransferJobResult(nameof(IFileExportOrchestrator.ExportDesktopWallpapersAsync), wallpaperExportResult);
+await ExecuteFileTransferJob(
+    exportOrchestrator,
+    o => o.ExportJottacloudTimelineAsync(new CancellationToken())
+);
+await ExecuteFileTransferJob(
+    exportOrchestrator,
+    o => o.ExportSteamScreenshotsAsync(new CancellationToken())
+);
+await ExecuteFileTransferJob(
+    exportOrchestrator,
+    o => o.ExportDesktopWallpapersAsync(new CancellationToken())
+);
 
 // Album upload jobs
-Console.WriteLine("Starting Chromecast upload...");
-var chromecastUploadResult = await exportOrchestrator.ExportChromecastPhotosAsync(new CancellationToken());
-LogAlbumUploadJobResult(nameof(IFileExportOrchestrator.ExportChromecastPhotosAsync), chromecastUploadResult);
+await ExecuteAlbumUploadJob(
+    exportOrchestrator,
+    o => o.ExportChromecastPhotosAsync(new CancellationToken())
+);
 
 await host.StopAsync();
 
-static void LogFileTransferJobResult(string jobName, FileTransferJobResult result)
+static async Task ExecuteFileTransferJob(
+    IFileExportOrchestrator instance,
+    Expression<Func<IFileExportOrchestrator, Task<FileTransferJobResult>>> expression)
 {
+    if (expression.Body is not MethodCallExpression methodCall)
+    {
+        throw new Exception("Invalid expression call");
+    }
+    string methodName = methodCall.Method.Name;
+    var compiled = expression.Compile();
+
+    Console.WriteLine($"Starting [{methodName}]...");
+
+    var result = await compiled.Invoke(instance);
+
     Console.WriteLine(Environment.NewLine);
     string resultText = result.Succeeded ? "SUCCEEDED" : "FAILED";
-    Console.WriteLine($"Job [{jobName}] {resultText} with status {result.Status}");
+    Console.WriteLine($"Job [{methodName}] {resultText} with status {result.Status}");
     Console.WriteLine($"Files proccessed:       {result.Value?.Count() ?? 0}");
     Console.WriteLine($"Result file location:   {result.ResultFilePath ?? "[Not saved]"}");
     Console.WriteLine($"Error message:          {result.ErrorMessage ?? "[No error]"}");
@@ -107,11 +122,24 @@ static void LogFileTransferJobResult(string jobName, FileTransferJobResult resul
     Console.WriteLine(Environment.NewLine);
 }
 
-static void LogAlbumUploadJobResult(string jobName, AlbumUploadResult result)
+static async Task ExecuteAlbumUploadJob(
+    IFileExportOrchestrator instance,
+    Expression<Func<IFileExportOrchestrator, Task<AlbumUploadResult>>> expression)
 {
+    if (expression.Body is not MethodCallExpression methodCall)
+    {
+        throw new Exception("Invalid expression call");
+    }
+    string methodName = methodCall.Method.Name;
+    var compiled = expression.Compile();
+
+    Console.WriteLine($"Starting [{methodName}]...");
+
+    var result = await compiled.Invoke(instance);
+
     Console.WriteLine(Environment.NewLine);
     string resultText = result.Succeeded ? "SUCCEEDED" : "FAILED";
-    Console.WriteLine($"Job [{jobName}] {resultText}");
+    Console.WriteLine($"Job [{methodName}] {resultText}");
     Console.WriteLine($"Album name:             {result.AlbumName}");
     Console.WriteLine($"Files proccessed:       {result.PhotoUploadResults?.Count() ?? 0}");
     Console.WriteLine($"Result file location:   {result.ResultFilePath ?? "[Not saved]"}");
