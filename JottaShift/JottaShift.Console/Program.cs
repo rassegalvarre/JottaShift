@@ -6,7 +6,6 @@ using JottaShift.Core.GooglePhotos;
 using JottaShift.Core.HttpClientWrapper;
 using JottaShift.Core.Jottacloud;
 using JottaShift.Core.Steam;
-using MetadataExtractor.Formats.Photoshop;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
