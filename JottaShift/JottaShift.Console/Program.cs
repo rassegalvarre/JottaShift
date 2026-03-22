@@ -1,4 +1,5 @@
-﻿using JottaShift.Core.Configuration;
+﻿using JottaShift.Core;
+using JottaShift.Core.Configuration;
 using JottaShift.Core.FileExport;
 using JottaShift.Core.FileExport.Jobs;
 using JottaShift.Core.FileStorage;
@@ -107,18 +108,16 @@ static async Task ExecuteFileTransferJob(
     string methodName = methodCall.Method.Name;
     var compiled = expression.Compile();
 
-    Console.WriteLine($"Starting [{methodName}]...");
+    WriteStart(methodName);
 
     var result = await compiled.Invoke(instance);
 
-    Console.WriteLine(Environment.NewLine);
-    string resultText = result.Succeeded ? "SUCCEEDED" : "FAILED";
-    Console.WriteLine($"Job [{methodName}] {resultText} with status {result.Status}");
-    Console.WriteLine($"Files proccessed:       {result.Value?.Count() ?? 0}");
-    Console.WriteLine($"Result file location:   {result.ResultFilePath ?? "[Not saved]"}");
-    Console.WriteLine($"Error message:          {result.ErrorMessage ?? "[No error]"}");
-    Console.WriteLine($"Sources deleted:        {result.SourceDirectoryDeleted}");
-    Console.WriteLine(Environment.NewLine);
+    Console.WriteLine($"    Files proccessed:       {result.Value?.Count() ?? 0}");
+    Console.WriteLine($"    Result file location:   {result.ResultFilePath ?? "[Not saved]"}");
+    Console.WriteLine($"    Error message:          {result.ErrorMessage ?? "[No error]"}");
+    Console.WriteLine($"    Sources deleted:        {result.SourceDirectoryDeleted}");
+
+    WriteFinished(methodName, result);
 }
 
 static async Task ExecuteAlbumUploadJob(
@@ -129,19 +128,55 @@ static async Task ExecuteAlbumUploadJob(
     {
         throw new Exception("Invalid expression call");
     }
+
     string methodName = methodCall.Method.Name;
     var compiled = expression.Compile();
 
-    Console.WriteLine($"Starting [{methodName}]...");
+    var separator = new string('═', 60);
+
+    // Start block
+    WriteStart(methodName);
 
     var result = await compiled.Invoke(instance);
 
-    Console.WriteLine(Environment.NewLine);
-    string resultText = result.Succeeded ? "SUCCEEDED" : "FAILED";
-    Console.WriteLine($"Job [{methodName}] {resultText}");
-    Console.WriteLine($"Album name:             {result.AlbumName}");
-    Console.WriteLine($"Files proccessed:       {result.PhotoUploadResults?.Count() ?? 0}");
-    Console.WriteLine($"Result file location:   {result.ResultFilePath ?? "[Not saved]"}");
-    Console.WriteLine($"Error message:          {result.ErrorMessage ?? "[No error]"}");
-    Console.WriteLine(Environment.NewLine);
+    Console.WriteLine($"    Album name:             {result.AlbumName}");
+    Console.WriteLine($"    Files processed:        {result.PhotoUploadResults?.Count() ?? 0}");
+    Console.WriteLine($"    Result file location:   {result.ResultFilePath ?? "[Not saved]"}");
+    Console.WriteLine($"    Error message:          {result.ErrorMessage ?? "[No error]"}");
+
+    // Status line
+    WriteFinished(methodName, result);
+   
+}
+
+static string Separator() => new string('═', 60);
+
+static void WriteStart(string methodName)
+{
+    var startTimestamp = DateTime.Now.ToString("HH:mm:ss");
+
+    Console.WriteLine();
+    Console.WriteLine(Separator());
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine($"[{startTimestamp}] STARTING: {methodName}");
+    Console.ResetColor();
+    Console.WriteLine(Separator());
+}
+
+static void WriteFinished(string methodName, Result result)
+{
+    var endTimestamp = DateTime.Now.ToString("HH:mm:ss");
+    Console.WriteLine(Separator());
+    if (result.Succeeded)
+    {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"[{endTimestamp}] JOB [{methodName}] SUCCEEDED");
+    }
+    else
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"[{endTimestamp}] JOB [{methodName}] FAILED");
+    }
+    Console.ResetColor();
+    Console.WriteLine();
 }
