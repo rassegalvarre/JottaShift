@@ -6,6 +6,8 @@ public record AlbumUploadResult : Result
 
     public IEnumerable<PhotoUploadResult> PhotoUploadResults { get; private set; } = [];
 
+    public string? ResultFilePath { get; set; }
+
     private AlbumUploadResult(string albumName)
     {
         AlbumName = albumName;

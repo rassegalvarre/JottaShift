@@ -96,6 +96,7 @@ public sealed class FileExportOrchestrator(
             var saveResult = await _fileExportResultWriter.SaveChromecastUploadResult(job, photoUploadResult);
             if (saveResult.Succeeded)
             {
+                photoUploadResult.ResultFilePath = saveResult.Value;
                 _logger.LogInformation("Job result for job with id {JobId} was saved to file. File path: {FilePath}",
                     job.Id, saveResult.Value);
             }
