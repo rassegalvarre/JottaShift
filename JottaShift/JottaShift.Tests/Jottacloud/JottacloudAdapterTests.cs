@@ -92,6 +92,7 @@ public class JottacloudAdapterTests(JottacloudFixture _fixture)
     }
 
     [Theory]
+    [InlineData("", "")]
     [InlineData("no_conflict.pdf", "no_conflict.pdf")]
     [InlineData("VID_20250411(Conflict).mp4", "VID_20250411.mp4")]
     [InlineData("DSC06380 (Conflict 2025-04-11 19.15.54).JPG", "DSC06380.JPG")]
@@ -101,10 +102,12 @@ public class JottacloudAdapterTests(JottacloudFixture _fixture)
     [InlineData(
         "Some Word document(BB's conflicted copy 2024-07-05).docx",
         "Some Word document.docx")]
-    // TODO: Add test for filename with full path. Should fail?
-    //[InlineData(
-    //    @"C:\source\some-folder (Conflict 2025-04-11 19.15.54)\P_20250411_135044.jpg",
-    //    "P_20250411_135044.jpg")]
+    [InlineData(
+        @"C:\source\some-folder (Conflict 2025-04-11 19.15.54)\P_20250411_135044.jpg",
+        @"C:\source\some-folder\P_20250411_135044.jpg")]
+    [InlineData(
+        @"C:\source\some-folder (Conflict 2025-04-11 19.15.54)\P_20250411_135044 (Conflict 2025-04-11 19.15.54).jpg",
+        @"C:\source\some-folder\P_20250411_135044.jpg")]
     public void CheckAndHandleConflictedFileName_ShouldCleanConflicts(
         string conflictedFileName,
         string expectedFileName)
