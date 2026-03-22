@@ -10,14 +10,24 @@ using JottaShift.Core.Steam;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Serilog;
+using Serilog.Events;
 using System.IO.Abstractions;
 using System.Linq.Expressions;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/jottashift-.log", rollingInterval: RollingInterval.Minute)
+    .CreateLogger();
 
 Console.WriteLine("JottaShift initiating..");
 
 var host = Host.CreateDefaultBuilder(args)
+    .UseSerilog()
     .ConfigureAppConfiguration((hostingContext, config) =>
     {
         config.AddJsonFile(AppSettings.GetAppSettingsFileFullPath(),
@@ -56,17 +66,6 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<ISteamRepository, SteamRepository>();
         services.AddScoped<IFileExportOrchestrator, FileExportOrchestrator>();
         services.AddScoped<IFileExportResultWriter, FileExportResultWriter>();
-    })
-    // TODO: In Release config, save logs to file.
-    .ConfigureLogging(logging =>
-    {
-        logging.ClearProviders();
-        logging.AddSimpleConsole(options =>
-        {
-            options.SingleLine = true;
-            options.TimestampFormat = "HH:mm:ss ";
-        });
-        logging.SetMinimumLevel(LogLevel.Information);
     })
     .Build();
 
