@@ -25,12 +25,12 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore JottaShift/JottaShift.slnx
+      run: dotnet restore src/JottaShift.slnx
     - name: Build
-      run: dotnet build JottaShift/JottaShift.slnx --no-restore
+      run: dotnet build src/JottaShift.slnx --no-restore
     - name: Test
       run: | 
-          dotnet test JottaShift/JottaShift.Tests/JottaShift.Tests.csproj `
+          dotnet test src/JottaShift.Tests/JottaShift.Tests.csproj `
           --no-build `
           --verbosity normal `
           --filter "(Dependency!=Google.Api)&(Dependency!=Jottacloud.Api)&(Dependency!=Env)"
