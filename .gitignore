@@ -61,3 +61,4 @@ nunit-*.xml
 /src/JottaShift.Console/JottaShift.Console.csproj
 /src/JottaShift.Console/JottaShift.Console.csproj.user
 /src/JottaShift.Console/Properties/PublishProfiles/FolderProfile.pubxml.user
+/src/.vs/JottaShift.slnx/v18
