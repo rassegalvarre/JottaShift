@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -29,9 +29,12 @@ jobs:
 
       - name: Publish
         run: |
-            dotnet publish JottaShift/JottaShift.Console/JottaShift.Console.csproj -c Release -o ./publish -r win-x64 `
-            -p:PublishSingleFile=true `
-            -p:SelfContained=true `
+            dotnet publish JottaShift/JottaShift.Console/JottaShift.Console.csproj \
+            -c Release \
+            -o ./publish \
+            -r win-x64 \
+            -p:PublishSingleFile=true \
+            -p:SelfContained=true \
             -p:UseAppHost=true
 
       - name: Archive published output
