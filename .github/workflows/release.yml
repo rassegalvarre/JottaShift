@@ -28,7 +28,8 @@ jobs:
         run: dotnet build JottaShift/JottaShift.slnx --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish JottaShift/JottaShift.Console/JottaShift.Console.csproj -c Release -o ./publish -r win-x64 `
+        run: |
+          dotnet publish JottaShift/JottaShift.Console/JottaShift.Console.csproj -c Release -o ./publish -r win-x64 `
           -p:PublishSingleFile=true `
           -p:SelfContained=true `
           -p:UseAppHost=true
