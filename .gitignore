@@ -53,12 +53,8 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 /.vs
-/JottaShift/.vs
-/JottaShift/JottaShift.Core/Configuration/appsettings.*.json
-/JottaShift/JottaShift.Console/JottaShift.Console.csproj.user
-/JottaShift/JottaShift.Console/Properties/PublishProfiles/FolderProfile.pubxml.user
-/src/.vs/JottaShift.slnx/FileContentIndex
-/src/JottaShift.Console/JottaShift.Console.csproj
-/src/JottaShift.Console/JottaShift.Console.csproj.user
+/src/.vs
+
+/src/JottaShift.*/JottaShift.*.csproj.user
 /src/JottaShift.Console/Properties/PublishProfiles/FolderProfile.pubxml.user
-/src/.vs/JottaShift.slnx/v18
+
