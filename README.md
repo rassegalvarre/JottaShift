@@ -50,12 +50,22 @@ them in correctly structured folders in "Sync" based on the photo/video captured
 The staged content will then be deleted after the export is completed.
 
 #### ChromecastUpload
+TODO: Rename to "GooglePhotosUpload" or similar, as it may not be limited to Chromecast.
+
+This job is built for uploading selected photos "Sync" to an album in Google Photos.
+In my personal case, it uploads photos to an album that is used for the Chromecast "Ambient Mode".
+
+The user can add photos to a *shared* album in Jottacloud, and this job will find the photos and upload them to the specified album in Google Photos.
 
 #### SteamScreenshotsExport
+This job is built for exporting screenshots taken in Steam to a folder in "Sync".
+Steam organizes screenshots in folder named by the game app Id, so the job will lookup the name based on the app Id and create a folder with the game name,
+where the screenshots will be exported.
+The folders will have alphabetic parent folders.
 
 #### ScreenshotsExport
 TODO: Rename to "WallpaperExport" or similar, as it may not be limited to screenshots.
 
-
+This job exports photos from a specified folder in "Sync" to another folder based on the image resolution.
 
 ## Setup
