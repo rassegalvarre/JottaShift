@@ -29,7 +29,7 @@ jobs:
 
       - name: Publish
         run: |
-            dotnet publish src/JottaShift/JottaShift.Console/JottaShift.Console.csproj \
+            dotnet publish src/JottaShift.Console/JottaShift.Console.csproj \
             -c Release \
             -o ./publish \
             -r win-x64 \
