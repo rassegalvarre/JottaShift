@@ -41,31 +41,42 @@ The current implementation of the Web API only used the public endpoints and doe
 These are the currently implemented jobs in the program, which are built around my own needs. The are run on-demand by running the `JottaShift.exe` executable.
 
 #### JottacloudTimelineExport
-Jottacloud can be setup to sync photos and videos from a smartphone to Jottacloud storage.
-However, Jottacloud will store these files in a folder named `Backup/Photo Timeline Uploads`, which is only accessable through the Jottacloud web-page, and will not be included in the "Sync" folder.
+Camera-sync from the Jottacloud-app will store the files in a folder named `Backup/Photo Timeline Uploads`, which is only accessable through the Jottacloud web-page, and will not be included in the "Sync" folder.
 
-This job will export the photos and videos from the "Photo Timeline Uploads" folder, and store them in "Sync". The files will also be strucuted based on year and month.
-This step requires the user to manually move the contents of the "Photo Timeline Uploads" folder to a staging-folder in "Sync", but then the job will detect those files and place 
-them in correctly structured folders in "Sync" based on the photo/video captured date.
-The staged content will then be deleted after the export is completed.
+##### Prerequisites
+Periodically, the user must move the files from the "Photo Timeline Uploads" folder to a staging-folder in "Sync".
+
+##### Job description
+The job will export the photos and videos from the "Photo Timeline Uploads" folder to "Sync".
+The files will be strucuted in a "Yeae/Month" folder hierarchy based on the photo capture date. 
+The staged content will be deleted after the export is completed.
 
 #### ChromecastUpload
 TODO: Rename to "GooglePhotosUpload" or similar, as it may not be limited to Chromecast.
 
-This job is built for uploading selected photos "Sync" to an album in Google Photos.
-In my personal case, it uploads photos to an album that is used for the Chromecast "Ambient Mode".
+##### Prerequisites
+Place images in a shared album in Jottacloud. Removed the images from the album after the job is executed.
+The images must also be synced as to locate them on disk.
 
-The user can add photos to a *shared* album in Jottacloud, and this job will find the photos and upload them to the specified album in Google Photos.
+#### Job description
+Job will find then local path for the images in the shared folder, and upload them to the specified album in Google Photos.
 
 #### SteamScreenshotsExport
-This job is built for exporting screenshots taken in Steam to a folder in "Sync".
-Steam organizes screenshots in folder named by the game app Id, so the job will lookup the name based on the app Id and create a folder with the game name,
-where the screenshots will be exported.
-The folders will have alphabetic parent folders.
+This job is built for exporting screenshots taken in Steam. Steam saves screenshots to folder for each app Id.
+The job will export the screenshots to a folder with the app name instead.
+The folders will be categorized into alphabetic parent folders.
 
 #### ScreenshotsExport
-TODO: Rename to "WallpaperExport" or similar, as it may not be limited to screenshots.
+TODO: Rename job to "WallpaperExport" or similar, as it may not be limited to screenshots.
 
-This job exports photos from a specified folder in "Sync" to another folder based on the image resolution.
+This job exports photos from the staging-folder to a categorized folder based on the image resolution.
 
 ## Setup
+### Environment variables
+Some environment variables must be created in order to utilize some third-party APIs like Google Photos.
+The keys can be found in [EnvironmentManager](src\JottaShift.Core\Configuration\EnvironmentManager.cs)
+
+### AppSettings
+Application settings area stored in [appsettings.json](src\JottaShift.Core\Configuration\appsettings.json). 
+This file must be configured in accordance to the jobs that are intended to be executed.
+If a jobs is disabled, the other values can be left blank.
