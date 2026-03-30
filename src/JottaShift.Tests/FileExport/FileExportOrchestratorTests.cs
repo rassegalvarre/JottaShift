@@ -15,11 +15,7 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace JottaShift.Tests.FileExport;
 
-public class FileExportOrchestratorTests(
-    FileExportFixture _fixture,
-    GooglePhotosFixture _googlePhotosFixture
-    ) : IClassFixture<FileExportFixture>, 
-        IClassFixture<GooglePhotosFixture>
+public class FileExportOrchestratorTests(FileExportFixture _fixture) : IClassFixture<FileExportFixture>
 {
     #region GetAlphabeticParentDirectoryName
     public static List<object[]> GetAlphabeticParentDirectoryNameTestData() => new()
