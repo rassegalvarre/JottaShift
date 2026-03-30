@@ -26,7 +26,7 @@ public class FileExportFixture : IDisposable
     public FileExportJobs DefaultFileExportJobs => new()
     {
         SaveJobResultsToFile = true,
-        ScreenshotsExportJob = new FileTransferJob()
+        DesktopWallpaperExportJob = new FileTransferJob()
         {
             Id = "desktop_wallpapers",
             SourceDirectoryPath = Path.Combine(SourceDirectoryRoot, "wallpapers"),
@@ -50,7 +50,7 @@ public class FileExportFixture : IDisposable
             Enabled = true,
             DeleteSourceFiles = true
         },
-        ChromecastUploadJob = new ChromecastUploadJob()
+        ChromecastUploadJob = new GooglePhotosUploadJob()
         {
             Id = "chromecast_photos",
             SourceJottacloudAlbumSharedUrl = "https://www.jottacloud.com/share/imjg7a52t61g",

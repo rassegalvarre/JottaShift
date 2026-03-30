@@ -469,7 +469,7 @@ public class FileExportOrchestratorTests(FileExportFixture _fixture) : IClassFix
     [Trait("Dependency", "FileSystem")]
     public async Task ExportDesktopWallpapersAsync_ShouldExportImageWithKnownResolution_ToDirectoryBasedOnResolution()
     {
-        var job = _fixture.DefaultFileExportJobs.ScreenshotsExportJob;
+        var job = _fixture.DefaultFileExportJobs.DesktopWallpaperExportJob;
 
         string sourceImageFileName = Path.GetFileName(TestDataHelper.Egypt);
         var sourceImageContentBytes = await File.ReadAllBytesAsync(TestDataHelper.Egypt);
@@ -500,7 +500,7 @@ public class FileExportOrchestratorTests(FileExportFixture _fixture) : IClassFix
     [Trait("Dependency", "FileSystem")]
     public async Task ExportDesktopWallpapersAsync_ShouldIgnoreImageWithUnknownResolution()
     {
-        var job = _fixture.DefaultFileExportJobs.ScreenshotsExportJob;
+        var job = _fixture.DefaultFileExportJobs.DesktopWallpaperExportJob;
 
         string sourceImageFileName = Path.GetFileName(TestDataHelper.Duck);
         var sourceImageContentBytes = await File.ReadAllBytesAsync(TestDataHelper.Duck);

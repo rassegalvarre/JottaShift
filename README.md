@@ -52,24 +52,21 @@ The files will be strucuted in a "Yeae/Month" folder hierarchy based on the phot
 The staged content will be deleted after the export is completed.
 
 #### ChromecastUpload
-TODO: Rename to "GooglePhotosUpload" or similar, as it may not be limited to Chromecast.
 
 ##### Prerequisites
 Place images in a shared album in Jottacloud. Removed the images from the album after the job is executed.
 The images must also be synced as to locate them on disk.
 
 #### Job description
-Job will find then local path for the images in the shared folder, and upload them to the specified album in Google Photos.
+Job will find then local path for the images in the shared folder, and upload them to the specified album in Google Photos which is configured for Chromecast Ambient Mode.
 
 #### SteamScreenshotsExport
 This job is built for exporting screenshots taken in Steam. Steam saves screenshots to folder for each app Id.
 The job will export the screenshots to a folder with the app name instead.
 The folders will be categorized into alphabetic parent folders.
 
-#### ScreenshotsExport
-TODO: Rename job to "WallpaperExport" or similar, as it may not be limited to screenshots.
-
-This job exports photos from the staging-folder to a categorized folder based on the image resolution.
+#### DesktopWallpaperExportJob
+This job exports images from the staging-folder to a categorized folder based on the image resolution.
 
 ## Setup
 ### Environment variables

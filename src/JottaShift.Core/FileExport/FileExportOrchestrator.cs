@@ -112,7 +112,7 @@ public sealed class FileExportOrchestrator(
 
     public async Task<FileTransferJobResult> ExportDesktopWallpapersAsync(CancellationToken ct = default)
     {
-        var job = _fileExportJobs.ScreenshotsExportJob;
+        var job = _fileExportJobs.DesktopWallpaperExportJob;
 
         var validationResult = ValidateFileTransferJob(job);
         if (!validationResult.Succeeded)
