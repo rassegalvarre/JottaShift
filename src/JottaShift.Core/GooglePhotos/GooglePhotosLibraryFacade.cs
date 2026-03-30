@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.GooglePhotos;
 
+[Obsolete("This class is deprecated. Please use GooglePhotosLibraryRestFacade instead.")]
 public class GooglePhotosLibraryFacade : IGooglePhotosLibraryFacade
 {
     private readonly ILogger<GooglePhotosLibraryFacade> _logger;
