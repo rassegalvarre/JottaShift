@@ -1,4 +1,5 @@
 ﻿using Google.Apis.PhotosLibrary.v1.Data;
+using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.GooglePhotos;
@@ -8,6 +9,7 @@ namespace JottaShift.Core.GooglePhotos;
 /// </summary>
 internal class GooglePhotosLibraryRestFacade(
     IUserCredentialManager _userCredentialManager,
+    IHttpClientWrapper httpClientWrapper,
     ILogger<GooglePhotosLibraryRestFacade> _logger) : IGooglePhotosLibraryFacade
 {
     public Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens)
