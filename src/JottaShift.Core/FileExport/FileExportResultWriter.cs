@@ -9,7 +9,7 @@ public class FileExportResultWriter(
     IFileWriterFactory _fileWriterFactory) : IFileExportResultWriter
 {
     public async Task<Result<string>> SaveChromecastUploadResult(
-        ChromecastUploadJob job, AlbumUploadResult jobResult, CancellationToken ct = default)
+        GooglePhotosUploadJob job, AlbumUploadResult jobResult, CancellationToken ct = default)
     {
         var timestamp = DateTime.Now;
         string outputFileName = Path.Combine(AppContext.BaseDirectory, "Jobs", $"{job.Id}_{timestamp:yyyyMMdd_HHmmss}.txt");
