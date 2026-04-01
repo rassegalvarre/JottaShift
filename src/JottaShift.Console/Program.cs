@@ -94,6 +94,9 @@ await ExecuteAlbumUploadJob(
     o => o.ExportChromecastPhotosAsync(new CancellationToken())
 );
 
+Console.WriteLine("All jobs were executed. Press any key to exit...");
+Console.ReadKey();
+
 await host.StopAsync();
 
 static async Task ExecuteFileTransferJob(
