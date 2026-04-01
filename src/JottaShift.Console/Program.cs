@@ -21,7 +21,7 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .Enrich.FromLogContext()
     .WriteTo.Console()
-    .WriteTo.File("logs/jottashift-.log", rollingInterval: RollingInterval.Minute)
+    .WriteTo.File("Logs/jottashift-.log", rollingInterval: RollingInterval.Minute)
     .CreateLogger();
 
 Console.WriteLine("JottaShift initiating..");
