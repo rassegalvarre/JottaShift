@@ -11,16 +11,25 @@ public class AppSettings
         AppContext.BaseDirectory,
         "Configuration");
 
-    public static string GetAppSettingsFileFullPath()
+    public static string GetAppSettingsFileFullPath(bool? useMachineDefinedSettings = false)
     {
-        string appSettingsFileName = "appsettings.json";
+        string baseAppSettingsFileName = "appsettings.json";
+        string appSettingsFullPath = Path.Combine(AppSettingsBaseFullPath, baseAppSettingsFileName);
+
         var machineNameResult = EnvironmentManager.GetKnownMachineName();
-        if (machineNameResult.Succeeded && machineNameResult.Value is not null)
+        if (useMachineDefinedSettings == true &&
+            machineNameResult.Succeeded &&
+            machineNameResult.Value is not null)
         {
-            appSettingsFileName = $"appsettings.{machineNameResult.Value}.json";
+            string machineDefinedAppSettingPath = Path.Combine(AppSettingsBaseFullPath, $"appsettings.{machineNameResult.Value}.json");
+            
+            if (File.Exists(machineDefinedAppSettingPath))
+            {
+                appSettingsFullPath = machineDefinedAppSettingPath;
+            }
         }
 
-        return Path.Combine(AppSettingsBaseFullPath, appSettingsFileName);
+        return appSettingsFullPath;
     }
 
     public required FileExportJobs FileExportJobs { get; init; }

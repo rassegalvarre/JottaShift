@@ -30,7 +30,7 @@ var host = Host.CreateDefaultBuilder(args)
     .UseSerilog()
     .ConfigureAppConfiguration((hostingContext, config) =>
     {
-        config.AddJsonFile(AppSettings.GetAppSettingsFileFullPath(),
+        config.AddJsonFile(AppSettings.GetAppSettingsFileFullPath(useMachineDefinedSettings: true),
             optional: false, reloadOnChange: true);
     })
     .ConfigureServices((hostContext, services) =>

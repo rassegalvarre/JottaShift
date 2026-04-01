@@ -8,11 +8,21 @@ public class AppSettingsTests(AppSettingsFixture _fixture) : IClassFixture<AppSe
     [Trait("Dependency", "Env")]
     public async Task GetAppSettingsFileFullPath_ShouldReturnSettingsForCurrentMachine()
     {
-        var fullPath = AppSettings.GetAppSettingsFileFullPath();
+        var fullPath = AppSettings.GetAppSettingsFileFullPath(true);
 
         Assert.True(Path.IsPathFullyQualified(fullPath));
         Assert.Contains(Environment.MachineName, fullPath);
     }
+    
+    [Fact]
+    public async Task GetAppSettingsFileFullPath_ShouldReturnDefaultSettings()
+    {
+        var fullPath = AppSettings.GetAppSettingsFileFullPath(false);
+
+        Assert.True(Path.IsPathFullyQualified(fullPath));
+        Assert.Contains("appsettings.json", fullPath);
+    }
+
 
     [Fact]
     public async Task GetAppSettingsAsync_ShouldReturn_DeserializedInstance()
