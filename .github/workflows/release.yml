@@ -38,15 +38,18 @@ jobs:
             -p:UseAppHost=true
 
       - name: Archive published output
+        id: archive
         run: |
           cd publish
           VERSION="${GITHUB_REF#refs/tags/}"
           VERSION_NO_V="${VERSION#v}"
-          zip -r ../JottaShift-${VERSION_NO_V}.zip .
+          ZIPNAME="JottaShift-${VERSION_NO_V}.zip"
+          zip -r ../${ZIPNAME} .
+          echo "zipname=${ZIPNAME}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: JottaShift.zip
+          files: ${{ steps.archive.outputs.zipname }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
