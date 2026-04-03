@@ -156,7 +156,7 @@ public class GooglePhotosLibraryFacade : IGooglePhotosLibraryFacade
             }
 
             _logger.LogInformation("Uploaded {ItemCount} items to Google Photos album with Id {AlbumId}",
-                batchCreateResponse.NewMediaItemResults, albumId);
+                batchCreateResponse.NewMediaItemResults.Count, albumId);
 
             return Result<BatchCreateMediaItemsResponse>.Success(batchCreateResponse);
         }
