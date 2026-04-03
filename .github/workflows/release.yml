@@ -40,7 +40,9 @@ jobs:
       - name: Archive published output
         run: |
           cd publish
-          zip -r ../JottaShift.zip .
+          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION_NO_V="${VERSION#v}"
+          zip -r ../JottaShift-${VERSION_NO_V}.zip .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
