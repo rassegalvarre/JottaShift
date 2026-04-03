@@ -45,7 +45,6 @@ jobs:
           VERSION_NO_V="${VERSION#v}"
           ZIPNAME="JottaShift-${VERSION_NO_V}.zip"
           zip -r ../${ZIPNAME} .
-          echo "zipname=${ZIPNAME}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
