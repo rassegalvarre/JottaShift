@@ -9,7 +9,7 @@ namespace JottaShift.Core.GooglePhotos;
 /// Implementation of <see cref="IGooglePhotosLibraryFacade"/> using REST API.
 /// TODO: Merge with IGooglePhotosHttpClient
 /// </summary>
-internal class GooglePhotosLibraryRestFacade(
+public class GooglePhotosLibraryRestFacade(
     IUserCredentialManager _userCredentialManager,
     IHttpClientWrapper _httpClientWrapper,
     ILogger<GooglePhotosLibraryRestFacade> _logger) : IGooglePhotosLibraryFacade
