@@ -15,9 +15,24 @@ public class GooglePhotosLibraryRestFacade(
     ILogger<GooglePhotosLibraryRestFacade> _logger) : IGooglePhotosLibraryFacade
 {
     // https://developers.google.com/photos/library/reference/rest/v1/albums/batchAddMediaItems
-    public Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens)
+    public async Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens)
     {
-        throw new NotImplementedException();
+        var batchCreateRequest = new BatchCreateMediaItemsRequest
+        {
+            AlbumId = albumId,
+            NewMediaItems = [.. uploadTokens.Select(token => new NewMediaItem
+                {
+                    SimpleMediaItem = new SimpleMediaItem { UploadToken = token }
+                })]
+        };
+
+        string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}:batchAddMediaItems";
+
+        var batchCreateResponse = await _httpClientWrapper.PostAsync<
+            BatchCreateMediaItemsRequest,
+            BatchCreateMediaItemsResponse>(requestUri, batchCreateRequest);
+
+        return batchCreateResponse.ToResult();
     }
 
     // https://developers.google.com/photos/library/reference/rest/v1/albums/create
