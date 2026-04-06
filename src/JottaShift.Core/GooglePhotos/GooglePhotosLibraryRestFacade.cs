@@ -1,4 +1,5 @@
-﻿using Google.Apis.PhotosLibrary.v1.Data;
+﻿using Google.Apis.PhotosLibrary.v1;
+using Google.Apis.PhotosLibrary.v1.Data;
 using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 
@@ -10,7 +11,7 @@ namespace JottaShift.Core.GooglePhotos;
 /// </summary>
 internal class GooglePhotosLibraryRestFacade(
     IUserCredentialManager _userCredentialManager,
-    IHttpClientWrapper httpClientWrapper,
+    IHttpClientWrapper _httpClientWrapper,
     ILogger<GooglePhotosLibraryRestFacade> _logger) : IGooglePhotosLibraryFacade
 {
     // https://developers.google.com/photos/library/reference/rest/v1/albums/batchAddMediaItems
@@ -20,9 +21,23 @@ internal class GooglePhotosLibraryRestFacade(
     }
 
     // https://developers.google.com/photos/library/reference/rest/v1/albums/create
-    public Task<Result<Album>> CreateAlbumAsync(string albumName)
+    public async Task<Result<Album>> CreateAlbumAsync(string albumName)
     {
-        throw new NotImplementedException();
+        var albumRequest = new CreateAlbumRequest()
+        {
+            Album = new Album()
+            {
+                Title = albumName
+            }
+        };
+        
+        string requestUri = "https://photoslibrary.googleapis.com/v1/album";
+
+        var createAlbumResponse = await _httpClientWrapper.PostAsync<CreateAlbumRequest, Album>(
+            requestUri,
+            albumRequest);
+
+        return createAlbumResponse.ToResult();
     }
 
     // https://developers.google.com/photos/library/reference/rest/v1/albums/get

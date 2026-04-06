@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace JottaShift.Core.HttpClientWrapper;
@@ -93,5 +94,44 @@ public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _log
         }
 
         return new HttpGetResult<T>(response.StatusCode, data);
+    }
+
+    public async Task<HttpPostResult<TResponse>> PostAsync<TRequest, TResponse>(string requestUri, TRequest request)
+    {
+        HttpResponseMessage response;
+        TResponse? data;
+
+        if (BaseAddress != null)
+        {
+            requestUri = new Uri(BaseAddress, requestUri).ToString();
+        }
+
+        try
+        {
+            string jsonContent = JsonSerializer.Serialize(request);
+            response = await _http.PostAsJsonAsync(requestUri, jsonContent);
+
+            if (response.StatusCode is not System.Net.HttpStatusCode.OK)
+            {
+                _logger.LogError("Request resulted in status {HttpStatus}", response.StatusCode);
+
+                return new HttpPostResult<TResponse>(response.StatusCode);
+            }
+            var responseContentStream = await response.Content.ReadAsStreamAsync();
+            data = await JsonSerializer.DeserializeAsync<TResponse?>(responseContentStream);
+
+            if (data == null)
+            {
+                _logger.LogError("Could not deserialize response to the expected schema");
+                return new HttpPostResult<TResponse>(response.StatusCode, "Could not deserialize response to the expected schema");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An exception occurred while sending the request");
+            return new HttpPostResult<TResponse>(System.Net.HttpStatusCode.InternalServerError, ex.Message);
+        }
+
+        return new HttpPostResult<TResponse>(response.StatusCode, data);
     }
 }
