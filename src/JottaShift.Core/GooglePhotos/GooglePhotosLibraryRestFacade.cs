@@ -68,9 +68,23 @@ public class GooglePhotosLibraryRestFacade(
     // https://developers.google.com/photos/library/reference/rest/v1/albums/list
     public async Task<Result<Album>> GetAlbumFromTitleAsync(string albumName)
     {
+        var accessTokenResult = await _userCredentialManager.GetAccessTokenAsync();
+        if (!accessTokenResult.Succeeded || accessTokenResult.Value == null)
+        {
+            accessTokenResult.ForwardFailure<Album>();
+        }
+
+        _httpClientWrapper.HttpClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessTokenResult.Value);
+
+
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/";
 
-        var getAlbumsResponse = await _httpClientWrapper.GetAsync<ListAlbumsResponse>(requestUri);
+        var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        request.Headers.Add("Authorization", $"Bearer {accessTokenResult.Value}");
+
+
+        var getAlbumsResponse = await _httpClientWrapper.SendAsync<ListAlbumsResponse>(request);
 
         if (!getAlbumsResponse.Success)
         {
