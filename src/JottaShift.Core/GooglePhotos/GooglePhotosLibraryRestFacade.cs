@@ -56,14 +56,33 @@ public class GooglePhotosLibraryRestFacade(
     }
 
     // https://developers.google.com/photos/library/reference/rest/v1/albums/get
-    public Task<Result<Album>> GetAlbumFromIdAsync(string albumId)
+    public async Task<Result<Album>> GetAlbumFromIdAsync(string albumId)
     {
-        throw new NotImplementedException();
+        string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}";
+
+        var getAlbumResponse = await _httpClientWrapper.GetAsync<Album>(requestUri);
+
+        return getAlbumResponse.ToResult();
     }
 
     // https://developers.google.com/photos/library/reference/rest/v1/albums/list
-    public Task<Result<Album>> GetAlbumFromTitleAsync(string albumName)
+    public async Task<Result<Album>> GetAlbumFromTitleAsync(string albumName)
     {
-        throw new NotImplementedException();
+        string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/";
+
+        var getAlbumsResponse = await _httpClientWrapper.GetAsync<ListAlbumsResponse>(requestUri);
+
+        if (!getAlbumsResponse.Success)
+        {
+            return Result<Album>.Failure(getAlbumsResponse.ErrorMessage ?? "Failed to get albums");
+        }
+
+        var album = getAlbumsResponse.Content?.Albums.FirstOrDefault(a => a.Title == albumName);
+        if (album == null)
+        {
+            return Result<Album>.Failure($"Album with name '{albumName}' not found");
+        }
+
+        return Result<Album>.Success(album);
     }
 }
