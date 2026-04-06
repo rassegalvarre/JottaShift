@@ -70,7 +70,7 @@ public sealed class FileExportOrchestrator(
         var job = _fileExportJobs.ChromecastUploadJob;
         if (!job.Enabled)
         {
-            _logger.LogInformation("Job {JobId} is disabled and will not run.", job.Id);
+            _logger.LogWarning("Job {JobId} is disabled and will not run.", job.Id);
             return AlbumUploadResult.Success(job.TargetGooglePhotosAlbumName, []);
         }
 
