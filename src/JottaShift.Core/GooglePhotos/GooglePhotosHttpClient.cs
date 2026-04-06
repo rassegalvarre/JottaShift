@@ -25,6 +25,8 @@ public class GooglePhotosHttpClient : IGooglePhotosHttpClient
         _userCredentialManager = userCredentialManager;
     }
 
+    // Replace with?
+    // https://developers.google.com/photos/library/reference/rest/v1/mediaItems/batchCreate
     public async Task<Result<string>> UploadPhotoAsync(string fileFullPah)
     {
         var fileContentResult = await _fileStorage.GetFileBytesAsync(fileFullPah);
