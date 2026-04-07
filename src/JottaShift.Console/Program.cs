@@ -21,7 +21,7 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .Enrich.FromLogContext()
     .WriteTo.Console()
-    .WriteTo.File("logs/jottashift-.log", rollingInterval: RollingInterval.Minute)
+    .WriteTo.File("Logs/jottashift-.log", rollingInterval: RollingInterval.Minute)
     .CreateLogger();
 
 Console.WriteLine("JottaShift initiating..");
@@ -30,7 +30,7 @@ var host = Host.CreateDefaultBuilder(args)
     .UseSerilog()
     .ConfigureAppConfiguration((hostingContext, config) =>
     {
-        config.AddJsonFile(AppSettings.GetAppSettingsFileFullPath(),
+        config.AddJsonFile(AppSettings.GetAppSettingsFileFullPath(useMachineDefinedSettings: true),
             optional: false, reloadOnChange: true);
     })
     .ConfigureServices((hostContext, services) =>
@@ -57,7 +57,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileWriterFactory, FileWriterFactory>();
         services.AddScoped<IFileStorageService, FileStorageService>();
-        services.AddSingleton<IGooglePhotosLibraryFacade, GooglePhotosLibraryFacade>();
+        services.AddSingleton<IGooglePhotosLibraryFacade, GooglePhotosLibraryRestFacade>();
         services.AddScoped<IGooglePhotosHttpClient, GooglePhotosHttpClient>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
         services.AddScoped<IUserCredentialManager, UserCredentialManager>();
@@ -93,6 +93,9 @@ await ExecuteAlbumUploadJob(
     exportOrchestrator,
     o => o.ExportChromecastPhotosAsync(new CancellationToken())
 );
+
+Console.WriteLine("All jobs were executed. Press any key to exit...");
+Console.ReadKey();
 
 await host.StopAsync();
 

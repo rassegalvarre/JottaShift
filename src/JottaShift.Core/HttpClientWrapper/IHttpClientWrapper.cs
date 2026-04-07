@@ -6,4 +6,5 @@ public interface IHttpClientWrapper
     HttpClient HttpClient { get; }
     Task<HttpSendResult<T>> SendAsync<T>(HttpRequestMessage request);
     Task<HttpGetResult<T>> GetAsync<T>(string uri);
+    Task<HttpPostResult<TResponse>> PostAsync<TRequest, TResponse>(string requestUri, TRequest request);
 }
