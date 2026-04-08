@@ -13,6 +13,38 @@ public class GooglePhotosHttpClient(
     IUserCredentialManager _userCredentialManager,
     ILogger<GooglePhotosHttpClient> _logger) : IGooglePhotosHttpClient, IGooglePhotosLibraryFacade
 {
+    public async Task<Result<TResponse>> SendWithBearerTokenAsync<TRequest, TResponse>(
+        string requestUri,
+        HttpMethod httpMethod,
+        HttpContent? requestContent = null,
+        Dictionary<string, string>? additionalHeaders = null)
+    {
+        var accessTokenResult = await _userCredentialManager.GetAccessTokenAsync();
+        if (!accessTokenResult.Succeeded || accessTokenResult.Value == null)
+        {
+            _logger.LogError("Failed to get access token: {ErrorMessage}", accessTokenResult.ErrorMessage);
+            return Result<TResponse>.Failure("Failed to get access token.");
+        }
+
+        var request = new HttpRequestMessage(httpMethod, requestUri);
+        if (requestContent != null)
+        {
+            request.Content = new StringContent(JsonSerializer.Serialize(requestContent));
+        }
+
+        if (additionalHeaders != null)
+        {
+            foreach (var header in additionalHeaders)
+            {
+                request.Headers.Add(header.Key, header.Value);
+            }
+        }
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResult.Value);
+        var response = await _http.SendAsync<TResponse>(request);
+        return response.ToResult();
+    }
+
     // Replace with?
     // https://developers.google.com/photos/library/reference/rest/v1/mediaItems/batchCreate
     public async Task<Result<string>> UploadPhotoAsync(string fileFullPah)
@@ -56,42 +88,7 @@ public class GooglePhotosHttpClient(
         return result.ToResult();
     }
 
-    public async Task<Result<TResponse>> GetAsync<TResponse>(string requestUri)
-    {
-        var accessTokenResult = await _userCredentialManager.GetAccessTokenAsync();
-        if (!accessTokenResult.Succeeded || accessTokenResult.Value == null)
-        {
-            _logger.LogError("Failed to get access token: {ErrorMessage}", accessTokenResult.ErrorMessage);
-            return Result<TResponse>.Failure("Failed to get access token.");
-        }
-
-        var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResult.Value);
-        var response = await _http.SendAsync<TResponse>(request);
-        return response.ToResult();
-    }
-
-    public async Task<Result<TResponse>> PostAsync<TRequest, TResponse>(
-        string requestUri,
-        TRequest requestContent)
-    {
-        var accessTokenResult = await _userCredentialManager.GetAccessTokenAsync();
-        if (!accessTokenResult.Succeeded || accessTokenResult.Value == null)
-        {
-            _logger.LogError("Failed to get access token: {ErrorMessage}", accessTokenResult.ErrorMessage);
-            return Result<TResponse>.Failure("Failed to get access token.");
-        }
-
-        var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-        {
-            Content = new StringContent(JsonSerializer.Serialize(requestContent))
-        };
-
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResult.Value);
-        var response = await _http.SendAsync<TResponse>(request);
-        return response.ToResult();
-    }
+    
     
     // https://developers.google.com/photos/library/reference/rest/v1/albums/batchAddMediaItems
     public async Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens)
