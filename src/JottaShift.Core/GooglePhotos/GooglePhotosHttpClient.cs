@@ -3,7 +3,8 @@ using JottaShift.Core.FileStorage;
 using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
-using System.Text.Json;
+using System.Reflection.Metadata;
+using static Google.Apis.PhotosLibrary.v1.MediaItemsResource;
 
 namespace JottaShift.Core.GooglePhotos;
 
@@ -13,7 +14,22 @@ public class GooglePhotosHttpClient(
     IUserCredentialManager _userCredentialManager,
     ILogger<GooglePhotosHttpClient> _logger) : IGooglePhotosHttpClient, IGooglePhotosLibraryFacade
 {
-    public async Task<Result<TResponse>> SendWithBearerTokenAsync<TRequest, TResponse>(
+
+    private HttpContent SerializeToJsonContent<T>(T obj)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(obj);
+        return new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+    }
+
+    private HttpContent SerializeToByteArrayContent(byte[] bytes)
+    {
+        return new ByteArrayContent(bytes)
+        {
+            Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+        };
+    }
+
+    private async Task<Result<TResponse>> SendWithBearerTokenAsync<TResponse>(
         string requestUri,
         HttpMethod httpMethod,
         HttpContent? requestContent = null,
@@ -26,19 +42,16 @@ public class GooglePhotosHttpClient(
             return Result<TResponse>.Failure("Failed to get access token.");
         }
 
-        var request = new HttpRequestMessage(httpMethod, requestUri);
-        if (requestContent != null)
+        var request = new HttpRequestMessage(httpMethod, requestUri)
         {
-            request.Content = new StringContent(JsonSerializer.Serialize(requestContent));
-        }
+            Content = requestContent,
+        };
 
-        if (additionalHeaders != null)
+        foreach (var header in additionalHeaders ?? [])
         {
-            foreach (var header in additionalHeaders)
-            {
-                request.Headers.Add(header.Key, header.Value);
-            }
+            request.Headers.Add(header.Key, header.Value);
         }
+        
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResult.Value);
         var response = await _http.SendAsync<TResponse>(request);
@@ -65,27 +78,21 @@ public class GooglePhotosHttpClient(
             return Result<string>.Failure("Failed to get file name");
         }
 
-        var accessTokenResult = await _userCredentialManager.GetAccessTokenAsync();
-        if (!accessTokenResult.Succeeded || accessTokenResult.Value is null)
-        {
-            _logger.LogError("Failed to get access token: {ErrorMessage}", accessTokenResult.ErrorMessage);
-            return Result<string>.Failure("Failed to get access token.");
-        }
-
         const string requestUri = "https://photoslibrary.googleapis.com/v1/uploads";
-        var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-        {
-            Content = new ByteArrayContent(fileContentResult.Value),
-        };
 
-        // Required headers (see Google docs)
-        request.Headers.Add("Authorization", $"Bearer {accessTokenResult.Value}");
-        request.Headers.Add("X-Goog-Upload-File-Name", fileNameResult.Value);
-        request.Headers.Add("X-Goog-Upload-Protocol", "raw");
-        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        var content = SerializeToByteArrayContent(fileContentResult.Value);
 
-        var result = await _http.SendAsync<string>(request);
-        return result.ToResult();
+        var result = await SendWithBearerTokenAsync<string>(
+            requestUri,
+            HttpMethod.Post,
+            content,            
+            new Dictionary<string, string>() // Required headers (see Google docs)
+            {
+                { "X-Goog-Upload-File-Name", fileNameResult.Value },
+                { "X-Goog-Upload-Protocol", "raw" }
+            });
+
+        return result;
     }
 
     
@@ -97,18 +104,20 @@ public class GooglePhotosHttpClient(
         {
             AlbumId = albumId,
             NewMediaItems = [.. uploadTokens.Select(token => new NewMediaItem
-                {
-                    SimpleMediaItem = new SimpleMediaItem { UploadToken = token }
-                })]
+            {
+                SimpleMediaItem = new SimpleMediaItem { UploadToken = token }
+            })]
         };
 
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}:batchAddMediaItems";
+        var content = SerializeToJsonContent(batchCreateRequest);
 
-        var batchCreateResponse = await _http.PostAsync<
-            BatchCreateMediaItemsRequest,
-            BatchCreateMediaItemsResponse>(requestUri, batchCreateRequest);
+        var batchCreateResponse = await SendWithBearerTokenAsync<BatchCreateMediaItemsResponse>(
+            requestUri,
+            HttpMethod.Post,
+            content);
 
-        return batchCreateResponse.ToResult();
+        return batchCreateResponse;
     }
 
     // https://developers.google.com/photos/library/reference/rest/v1/albums/create
@@ -123,12 +132,14 @@ public class GooglePhotosHttpClient(
         };
 
         string requestUri = "https://photoslibrary.googleapis.com/v1/album";
+        var content = SerializeToJsonContent(albumRequest);
 
-        var createAlbumResponse = await _http.PostAsync<CreateAlbumRequest, Album>(
+        var createAlbumResponse = await SendWithBearerTokenAsync<Album>(
             requestUri,
-            albumRequest);
+            HttpMethod.Post,
+            content);
 
-        return createAlbumResponse.ToResult();
+        return createAlbumResponse;
     }
 
     // https://developers.google.com/photos/library/reference/rest/v1/albums/get
@@ -136,9 +147,9 @@ public class GooglePhotosHttpClient(
     {
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}";
 
-        var getAlbumResponse = await _http.GetAsync<Album>(requestUri);
+        var getAlbumResponse = await SendWithBearerTokenAsync<Album>(requestUri, HttpMethod.Get);
 
-        return getAlbumResponse.ToResult();
+        return getAlbumResponse;
     }
 
     // https://developers.google.com/photos/library/reference/rest/v1/albums/list
@@ -147,14 +158,14 @@ public class GooglePhotosHttpClient(
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/";
 
 
-        var getAlbumsResponse = await _http.GetAsync<ListAlbumsResponse>(requestUri);
+       var getAlbumsResponse = await SendWithBearerTokenAsync<ListAlbumsResponse>(requestUri, HttpMethod.Get);
 
-        if (!getAlbumsResponse.Success)
+        if (!getAlbumsResponse.Succeeded || getAlbumsResponse.Value is null)
         {
             return Result<Album>.Failure(getAlbumsResponse.ErrorMessage ?? "Failed to get albums");
         }
 
-        var album = getAlbumsResponse.Content?.Albums.FirstOrDefault(a => a.Title == albumName);
+        var album = getAlbumsResponse.Value.Albums.FirstOrDefault(a => a.Title == albumName);
         if (album == null)
         {
             return Result<Album>.Failure($"Album with name '{albumName}' not found");
