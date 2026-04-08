@@ -33,6 +33,7 @@ public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _log
             else
             {
                 var responseContentStream = await response.Content.ReadAsStreamAsync();
+                var responseContentString = await response.Content.ReadAsStringAsync();
 
                 if (responseContentStream.Length == 0)
                 {
@@ -40,7 +41,7 @@ public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _log
                     return new HttpSendResult<T>(response.StatusCode);
                 }
                 
-                data = await JsonSerializer.DeserializeAsync<T?>(responseContentStream);
+                data = JsonSerializer.Deserialize<T?>(responseContentString);
             }
 
             if (data == null)

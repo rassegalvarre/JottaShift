@@ -1,5 +1,6 @@
 ﻿using Google.Apis.PhotosLibrary.v1.Data;
 using JottaShift.Core.FileStorage;
+using JottaShift.Core.GooglePhotos.Models.Domain;
 using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
@@ -12,7 +13,6 @@ public class GooglePhotosHttpClient(
     IUserCredentialManager _userCredentialManager,
     ILogger<GooglePhotosHttpClient> _logger) : IGooglePhotosHttpClient, IGooglePhotosLibraryFacade
 {
-
     private static StringContent SerializeToStringContent<T>(T obj)
     {
         var json = System.Text.Json.JsonSerializer.Serialize(obj);
@@ -48,8 +48,7 @@ public class GooglePhotosHttpClient(
         foreach (var header in additionalHeaders ?? [])
         {
             request.Headers.Add(header.Key, header.Value);
-        }
-        
+        }        
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResult.Value);
         var response = await _http.SendAsync<TResponse>(request);
@@ -128,7 +127,7 @@ public class GooglePhotosHttpClient(
     {
         var albumRequest = new CreateAlbumRequest()
         {
-            Album = new Album()
+            Album = new Google.Apis.PhotosLibrary.v1.Data.Album()
             {
                 Title = albumName
             }
@@ -165,7 +164,7 @@ public class GooglePhotosHttpClient(
     {
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/";
 
-       var getAlbumsResponse = await SendWithBearerTokenAsync<ListAlbumsResponse>(requestUri, HttpMethod.Get);
+        var getAlbumsResponse = await SendWithBearerTokenAsync<AlbumsResponse>(requestUri, HttpMethod.Get);
 
         if (!getAlbumsResponse.Succeeded || getAlbumsResponse.Value is null)
         {
@@ -178,6 +177,9 @@ public class GooglePhotosHttpClient(
             return Result<Album>.Failure($"Album with name '{albumName}' not found");
         }
 
-        return Result<Album>.Success(album);
+        return Result<Album>.Success(new Album()
+        {
+            Title = album.Title
+        });
     }
 }
