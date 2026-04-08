@@ -1,6 +1,6 @@
 ﻿using Google.Apis.PhotosLibrary.v1.Data;
 using JottaShift.Core.FileStorage;
-using JottaShift.Core.GooglePhotos.Models.Domain;
+using JottaShift.Core.GooglePhotos.Models.Api;
 using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
