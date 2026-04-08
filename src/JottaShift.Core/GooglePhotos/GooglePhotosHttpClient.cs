@@ -7,25 +7,12 @@ using System.Text.Json;
 
 namespace JottaShift.Core.GooglePhotos;
 
-public class GooglePhotosHttpClient : IGooglePhotosHttpClient, IGooglePhotosLibraryFacade
+public class GooglePhotosHttpClient(
+    IFileStorageService _fileStorage,
+    IHttpClientWrapper _http,
+    IUserCredentialManager _userCredentialManager,
+    ILogger<GooglePhotosHttpClient> _logger) : IGooglePhotosHttpClient, IGooglePhotosLibraryFacade
 {
-    private readonly IFileStorageService _fileStorage;
-    private readonly IHttpClientWrapper _http;
-    private readonly IUserCredentialManager _userCredentialManager;
-    private readonly ILogger<GooglePhotosHttpClient> _logger;
-
-    public GooglePhotosHttpClient(
-        IFileStorageService fileStorage,
-        IHttpClientWrapper http,
-        IUserCredentialManager userCredentialManager,
-        ILogger<GooglePhotosHttpClient> logger)
-    {
-        _fileStorage = fileStorage;
-        _http = http;
-        _logger = logger;
-        _userCredentialManager = userCredentialManager;
-    }
-
     // Replace with?
     // https://developers.google.com/photos/library/reference/rest/v1/mediaItems/batchCreate
     public async Task<Result<string>> UploadPhotoAsync(string fileFullPah)
