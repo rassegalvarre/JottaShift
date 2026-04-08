@@ -3,6 +3,7 @@ using JottaShift.Core.FileStorage;
 using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace JottaShift.Core.GooglePhotos;
 
@@ -66,5 +67,42 @@ public class GooglePhotosHttpClient : IGooglePhotosHttpClient
 
         var result = await _http.SendAsync<string>(request);
         return result.ToResult();
+    }
+
+    public async Task<Result<TResponse>> GetAsync<TResponse>(string requestUri)
+    {
+        var accessTokenResult = await _userCredentialManager.GetAccessTokenAsync();
+        if (!accessTokenResult.Succeeded || accessTokenResult.Value == null)
+        {
+            _logger.LogError("Failed to get access token: {ErrorMessage}", accessTokenResult.ErrorMessage);
+            return Result<TResponse>.Failure("Failed to get access token.");
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResult.Value);
+        var response = await _http.SendAsync<TResponse>(request);
+        return response.ToResult();
+    }
+
+    public async Task<Result<TResponse>> PostAsync<TRequest, TResponse>(
+        string requestUri,
+        TRequest requestContent)
+    {
+        var accessTokenResult = await _userCredentialManager.GetAccessTokenAsync();
+        if (!accessTokenResult.Succeeded || accessTokenResult.Value == null)
+        {
+            _logger.LogError("Failed to get access token: {ErrorMessage}", accessTokenResult.ErrorMessage);
+            return Result<TResponse>.Failure("Failed to get access token.");
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(requestContent))
+        };
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResult.Value);
+        var response = await _http.SendAsync<TResponse>(request);
+        return response.ToResult();
     }
 }
