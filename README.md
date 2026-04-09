@@ -19,9 +19,8 @@ The program uses this URL to lookup the photos in the album, search for the phot
 
 #### Google Photos
 JottaShift has the ability to upload photos to Google Photos, create and manage albums, and add photos to albums.
-It uses the offical NuGet packages for Google Photos API.
+It uses the offical NuGet package for auth and the Library API via its REST endpoints.
 - [Google.Apis.Auth](https://www.nuget.org/packages/Google.Apis.Auth)
-- [Google.Apis.PhotosLibrary.v1](https://www.nuget.org/packages/Google.Apis.PhotosLibrary.v1) [is deprecated and will be replaced with REST]
 
 Using the Google Photos API requires authentication via OAuth 2.0, so new credentials must be created in the Google Cloud Console and added to the program.
 I will not supply my own personal credentials.
