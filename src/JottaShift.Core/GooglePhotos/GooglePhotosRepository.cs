@@ -60,6 +60,8 @@ public class GooglePhotosRepository(
             return AlbumUploadResult.Failure(albumName, "Failed to upload any photos", photoUploadResults);
         }
 
+        // TODO: Split uploadTokens in batches of 50 if more than 50, as per Google Photos API limits
+
         var batchCreateResult = await _googlePhotosClient.BatchCreateMediaItemsAsync(
             albumResult.Value.Id, uploadTokens);
         if (!batchCreateResult.Succeeded || batchCreateResult.Value?.NewMediaItemResults is null)
