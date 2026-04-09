@@ -56,7 +56,7 @@ public class GooglePhotosHttpClient(
     }
     #endregion
 
-    #region Public API methods
+    #region Google Photos Library API methods
     public async Task<Result<string>> UploadMediaAsync(string fileFullPah)
     {
         var fileContentResult = await _fileStorage.GetFileBytesAsync(fileFullPah);
@@ -83,16 +83,14 @@ public class GooglePhotosHttpClient(
             { "X-Goog-Upload-Protocol", "raw" }
         };
 
-        var result = await SendWithBearerTokenAsync<string>(
+        return await SendWithBearerTokenAsync<string>(
             requestUri,
             HttpMethod.Post,
             content,            
             additionalHeaders);
-
-        return result;
     }
 
-    public async Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
+    public Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
     {
         var batchCreateRequest = new BatchCreateMediaItemsRequest
         {
@@ -106,15 +104,13 @@ public class GooglePhotosHttpClient(
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}:batchAddMediaItems";
         var content = SerializeToStringContent(batchCreateRequest);
 
-        var batchCreateResponse = await SendWithBearerTokenAsync<BatchCreateMediaItemsResponse>(
+        return SendWithBearerTokenAsync<BatchCreateMediaItemsResponse>(
             requestUri,
             HttpMethod.Post,
             content);
-
-        return batchCreateResponse;
     }
 
-    public async Task<Result<Album>> CreateAlbumAsync(string albumTitle)
+    public Task<Result<Album>> CreateAlbumAsync(string albumTitle)
     {
         var albumRequest = new CreateAlbumRequest()
         {
@@ -127,20 +123,17 @@ public class GooglePhotosHttpClient(
         string requestUri = "https://photoslibrary.googleapis.com/v1/album";
         var content = SerializeToStringContent(albumRequest);
 
-        var createAlbumResponse = await SendWithBearerTokenAsync<Album>(
+        return SendWithBearerTokenAsync<Album>(
             requestUri,
             HttpMethod.Post,
             content);
-
-        return createAlbumResponse;
     }
  
-    public async Task<Result<Album>> GetAlbumAsync(string albumId)
+    public Task<Result<Album>> GetAlbumAsync(string albumId)
     {
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}";
 
-        var getAlbumResponse = await SendWithBearerTokenAsync<Album>(requestUri, HttpMethod.Get);
-        return getAlbumResponse;
+        return SendWithBearerTokenAsync<Album>(requestUri, HttpMethod.Get);
     }
    
     public async Task<Result<Album>> GetAlbumFromTitleAsync(string albumTitle)
@@ -161,13 +154,11 @@ public class GooglePhotosHttpClient(
         return Result<Album>.Success(album);
     }
 
-    public async Task<Result<ListAlbumsResponse>> ListAlbumsAsync()
+    public Task<Result<ListAlbumsResponse>> ListAlbumsAsync()
     {
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/";
 
-        var listAlbumsResponse = await SendWithBearerTokenAsync<ListAlbumsResponse>(requestUri, HttpMethod.Get);
-
-        return listAlbumsResponse;
+        return SendWithBearerTokenAsync<ListAlbumsResponse>(requestUri, HttpMethod.Get);
     }
     #endregion  
 }

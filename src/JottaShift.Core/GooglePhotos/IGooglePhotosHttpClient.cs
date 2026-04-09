@@ -12,7 +12,6 @@ public interface IGooglePhotosHttpClient
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/batchAddMediaItems">
     /// Method: albums.batchAddMediaItems</see>
     /// </summary>
-    /// <returns></returns>
     Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens);
 
     /// <summary>
@@ -29,6 +28,10 @@ public interface IGooglePhotosHttpClient
     /// </summary>
     Task<Result<Album>> GetAlbumAsync(string albumId);
 
+    /// <summary>
+    /// Get an album byt its title.
+    /// Method is internal and not part of the official Google Photos API.
+    /// </summary>
     Task<Result<Album>> GetAlbumFromTitleAsync(string albumTitle);
 
     /// <summary>
