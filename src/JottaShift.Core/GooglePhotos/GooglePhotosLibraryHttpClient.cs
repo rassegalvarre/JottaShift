@@ -6,12 +6,26 @@ using System.Net.Http.Headers;
 
 namespace JottaShift.Core.GooglePhotos;
 
-public class GooglePhotosLibraryHttpClient(
-    IFileStorageService _fileStorage,
-    IHttpClientWrapper _http,
-    IUserCredentialManager _userCredentialManager,
-    ILogger<GooglePhotosLibraryHttpClient> _logger) : IGooglePhotosLibraryHttpClient
+public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
 {
+    private readonly IFileStorageService _fileStorage;
+    private readonly IHttpClientWrapper _http;
+    private readonly IUserCredentialManager _userCredentialManager;
+    private readonly ILogger<GooglePhotosLibraryHttpClient> _logger;
+
+    public GooglePhotosLibraryHttpClient(
+        IFileStorageService fileStorage,
+        IHttpClientWrapper http,
+        IUserCredentialManager userCredentialManager,
+        ILogger<GooglePhotosLibraryHttpClient> logger)
+    {
+        _fileStorage = fileStorage;
+        _http = http;
+        _http.BaseAddress = new Uri(_googlePhotosLibraryApiUri);
+        _userCredentialManager = userCredentialManager;
+        _logger = logger;
+    }
+
     private const string _googlePhotosLibraryApiUri = "https://photoslibrary.googleapis.com/v1/";
 
     #region Private helper methods
@@ -42,7 +56,7 @@ public class GooglePhotosLibraryHttpClient(
             return Result<TResponse>.Failure("Failed to get access token.");
         }
 
-        string requestUri = _googlePhotosLibraryApiUri + endPoint;
+        var requestUri = new Uri(_http.BaseAddress!, endPoint);
         var request = new HttpRequestMessage(httpMethod, requestUri)
         {
             Content = requestContent,
