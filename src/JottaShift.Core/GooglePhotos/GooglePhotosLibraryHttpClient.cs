@@ -6,11 +6,11 @@ using System.Net.Http.Headers;
 
 namespace JottaShift.Core.GooglePhotos;
 
-public class GooglePhotosHttpClient(
+public class GooglePhotosLibraryHttpClient(
     IFileStorageService _fileStorage,
     IHttpClientWrapper _http,
     IUserCredentialManager _userCredentialManager,
-    ILogger<GooglePhotosHttpClient> _logger) : IGooglePhotosHttpClient
+    ILogger<GooglePhotosLibraryHttpClient> _logger) : IGooglePhotosLibraryHttpClient
 {
     #region Private helper methods
     private static StringContent SerializeToStringContent<T>(T obj)

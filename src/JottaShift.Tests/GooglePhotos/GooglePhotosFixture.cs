@@ -15,7 +15,7 @@ public class GooglePhotosFixture : IDisposable
 
     public string ValidPhotoFullPath => Path.Combine(ValidPhotoDirectoryPath, ValidPhotoFileName);
 
-    public GooglePhotosHttpClient CreateGooglePhotosHttpClient(
+    public GooglePhotosLibraryHttpClient CreateGooglePhotosHttpClient(
         IFileStorageService? fileStorage = null,
         IHttpClientWrapper? httpClientWrapper = null,
         IUserCredentialManager? userCredentialManager= null)
@@ -24,17 +24,17 @@ public class GooglePhotosFixture : IDisposable
         httpClientWrapper ??= new Mock<IHttpClientWrapper>().Object;
         userCredentialManager ??= new Mock<IUserCredentialManager>().Object;
 
-        return new GooglePhotosHttpClient(
+        return new GooglePhotosLibraryHttpClient(
             fileStorage,
             httpClientWrapper,
             userCredentialManager,
-            new Mock<ILogger<GooglePhotosHttpClient>>().Object);
+            new Mock<ILogger<GooglePhotosLibraryHttpClient>>().Object);
     }
 
     public GooglePhotosRepository CreateGooglePhotosRepository(
-        IGooglePhotosHttpClient? googlePhotosClient = null)
+        IGooglePhotosLibraryHttpClient? googlePhotosClient = null)
     {
-        googlePhotosClient ??= new Mock<IGooglePhotosHttpClient>().Object;
+        googlePhotosClient ??= new Mock<IGooglePhotosLibraryHttpClient>().Object;
 
         return new GooglePhotosRepository(
             googlePhotosClient,

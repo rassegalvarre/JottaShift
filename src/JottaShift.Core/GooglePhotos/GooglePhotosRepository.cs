@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosRepository(
-    IGooglePhotosHttpClient _googlePhotosClient,
+    IGooglePhotosLibraryHttpClient _googlePhotosClient,
     ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
     public async Task<Result<Album>> GetOrCreateAlbumAsync(string albumTitle)

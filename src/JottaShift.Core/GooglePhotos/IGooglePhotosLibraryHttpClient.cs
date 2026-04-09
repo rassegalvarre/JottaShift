@@ -3,9 +3,11 @@
 namespace JottaShift.Core.GooglePhotos;
 
 /// <summary>
-/// Defines methods for interacting with the Google Photos API via HTTP
+/// Defines methods for interacting with the Google Photos API via HTTP.
+/// <see href="https://developers.google.com/photos/library/guides/get-started-library">
+/// Get started with the Library API</see>
 /// </summary>
-public interface IGooglePhotosHttpClient
+public interface IGooglePhotosLibraryHttpClient
 {
     /// <summary>
     /// Adds a collection of media items to an album using their upload tokens.
