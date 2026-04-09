@@ -1,5 +1,4 @@
-﻿using Google.Apis.PhotosLibrary.v1.Data;
-using JottaShift.Core.GooglePhotos.Models.PhotosLibraryV1Data;
+﻿using JottaShift.Core.GooglePhotos.Models.PhotosLibraryV1Data;
 using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.GooglePhotos;
