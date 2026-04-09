@@ -57,8 +57,9 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
             return Result<TResponse>.Failure("Failed to get access token.");
         }
 
-        // var requestUri = new Uri(_googlePhotosLibraryApiUri, endPoint);
-        var request = new HttpRequestMessage(httpMethod, endpoint)
+        // Add a "./" prefix to ensure the endpoint is treated as relative to the base address
+        // Avoids some issues that can occur with the gRPC transcoded path. https://google.aip.dev/127
+        var request = new HttpRequestMessage(httpMethod, $"./{endpoint}")
         {
             Content = requestContent,
         };
@@ -153,7 +154,7 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
         var content = SerializeToStringContent(batchCreateRequest);
 
         return await SendWithBearerTokenAsync<BatchCreateMediaItemsResponse>(
-            "./mediaItems:batchCreate",
+            "mediaItems:batchCreate",
             HttpMethod.Post, content);
     }
 
