@@ -1,4 +1,4 @@
-﻿using Google.Apis.PhotosLibrary.v1.Data;
+﻿using JottaShift.Core.GooglePhotos.Models.PhotosLibraryV1Data;
 
 namespace JottaShift.Core.GooglePhotos;
 
@@ -10,11 +10,11 @@ public record PhotoUploadResult(string FilePath)
     public string? Url { get; set; }
     public string? StatusMessage { get; set; }
 
-    public void FromNewMediaItemResult(NewMediaItemResult result)
+    public void FromNewMediaItemResult(JS_NewMediaItemResult result)
     {
-        Id = result.MediaItem.Id;
-        Url = result.MediaItem.ProductUrl;
-        StatusMessage = result.Status.Message;
+        Id = result.MediaItem?.Id;
+        Url = result.MediaItem?.ProductUrl;
+        StatusMessage = result.Status?.Message;
     }
 }
 

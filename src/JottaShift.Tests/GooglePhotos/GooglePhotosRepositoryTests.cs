@@ -1,6 +1,6 @@
-﻿using Google.Apis.PhotosLibrary.v1.Data;
-using JottaShift.Core;
+﻿using JottaShift.Core;
 using JottaShift.Core.GooglePhotos;
+using JottaShift.Core.GooglePhotos.Models.PhotosLibraryV1Data;
 using Moq;
 
 namespace JottaShift.Tests.GooglePhotos;
@@ -11,18 +11,17 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task GetOrCreateAlbum_ShouldGetExistingAlbum()
     {
-        Album existingAlbum = new()
+        JS_Album existingAlbum = new()
         {
             Id = "existing-album-id",
             Title = _fixture.TestAlbumName
         };
 
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Success(existingAlbum));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Success(existingAlbum));
 
-        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
-
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosHttpClient.Object);
         var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
         ResultAssert.ValueSuccess(albumResult, existingAlbum);
@@ -31,20 +30,20 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task GetOrCreateAlbum_ShouldCreateNewWhenNoneExist()
     {
-        Album newAlbum = new()
+        JS_Album newAlbum = new()
         {
             Id = "new-album-id",
             Title = _fixture.TestAlbumName
         };
 
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Failure("Not found"));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Failure("Not found"));
 
-        mockGooglePhotosLibraryFacade.Setup(f => f.CreateAlbumAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Success(newAlbum));
+        mockGooglePhotosHttpClient.Setup(f => f.CreateAlbumAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Success(newAlbum));
 
-        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosHttpClient.Object);
 
         var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
@@ -54,14 +53,14 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task GetOrCreateAlbum_ShouldReturnFailure_WhenUnableToCreateNewAlbum()
     {
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Failure("Not found"));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Failure("Not found"));
 
-        mockGooglePhotosLibraryFacade.Setup(f => f.CreateAlbumAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Failure("Cant create"));
+        mockGooglePhotosHttpClient.Setup(f => f.CreateAlbumAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Failure("Cant create"));
 
-        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosHttpClient.Object);
 
         var albumResult = await googlePhotosRepository.GetOrCreateAlbumAsync(_fixture.TestAlbumName);
 
@@ -73,14 +72,14 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task UploadPhotosToAlbumAsync_ShouldReturnFailure_WhenInvalidAlbum()
     {
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Failure("Not found"));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Failure("Not found"));
 
-        mockGooglePhotosLibraryFacade.Setup(f => f.CreateAlbumAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Failure("Not created"));
+        mockGooglePhotosHttpClient.Setup(f => f.CreateAlbumAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Failure("Not created"));
 
-        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosHttpClient.Object);
 
         List<string> filePaths = [ _fixture.ValidPhotoFullPath ];
 
@@ -92,23 +91,21 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task UploadPhotosToAlbumAsync_ShouldReturnFailure_WhenUnableToGetToken()
     {
-        Album existingAlbum = new()
+        JS_Album existingAlbum = new()
         {
             Id = "existing-album-id",
             Title = _fixture.TestAlbumName
         };
 
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Success(existingAlbum));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Success(existingAlbum));
 
-        var mockGooglePhotosClient = new Mock<IGooglePhotosHttpClient>();
-        mockGooglePhotosClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
+        mockGooglePhotosHttpClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<string>.Failure("Token failure"));
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(
-            mockGooglePhotosLibraryFacade.Object,
-            mockGooglePhotosClient.Object);
+            mockGooglePhotosHttpClient.Object);
         
         List<string> filePaths = [_fixture.ValidPhotoFullPath];
 
@@ -120,26 +117,24 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task UploadPhotosToAlbumAsync_ShouldReturnFailure_WhenUnableToAddPhotosToAlbum()
     {
-        Album existingAlbum = new()
+        JS_Album existingAlbum = new()
         {
             Id = "existing-album-id",
             Title = _fixture.TestAlbumName
         };
 
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Success(existingAlbum));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Success(existingAlbum));
 
-        mockGooglePhotosLibraryFacade.Setup(f => f.AddImagesToAlbum(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
-            .ReturnsAsync(Result<BatchCreateMediaItemsResponse>.Failure("Cant add to album"));
+        mockGooglePhotosHttpClient.Setup(f => f.BatchAddMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(Result<JS_BatchCreateMediaItemsResponse>.Failure("Cant add to album"));
 
-        var mockGooglePhotosClient = new Mock<IGooglePhotosHttpClient>();
-        mockGooglePhotosClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
+        mockGooglePhotosHttpClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<string>.Success(Guid.NewGuid().ToString()));
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(
-            mockGooglePhotosLibraryFacade.Object,
-            mockGooglePhotosClient.Object);
+            mockGooglePhotosHttpClient.Object);
 
         List<string> filePaths = [_fixture.ValidPhotoFullPath];
 
@@ -151,17 +146,17 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task UploadPhotosToAlbumAsync_ShouldReturnSuccess_WhenNoFilesProvided()
     {
-        Album existingAlbum = new()
+        JS_Album existingAlbum = new()
         {
             Id = "existing-album-id",
             Title = _fixture.TestAlbumName
         };
 
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Success(existingAlbum));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Success(existingAlbum));
 
-        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosLibraryFacade.Object);
+        var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(mockGooglePhotosHttpClient.Object);
 
         var uploadResult = await googlePhotosRepository.UploadPhotosToAlbumAsync(_fixture.TestAlbumName, []);
 
@@ -172,31 +167,29 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
     [Fact]
     public async Task UploadPhotosToAlbumAsync_ShouldReturnFailure_WhenNoPhotosUploaded()
     {
-        Album existingAlbum = new()
+        JS_Album existingAlbum = new()
         {
             Id = "existing-album-id",
             Title = _fixture.TestAlbumName
         };
 
-        BatchCreateMediaItemsResponse batchCreateResponse = new()
+        JS_BatchCreateMediaItemsResponse batchCreateResponse = new()
         {
             NewMediaItemResults = []
         };
 
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Success(existingAlbum));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Success(existingAlbum));
 
-        var mockGooglePhotosClient = new Mock<IGooglePhotosHttpClient>();
-        mockGooglePhotosClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
+        mockGooglePhotosHttpClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<string>.Success(Guid.NewGuid().ToString()));
 
-        mockGooglePhotosLibraryFacade.Setup(f => f.AddImagesToAlbum(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
-            .ReturnsAsync(Result<BatchCreateMediaItemsResponse>.Success(batchCreateResponse));
+        mockGooglePhotosHttpClient.Setup(f => f.BatchAddMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(Result<JS_BatchCreateMediaItemsResponse>.Success(batchCreateResponse));
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(
-            mockGooglePhotosLibraryFacade.Object,
-            mockGooglePhotosClient.Object);
+            mockGooglePhotosHttpClient.Object);
 
         List<string> filePaths = [ _fixture.ValidPhotoFullPath ];
 
@@ -211,43 +204,40 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
         List<string> filePaths = [_fixture.ValidPhotoFullPath];
         string uploadToken = Guid.NewGuid().ToString();
         
-        Album existingAlbum = new()
+        JS_Album existingAlbum = new()
         {
             Id = "existing-album-id",
             Title = _fixture.TestAlbumName
         };
 
-        BatchCreateMediaItemsResponse batchCreateResponse = new()
+        JS_BatchCreateMediaItemsResponse batchCreateResponse = new()
         {
-            NewMediaItemResults = [.. filePaths.Select(f => new NewMediaItemResult()
+            NewMediaItemResults = [.. filePaths.Select(f => new JS_NewMediaItemResult()
             {
-                MediaItem = new MediaItem()
+                MediaItem = new JS_MediaItem()
                 {
                     Id = f
                 },
                 UploadToken = uploadToken,
-                Status = new Status()
+                Status = new JS_Status()
                 {
                     Message = "Success"
                 }
             })]
         };
 
-        var mockGooglePhotosLibraryFacade = new Mock<IGooglePhotosLibraryFacade>();
-        mockGooglePhotosLibraryFacade.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
-            .ReturnsAsync(Result<Album>.Success(existingAlbum));
+        var mockGooglePhotosHttpClient = new Mock<IGooglePhotosHttpClient>();
+        mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<JS_Album>.Success(existingAlbum));
 
-        var mockGooglePhotosClient = new Mock<IGooglePhotosHttpClient>();
-        mockGooglePhotosClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
+        mockGooglePhotosHttpClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<string>.Success(uploadToken));
 
-        mockGooglePhotosLibraryFacade.Setup(f => f.AddImagesToAlbum(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
-            .ReturnsAsync(Result<BatchCreateMediaItemsResponse>.Success(batchCreateResponse));
+        mockGooglePhotosHttpClient.Setup(f => f.BatchAddMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(Result<JS_BatchCreateMediaItemsResponse>.Success(batchCreateResponse));
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(
-            mockGooglePhotosLibraryFacade.Object,
-            mockGooglePhotosClient.Object);
-
+            mockGooglePhotosHttpClient.Object);
 
         var uploadResult = await googlePhotosRepository.UploadPhotosToAlbumAsync(_fixture.TestAlbumName, filePaths);
         var uploadedPhoto = uploadResult.PhotoUploadResults.First();

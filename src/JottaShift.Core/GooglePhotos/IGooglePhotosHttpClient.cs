@@ -20,13 +20,15 @@ public interface IGooglePhotosHttpClient
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/create">
     /// Method: albums.create</see>
     /// </summary>
-    Task<Result<JS_Album>> CreateAlbumAsync(string albumName);
+    Task<Result<JS_Album>> CreateAlbumAsync(string albumTitle);
 
     /// <summary>
     /// Gets an album by its ID.
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/get">Method: albums.get</see>
     /// </summary>
     Task<Result<JS_Album>> GetAlbumAsync(string albumId);
+
+    Task<Result<JS_Album>> GetAlbumFromTitleAsync(string albumTitle);
 
     /// <summary>
     /// Uploads media to Google storage.
