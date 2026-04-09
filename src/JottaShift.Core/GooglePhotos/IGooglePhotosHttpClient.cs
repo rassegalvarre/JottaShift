@@ -6,9 +6,9 @@
 public interface IGooglePhotosHttpClient
 {
     /// <summary>
-    /// Uploads an image to Google Photos and returns the upload token.
+    /// Uploads media to Google storage.
+    /// <see href="https://developers.google.com/photos/library/guides/upload-media">Upload media docs</see>.
     /// </summary>
-    /// <param name="fileFullPath">Full local path of the file.</param>
-    /// <returns>A Result containing the upload token if successful, or an error message if failed.</returns>
-    Task<Result<string>> UploadPhotoAsync(string fileFullPath);
+    /// <returns>Upload token</returns>
+    Task<Result<string>> UploadMediaAsync(string fileFullPath);
 }

@@ -39,7 +39,7 @@ public class GooglePhotosRepository(
         {
             var result = new PhotoUploadResult(photoPath);
 
-            var tokenResult = await _googlePhotosClient.UploadPhotoAsync(photoPath);
+            var tokenResult = await _googlePhotosClient.UploadMediaAsync(photoPath);
             if (tokenResult.Succeeded && tokenResult.Value is not null)
             {
                 result.UploadToken = tokenResult.Value;

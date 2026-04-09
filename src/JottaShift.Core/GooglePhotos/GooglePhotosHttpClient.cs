@@ -58,7 +58,7 @@ public class GooglePhotosHttpClient(
     /// <remarks>
     /// <see href="https://developers.google.com/photos/library/guides/upload-media">Upload media</see>
     /// </remarks>
-    public async Task<Result<string>> UploadPhotoAsync(string fileFullPah)
+    public async Task<Result<string>> UploadMediaAsync(string fileFullPah)
     {
         var fileContentResult = await _fileStorage.GetFileBytesAsync(fileFullPah);
         var fileNameResult = _fileStorage.GetFileName(fileFullPah);
