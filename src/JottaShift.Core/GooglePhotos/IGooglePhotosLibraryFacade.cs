@@ -8,10 +8,16 @@ namespace JottaShift.Core.GooglePhotos;
 /// Handles service initialization, caching, and provides domain operations.
 /// Registered as a singleton for lazy initialization and service reuse.
 /// </summary>
+[Obsolete("Use IGooglePhotosHttpClient instead")]
 public interface IGooglePhotosLibraryFacade
 {
+    [Obsolete]
     Task<Result<Album>> GetAlbumFromTitleAsync(string albumName);
+
+    [Obsolete]
     Task<Result<Album>> GetAlbumFromIdAsync(string albumId);
+
+    [Obsolete]
     Task<Result<Album>> CreateAlbumAsync(string albumName);
 
     [Obsolete]

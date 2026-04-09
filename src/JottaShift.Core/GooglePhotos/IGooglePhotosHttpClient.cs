@@ -1,5 +1,4 @@
-﻿using Google.Apis.PhotosLibrary.v1.Data;
-using JottaShift.Core.GooglePhotos.Models.Domain;
+﻿using JottaShift.Core.GooglePhotos.Models.PhotosLibraryV1Data;
 
 namespace JottaShift.Core.GooglePhotos;
 
@@ -14,20 +13,20 @@ public interface IGooglePhotosHttpClient
     /// Method: albums.batchAddMediaItems</see>
     /// </summary>
     /// <returns></returns>
-    Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens);
+    Task<Result<JS_BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens);
 
     /// <summary>
     /// Creates a new album.
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/create">
     /// Method: albums.create</see>
     /// </summary>
-    Task<Result<GooglePhotosAlbum>> CreateAlbumAsync(string albumName);
+    Task<Result<JS_Album>> CreateAlbumAsync(string albumName);
 
     /// <summary>
     /// Gets an album by its ID.
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/get">Method: albums.get</see>
     /// </summary>
-    Task<Result<GooglePhotosAlbum>> GetAlbumAsync(string albumId);
+    Task<Result<JS_Album>> GetAlbumAsync(string albumId);
 
     /// <summary>
     /// Uploads media to Google storage.
