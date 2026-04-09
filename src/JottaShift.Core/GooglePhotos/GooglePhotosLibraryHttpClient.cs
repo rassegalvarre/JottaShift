@@ -21,12 +21,12 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
     {
         _fileStorage = fileStorage;
         _http = http;
-        _http.BaseAddress = new Uri(_googlePhotosLibraryApiUri);
+        _http.BaseAddress = _googlePhotosLibraryApiUri;
         _userCredentialManager = userCredentialManager;
         _logger = logger;
     }
 
-    private const string _googlePhotosLibraryApiUri = "https://photoslibrary.googleapis.com/v1/";
+    private readonly Uri _googlePhotosLibraryApiUri = new("https://photoslibrary.googleapis.com/v1/");
 
     #region Private helper methods
     private static StringContent SerializeToStringContent<T>(T obj)
@@ -56,7 +56,7 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
             return Result<TResponse>.Failure("Failed to get access token.");
         }
 
-        var requestUri = new Uri(_http.BaseAddress!, endPoint);
+        var requestUri = new Uri(_googlePhotosLibraryApiUri, endPoint);
         var request = new HttpRequestMessage(httpMethod, requestUri)
         {
             Content = requestContent,
