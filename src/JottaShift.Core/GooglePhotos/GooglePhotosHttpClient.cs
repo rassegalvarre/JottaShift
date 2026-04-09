@@ -150,29 +150,32 @@ public class GooglePhotosHttpClient(
         var getAlbumResponse = await SendWithBearerTokenAsync<Album>(requestUri, HttpMethod.Get);
         return getAlbumResponse;
     }
-
-    // TODO: Extract List to own method
-    /// <remarks>
-    /// Uses <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/list">Method: albums.list</see>
-    /// </remarks>
+   
     public async Task<Result<Album>> GetAlbumFromTitleAsync(string albumTitle)
-    {
-        string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/";
+    {       
+        var listAlbumsResponse = await ListAlbumsAsync();
 
-        var getAlbumsResponse = await SendWithBearerTokenAsync<ListAlbumsResponse>(requestUri, HttpMethod.Get);
-
-        if (!getAlbumsResponse.Succeeded || getAlbumsResponse.Value is null)
+        if (!listAlbumsResponse.Succeeded || listAlbumsResponse.Value is null)
         {
-            return Result<Album>.Failure(getAlbumsResponse.ErrorMessage ?? "Failed to get albums");
+            return listAlbumsResponse.ForwardFailure<Album>();
         }
 
-        var album = getAlbumsResponse.Value.Albums?.FirstOrDefault(a => a.Title == albumTitle);
+        var album = listAlbumsResponse.Value.Albums?.FirstOrDefault(a => a.Title == albumTitle);
         if (album == null)
         {
             return Result<Album>.Failure($"Album with title '{albumTitle}' not found");
         }
 
         return Result<Album>.Success(album);
+    }
+
+    public async Task<Result<ListAlbumsResponse>> ListAlbumsAsync()
+    {
+        string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/";
+
+        var listAlbumsResponse = await SendWithBearerTokenAsync<ListAlbumsResponse>(requestUri, HttpMethod.Get);
+
+        return listAlbumsResponse;
     }
     #endregion  
 }

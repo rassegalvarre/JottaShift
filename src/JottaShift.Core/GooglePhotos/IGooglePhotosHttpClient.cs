@@ -24,15 +24,24 @@ public interface IGooglePhotosHttpClient
 
     /// <summary>
     /// Gets an album by its ID.
-    /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/get">Method: albums.get</see>
+    /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/get">
+    /// Method: albums.get</see>
     /// </summary>
     Task<Result<Album>> GetAlbumAsync(string albumId);
 
     Task<Result<Album>> GetAlbumFromTitleAsync(string albumTitle);
 
     /// <summary>
+    /// List all available albums.
+    /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/list">
+    /// Method: albums.list</see>
+    /// </summary>
+    Task<Result<ListAlbumsResponse>> ListAlbumsAsync();
+
+    /// <summary>
     /// Uploads media to Google storage.
-    /// <see href="https://developers.google.com/photos/library/guides/upload-media">Upload media docs</see>.
+    /// <see href="https://developers.google.com/photos/library/guides/upload-media">
+    /// Upload media docs</see>.
     /// </summary>
     /// <returns>Upload token</returns>
     Task<Result<string>> UploadMediaAsync(string fileFullPath);
