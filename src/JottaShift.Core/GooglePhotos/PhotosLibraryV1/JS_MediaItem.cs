@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace JottaShift.Core.GooglePhotos.Models.PhotosLibraryV1Data;
+namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
 public class JS_MediaItem
 {

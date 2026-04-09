@@ -1,6 +1,6 @@
 ﻿using JottaShift.Core;
 using JottaShift.Core.GooglePhotos;
-using JottaShift.Core.GooglePhotos.Models.PhotosLibraryV1Data;
+using JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 using Moq;
 
 namespace JottaShift.Tests.GooglePhotos;
