@@ -13,5 +13,7 @@ public interface IGooglePhotosLibraryFacade
     Task<Result<Album>> GetAlbumFromTitleAsync(string albumName);
     Task<Result<Album>> GetAlbumFromIdAsync(string albumId);
     Task<Result<Album>> CreateAlbumAsync(string albumName);
+
+    [Obsolete]
     Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens);
 }

@@ -1,6 +1,8 @@
 ﻿using Google.Apis.PhotosLibrary.v1.Data;
 using JottaShift.Core.FileStorage;
 using JottaShift.Core.GooglePhotos.Models.Api;
+using JottaShift.Core.GooglePhotos.Models.Domain;
+using JottaShift.Core.GooglePhotos.Models.PhotosLibraryApi;
 using JottaShift.Core.HttpClientWrapper;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
@@ -13,6 +15,7 @@ public class GooglePhotosHttpClient(
     IUserCredentialManager _userCredentialManager,
     ILogger<GooglePhotosHttpClient> _logger) : IGooglePhotosHttpClient, IGooglePhotosLibraryFacade
 {
+    #region Private helper methods
     private static StringContent SerializeToStringContent<T>(T obj)
     {
         var json = System.Text.Json.JsonSerializer.Serialize(obj);
@@ -54,10 +57,9 @@ public class GooglePhotosHttpClient(
         var response = await _http.SendAsync<TResponse>(request);
         return response.ToResult();
     }
+    #endregion
 
-    /// <remarks>
-    /// <see href="https://developers.google.com/photos/library/guides/upload-media">Upload media</see>
-    /// </remarks>
+    #region Public API methods
     public async Task<Result<string>> UploadMediaAsync(string fileFullPah)
     {
         var fileContentResult = await _fileStorage.GetFileBytesAsync(fileFullPah);
@@ -95,10 +97,7 @@ public class GooglePhotosHttpClient(
 
 
 
-    /// <remarks>
-    /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/batchAddMediaItems">Method: albums.batchAddMediaItems</see>
-    /// </remarks>
-    public async Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens)
+    public async Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
     {
         var batchCreateRequest = new BatchCreateMediaItemsRequest
         {
@@ -123,11 +122,11 @@ public class GooglePhotosHttpClient(
     /// <remarks>
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/create">Method: albums.create</see>
     /// </remarks>
-    public async Task<Result<Album>> CreateAlbumAsync(string albumName)
+    public async Task<Result<GooglePhotosAlbum>> CreateAlbumAsync(string albumName)
     {
-        var albumRequest = new CreateAlbumRequest()
+        var albumRequest = new AlbumsCreateRequest()
         {
-            Album = new Google.Apis.PhotosLibrary.v1.Data.Album()
+            Album = new GooglePhotosAlbum()
             {
                 Title = albumName
             }
@@ -136,7 +135,7 @@ public class GooglePhotosHttpClient(
         string requestUri = "https://photoslibrary.googleapis.com/v1/album";
         var content = SerializeToStringContent(albumRequest);
 
-        var createAlbumResponse = await SendWithBearerTokenAsync<Album>(
+        var createAlbumResponse = await SendWithBearerTokenAsync<GooglePhotosAlbum>(
             requestUri,
             HttpMethod.Post,
             content);
@@ -182,4 +181,19 @@ public class GooglePhotosHttpClient(
             Title = album.Title
         });
     }
+    #endregion
+
+    #region Obsolete API methods
+    [Obsolete("Use BatchAddMediaItemsAsync instead")]
+    public Task<Result<BatchCreateMediaItemsResponse>> AddImagesToAlbum(string albumId, IEnumerable<string> uploadTokens)
+    {
+        throw new NotImplementedException();
+    }
+
+    [Obsolete("Use CreateAlbumAsync instead")]
+    Task<Result<Album>> IGooglePhotosLibraryFacade.CreateAlbumAsync(string albumName)
+    {
+        throw new NotImplementedException();
+    }
+    #endregion
 }
