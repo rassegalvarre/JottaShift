@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class JS_SimpleMediaItem
+public class SimpleMediaItem
 {
     [JsonPropertyName("uploadToken")]
     public string? UploadToken { get; set; }

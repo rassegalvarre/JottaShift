@@ -2,10 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class JS_ListAlbumsResponse
+public class ListAlbumsResponse
 {
     [JsonPropertyName("albums")]
-    public IList<JS_Album>? Albums { get; set; }
+    public IList<Album>? Albums { get; set; }
 
     [JsonPropertyName("nextPageToken")]
     public string? NextPageToken { get; set; }

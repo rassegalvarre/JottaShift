@@ -2,13 +2,13 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class JS_NewMediaItemResult
+public class NewMediaItemResult
 {
     [JsonPropertyName("mediaItem")]
-    public JS_MediaItem? MediaItem { get; set; }
+    public MediaItem? MediaItem { get; set; }
 
     [JsonPropertyName("status")]
-    public JS_Status? Status { get; set; }
+    public Status? Status { get; set; }
 
     [JsonPropertyName("uploadToken")]
     public string? UploadToken { get; set; }

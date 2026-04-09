@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class JS_MediaMetadata
+public class MediaMetadata
 {
     [JsonPropertyName("creationTime")]
     public string? CreationTime { get; set; }
@@ -14,8 +14,8 @@ public class JS_MediaMetadata
     public string? Height { get; set; }
 
     [JsonPropertyName("photo")]
-    public JS_Photo? Photo { get; set; }
+    public Photo? Photo { get; set; }
 
     [JsonPropertyName("video")]
-    public JS_Video? Video { get; set; }
+    public Video? Video { get; set; }
 }

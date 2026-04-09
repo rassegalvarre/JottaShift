@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class JS_Video
+public class Video
 {
     [JsonPropertyName("cameraMake")]
     public string? CameraMake { get; set; }

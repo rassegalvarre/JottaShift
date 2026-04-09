@@ -7,7 +7,7 @@ public class GooglePhotosRepository(
     IGooglePhotosHttpClient _googlePhotosClient,
     ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
-    public async Task<Result<JS_Album>> GetOrCreateAlbumAsync(string albumTitle)
+    public async Task<Result<Album>> GetOrCreateAlbumAsync(string albumTitle)
     {
         var albumResult = await _googlePhotosClient.GetAlbumFromTitleAsync(albumTitle);
         if (albumResult.Succeeded && albumResult.Value is not null)

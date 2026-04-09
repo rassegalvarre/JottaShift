@@ -2,10 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class JS_ShareInfo
+public class ShareInfo
 {
     [JsonPropertyName("sharedAlbumOptions")]
-    public JS_SharedAlbumOptions? SharedAlbumOptions { get; set; }
+    public SharedAlbumOptions? SharedAlbumOptions { get; set; }
 
     [JsonPropertyName("shareableUrl")]
     public string? ShareableUrl { get; set; }

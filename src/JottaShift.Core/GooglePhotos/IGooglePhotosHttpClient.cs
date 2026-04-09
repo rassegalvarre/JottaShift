@@ -13,22 +13,22 @@ public interface IGooglePhotosHttpClient
     /// Method: albums.batchAddMediaItems</see>
     /// </summary>
     /// <returns></returns>
-    Task<Result<JS_BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens);
+    Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens);
 
     /// <summary>
     /// Creates a new album.
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/create">
     /// Method: albums.create</see>
     /// </summary>
-    Task<Result<JS_Album>> CreateAlbumAsync(string albumTitle);
+    Task<Result<Album>> CreateAlbumAsync(string albumTitle);
 
     /// <summary>
     /// Gets an album by its ID.
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/get">Method: albums.get</see>
     /// </summary>
-    Task<Result<JS_Album>> GetAlbumAsync(string albumId);
+    Task<Result<Album>> GetAlbumAsync(string albumId);
 
-    Task<Result<JS_Album>> GetAlbumFromTitleAsync(string albumTitle);
+    Task<Result<Album>> GetAlbumFromTitleAsync(string albumTitle);
 
     /// <summary>
     /// Uploads media to Google storage.

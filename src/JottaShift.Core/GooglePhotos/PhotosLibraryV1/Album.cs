@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class JS_Album
+public class Album
 {
     [JsonPropertyName("id")]
     public string? Id { get; set; }
@@ -17,7 +17,7 @@ public class JS_Album
     public bool? IsWriteable { get; set; }
 
     [JsonPropertyName("shareInfo")]
-    public JS_ShareInfo? ShareInfo { get; set; }
+    public ShareInfo? ShareInfo { get; set; }
 
     [JsonPropertyName("mediaItemsCount")]
     public string? MediaItemsCount { get; set; }

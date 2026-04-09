@@ -94,21 +94,21 @@ public class GooglePhotosHttpClient(
 
 
 
-    public async Task<Result<JS_BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
+    public async Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
     {
-        var batchCreateRequest = new JS_BatchCreateMediaItemsRequest
+        var batchCreateRequest = new BatchCreateMediaItemsRequest
         {
             AlbumId = albumId,
-            NewMediaItems = [.. uploadTokens.Select(token => new JS_NewMediaItem
+            NewMediaItems = [.. uploadTokens.Select(token => new NewMediaItem
             {
-                SimpleMediaItem = new JS_SimpleMediaItem { UploadToken = token }
+                SimpleMediaItem = new SimpleMediaItem { UploadToken = token }
             })]
         };
 
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}:batchAddMediaItems";
         var content = SerializeToStringContent(batchCreateRequest);
 
-        var batchCreateResponse = await SendWithBearerTokenAsync<JS_BatchCreateMediaItemsResponse>(
+        var batchCreateResponse = await SendWithBearerTokenAsync<BatchCreateMediaItemsResponse>(
             requestUri,
             HttpMethod.Post,
             content);
@@ -119,11 +119,11 @@ public class GooglePhotosHttpClient(
     /// <remarks>
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/create">Method: albums.create</see>
     /// </remarks>
-    public async Task<Result<JS_Album>> CreateAlbumAsync(string albumTitle)
+    public async Task<Result<Album>> CreateAlbumAsync(string albumTitle)
     {
-        var albumRequest = new JS_CreateAlbumRequest()
+        var albumRequest = new CreateAlbumRequest()
         {
-            Album = new JS_Album()
+            Album = new Album()
             {
                 Title = albumTitle
             }
@@ -132,7 +132,7 @@ public class GooglePhotosHttpClient(
         string requestUri = "https://photoslibrary.googleapis.com/v1/album";
         var content = SerializeToStringContent(albumRequest);
 
-        var createAlbumResponse = await SendWithBearerTokenAsync<JS_Album>(
+        var createAlbumResponse = await SendWithBearerTokenAsync<Album>(
             requestUri,
             HttpMethod.Post,
             content);
@@ -143,11 +143,11 @@ public class GooglePhotosHttpClient(
     /// <remarks>
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/get">Method: albums.get</see>
     /// </remarks>
-    public async Task<Result<JS_Album>> GetAlbumAsync(string albumId)
+    public async Task<Result<Album>> GetAlbumAsync(string albumId)
     {
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}";
 
-        var getAlbumResponse = await SendWithBearerTokenAsync<JS_Album>(requestUri, HttpMethod.Get);
+        var getAlbumResponse = await SendWithBearerTokenAsync<Album>(requestUri, HttpMethod.Get);
         return getAlbumResponse;
     }
 
@@ -155,24 +155,24 @@ public class GooglePhotosHttpClient(
     /// <remarks>
     /// Uses <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/list">Method: albums.list</see>
     /// </remarks>
-    public async Task<Result<JS_Album>> GetAlbumFromTitleAsync(string albumTitle)
+    public async Task<Result<Album>> GetAlbumFromTitleAsync(string albumTitle)
     {
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/";
 
-        var getAlbumsResponse = await SendWithBearerTokenAsync<JS_ListAlbumsResponse>(requestUri, HttpMethod.Get);
+        var getAlbumsResponse = await SendWithBearerTokenAsync<ListAlbumsResponse>(requestUri, HttpMethod.Get);
 
         if (!getAlbumsResponse.Succeeded || getAlbumsResponse.Value is null)
         {
-            return Result<JS_Album>.Failure(getAlbumsResponse.ErrorMessage ?? "Failed to get albums");
+            return Result<Album>.Failure(getAlbumsResponse.ErrorMessage ?? "Failed to get albums");
         }
 
         var album = getAlbumsResponse.Value.Albums?.FirstOrDefault(a => a.Title == albumTitle);
         if (album == null)
         {
-            return Result<JS_Album>.Failure($"Album with title '{albumTitle}' not found");
+            return Result<Album>.Failure($"Album with title '{albumTitle}' not found");
         }
 
-        return Result<JS_Album>.Success(album);
+        return Result<Album>.Success(album);
     }
     #endregion  
 }
