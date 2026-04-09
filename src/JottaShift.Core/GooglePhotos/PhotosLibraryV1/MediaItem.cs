@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class MediaItem
+public record MediaItem
 {
     [JsonPropertyName("baseUrl")]
     public string? BaseUrl { get; set; }

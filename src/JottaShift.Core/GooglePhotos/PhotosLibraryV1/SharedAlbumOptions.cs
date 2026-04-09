@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class SharedAlbumOptions
+public record SharedAlbumOptions
 {
     [JsonPropertyName("isCollaborative")]
     public bool? IsCollaborative { get; set; }

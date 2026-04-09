@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class ShareInfo
+public record ShareInfo
 {
     [JsonPropertyName("sharedAlbumOptions")]
     public SharedAlbumOptions? SharedAlbumOptions { get; set; }

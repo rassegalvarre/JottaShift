@@ -121,14 +121,19 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
             HttpMethod.Post, content);
     }
 
-    public Task<Result> BatchAddMediaItemsAsync(string albumId, BatchCreateMediaItemsResponse createMediaItemsResponse)
+    public async Task<Result> BatchAddMediaItemsAsync(string albumId, BatchCreateMediaItemsResponse createMediaItemsResponse)
     {
-        var mediaItemIds = createMediaItemsResponse.NewMediaItemResults?
+        if (createMediaItemsResponse.NewMediaItemResults is null)
+        {
+            return Result.Failure("Media item collection is empty");
+        }
+
+        var mediaItemIds = createMediaItemsResponse.NewMediaItemResults
            .Where(r => r.MediaItem?.Id is not null)
            .Select(r => r.MediaItem!.Id!)
-           .ToList() ?? []; // TODO: Refactor to avoid nullability issues
+           .ToList();
 
-        return BatchAddMediaItemsAsync(albumId, mediaItemIds);
+        return await BatchAddMediaItemsAsync(albumId, mediaItemIds);
     }
 
     public async Task<Result<BatchCreateMediaItemsResponse>> BatchCreateMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)

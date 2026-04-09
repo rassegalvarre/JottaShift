@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class BatchCreateMediaItemsRequest
+public record BatchCreateMediaItemsRequest
 {
     [JsonPropertyName("albumId")]
     public string? AlbumId { get; set; }

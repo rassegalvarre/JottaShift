@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class ContributorInfo
+public record ContributorInfo
 {
     [JsonPropertyName("profilePictureBaseUrl")]
     public string? ProfilePictureBaseUrl { get; set; }

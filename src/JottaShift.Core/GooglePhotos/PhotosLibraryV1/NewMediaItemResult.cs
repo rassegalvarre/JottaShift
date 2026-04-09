@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class NewMediaItemResult
+public record NewMediaItemResult
 {
     [JsonPropertyName("mediaItem")]
     public MediaItem? MediaItem { get; set; }

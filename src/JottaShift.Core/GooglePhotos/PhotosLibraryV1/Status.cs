@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class Status
+public record Status
 {
     [JsonPropertyName("code")]
     public int? Code { get; set; }

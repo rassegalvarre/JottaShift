@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 
-public class Album
+public record Album
 {
     [JsonPropertyName("id")]
     public string? Id { get; set; }
