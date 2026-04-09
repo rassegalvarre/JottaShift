@@ -146,11 +146,11 @@ public class GooglePhotosHttpClient(
     /// <remarks>
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/get">Method: albums.get</see>
     /// </remarks>
-    public async Task<Result<Album>> GetAlbumFromIdAsync(string albumId)
+    public async Task<Result<GooglePhotosAlbum>> GetAlbumAsync(string albumId)
     {
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}";
 
-        var getAlbumResponse = await SendWithBearerTokenAsync<Album>(requestUri, HttpMethod.Get);
+        var getAlbumResponse = await SendWithBearerTokenAsync<GooglePhotosAlbum>(requestUri, HttpMethod.Get);
 
         return getAlbumResponse;
     }
@@ -192,6 +192,12 @@ public class GooglePhotosHttpClient(
 
     [Obsolete("Use CreateAlbumAsync instead")]
     Task<Result<Album>> IGooglePhotosLibraryFacade.CreateAlbumAsync(string albumName)
+    {
+        throw new NotImplementedException();
+    }
+
+    [Obsolete("Use GetAlbumAsync instead")]
+    public Task<Result<Album>> GetAlbumFromIdAsync(string albumId)
     {
         throw new NotImplementedException();
     }
