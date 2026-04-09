@@ -22,7 +22,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
         var googlePhotosHttpClient = _fixture.CreateGooglePhotosHttpClient(
             fileStorage: mockFileStorage.Object);
 
-        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
+        var uploadPhotoResult = await googlePhotosHttpClient.UploadMediaAsync(_fixture.ValidPhotoFullPath);
 
         ResultAssert.ValueFailure(uploadPhotoResult);
     }
@@ -45,7 +45,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
             fileStorage: mockFileStorage.Object,
             userCredentialManager: mockUserCredentialManager.Object);
 
-        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
+        var uploadPhotoResult = await googlePhotosHttpClient.UploadMediaAsync(_fixture.ValidPhotoFullPath);
         
         ResultAssert.ValueFailure(uploadPhotoResult);
     }
@@ -74,7 +74,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
             userCredentialManager: mockUserCredentialManager.Object,
             httpClientWrapper: mockHttpClientWrapper.Object);
 
-        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
+        var uploadPhotoResult = await googlePhotosHttpClient.UploadMediaAsync(_fixture.ValidPhotoFullPath);
 
         ResultAssert.ValueFailure(uploadPhotoResult);
     }
@@ -105,7 +105,7 @@ public class GooglePhotosHttpClientTests(GooglePhotosFixture _fixture) : IClassF
             userCredentialManager: mockUserCredentialManager.Object,
             httpClientWrapper: mockHttpClientWrapper.Object);
 
-        var uploadPhotoResult = await googlePhotosHttpClient.UploadPhotoAsync(_fixture.ValidPhotoFullPath);
+        var uploadPhotoResult = await googlePhotosHttpClient.UploadMediaAsync(_fixture.ValidPhotoFullPath);
 
         ResultAssert.ValueSuccess(uploadPhotoResult, expectedUploadToken);
     }

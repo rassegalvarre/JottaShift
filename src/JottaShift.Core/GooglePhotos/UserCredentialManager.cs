@@ -1,5 +1,4 @@
 ﻿using Google.Apis.Auth.OAuth2;
-using Google.Apis.PhotosLibrary.v1;
 using JottaShift.Core.Configuration;
 using System.Text.Json;
 
@@ -13,8 +12,8 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
         "Google.Apis.Auth");
 
     private readonly string[] _scopes = [
-        PhotosLibraryService.Scope.PhotoslibraryAppendonly,
-        PhotosLibraryService.Scope.PhotoslibraryReadonlyAppcreateddata
+        "https://www.googleapis.com/auth/photoslibrary.appendonly",
+        "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata"
     ];
 
     private UserCredential? _userCredential;

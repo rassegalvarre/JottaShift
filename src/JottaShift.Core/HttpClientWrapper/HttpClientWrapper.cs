@@ -5,8 +5,13 @@ namespace JottaShift.Core.HttpClientWrapper;
 
 public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _logger) : IHttpClientWrapper
 {
-    public Uri? BaseAddress { get; set; }
-    public HttpClient HttpClient=> _http;
+    public Uri? BaseAddress
+    {
+        get => _http.BaseAddress;        
+        set => _http.BaseAddress = value;        
+    }
+
+    public HttpClient HttpClient => _http;
 
     public async Task<HttpSendResult<T>> SendAsync<T>(HttpRequestMessage request)
     {
@@ -62,11 +67,6 @@ public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _log
         HttpResponseMessage response;
         T? data;
 
-        if (BaseAddress != null)
-        {
-            requestUri = new Uri(BaseAddress, requestUri).ToString();
-        }
-
         try
         {
             response = await _http.GetAsync(requestUri);
@@ -92,6 +92,6 @@ public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _log
             return new HttpGetResult<T>(System.Net.HttpStatusCode.InternalServerError, ex.Message);
         }
 
-        return new HttpGetResult<T>(response.StatusCode, data);
+        return new HttpGetResult<T>(response.StatusCode, data);   
     }
 }

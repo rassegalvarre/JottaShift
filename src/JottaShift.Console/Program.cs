@@ -57,8 +57,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IFileSystem, FileSystem>();
         services.AddScoped<IFileWriterFactory, FileWriterFactory>();
         services.AddScoped<IFileStorageService, FileStorageService>();
-        services.AddSingleton<IGooglePhotosLibraryFacade, GooglePhotosLibraryFacade>();
-        services.AddScoped<IGooglePhotosHttpClient, GooglePhotosHttpClient>();
+        services.AddScoped<IGooglePhotosLibraryHttpClient, GooglePhotosLibraryHttpClient>();
         services.AddScoped<IGooglePhotosRepository, GooglePhotosRepository>();
         services.AddScoped<IUserCredentialManager, UserCredentialManager>();
         services.AddScoped<IJottacloudHttpClient, JottacloudHttpClient>();

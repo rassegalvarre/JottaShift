@@ -1,28 +1,27 @@
-﻿using Google.Apis.PhotosLibrary.v1.Data;
+﻿using JottaShift.Core.GooglePhotos.PhotosLibraryV1;
 using Microsoft.Extensions.Logging;
 
 namespace JottaShift.Core.GooglePhotos;
 
 public class GooglePhotosRepository(
-    IGooglePhotosLibraryFacade _photosLibraryFacade,
-    IGooglePhotosHttpClient _googlePhotosClient,
+    IGooglePhotosLibraryHttpClient _googlePhotosClient,
     ILogger<GooglePhotosRepository> _logger) : IGooglePhotosRepository
 {
-    public async Task<Result<Album>> GetOrCreateAlbumAsync(string albumName)
+    public async Task<Result<Album>> GetOrCreateAlbumAsync(string albumTitle)
     {
-        var albumResult = await _photosLibraryFacade.GetAlbumFromTitleAsync(albumName);
+        var albumResult = await _googlePhotosClient.GetAlbumFromTitleAsync(albumTitle);
         if (albumResult.Succeeded && albumResult.Value is not null)
         {
             return albumResult;
         }
 
-        return await _photosLibraryFacade.CreateAlbumAsync(albumName);
+        return await _googlePhotosClient.CreateAlbumAsync(albumTitle);
     }
  
     public async Task<AlbumUploadResult> UploadPhotosToAlbumAsync(string albumName, IEnumerable<string> photosFullPaths)
     {
         var albumResult = await GetOrCreateAlbumAsync(albumName);
-        if (!albumResult.Succeeded || albumResult.Value is null)
+        if (!albumResult.Succeeded || albumResult.Value?.Id is null)
         {
             _logger.LogError("Failed to get or create album {AlbumName}. Error: {ErrorMessage}", albumName, albumResult.ErrorMessage);
             return AlbumUploadResult.FromFailedResult(albumResult, albumName);
@@ -39,7 +38,7 @@ public class GooglePhotosRepository(
         {
             var result = new PhotoUploadResult(photoPath);
 
-            var tokenResult = await _googlePhotosClient.UploadPhotoAsync(photoPath);
+            var tokenResult = await _googlePhotosClient.UploadMediaAsync(photoPath);
             if (tokenResult.Succeeded && tokenResult.Value is not null)
             {
                 result.UploadToken = tokenResult.Value;
@@ -61,9 +60,9 @@ public class GooglePhotosRepository(
             return AlbumUploadResult.Failure(albumName, "Failed to upload any photos", photoUploadResults);
         }
 
-        var batchCreateResult = await _photosLibraryFacade.AddImagesToAlbum(
+        var batchCreateResult = await _googlePhotosClient.BatchCreateMediaItemsAsync(
             albumResult.Value.Id, uploadTokens);
-        if (!batchCreateResult.Succeeded || batchCreateResult.Value is null)
+        if (!batchCreateResult.Succeeded || batchCreateResult.Value?.NewMediaItemResults is null)
         {
             _logger.LogError("Failed to add images to album {AlbumName}. Error: {ErrorMessage}", albumName, batchCreateResult.ErrorMessage);
             return AlbumUploadResult.FromFailedResult(batchCreateResult, albumName, photoUploadResults);
