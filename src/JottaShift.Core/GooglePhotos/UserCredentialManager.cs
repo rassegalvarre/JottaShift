@@ -72,6 +72,11 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
                 _scopes,
                 "user",
                 CancellationToken.None);
+
+            if (newCredentials.Token.IsStale)
+            {
+                bool refreshed = await newCredentials.RefreshTokenAsync(CancellationToken.None);
+            }
         }
         catch (Exception ex)
         {
