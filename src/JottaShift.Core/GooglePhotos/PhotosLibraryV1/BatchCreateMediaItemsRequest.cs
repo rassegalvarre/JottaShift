@@ -9,4 +9,7 @@ public class BatchCreateMediaItemsRequest
 
     [JsonPropertyName("newMediaItems")]
     public IList<NewMediaItem>? NewMediaItems { get; set; }
+
+    [JsonPropertyName("albumPosition")]
+    public AlbumPosition? AlbumPosition { get; set; }
 }

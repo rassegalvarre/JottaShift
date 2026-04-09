@@ -14,7 +14,21 @@ public interface IGooglePhotosLibraryHttpClient
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/batchAddMediaItems">
     /// Method: albums.batchAddMediaItems</see>
     /// </summary>
-    Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens);
+    Task<Result> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> mediaIds);
+
+    /// <summary>
+    /// Adds a collection of media items to an album using <see cref="BatchCreateMediaItemsResponse"/>.
+    /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/batchAddMediaItems">
+    /// Method: albums.batchAddMediaItems</see>
+    /// </summary>
+    Task<Result> BatchAddMediaItemsAsync(string albumId, BatchCreateMediaItemsResponse createMediaItemsResponse);
+
+    /// <summary>
+    /// Creates a collection of media items in a library and adds them to an album.
+    /// <see href="https://developers.google.com/photos/library/reference/rest/v1/mediaItems/batchCreate">
+    /// Method: mediaItems.batchCreate</see>
+    /// </summary>
+    Task<Result<BatchCreateMediaItemsResponse>> BatchCreateMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens);
 
     /// <summary>
     /// Creates a new album.

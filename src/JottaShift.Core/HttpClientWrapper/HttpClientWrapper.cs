@@ -1,13 +1,17 @@
 ﻿using Microsoft.Extensions.Logging;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace JottaShift.Core.HttpClientWrapper;
 
 public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _logger) : IHttpClientWrapper
 {
-    public Uri? BaseAddress { get; set; }
-    public HttpClient HttpClient=> _http;
+    public Uri? BaseAddress
+    {
+        get => _http.BaseAddress;        
+        set => _http.BaseAddress = value;        
+    }
+
+    public HttpClient HttpClient => _http;
 
     public async Task<HttpSendResult<T>> SendAsync<T>(HttpRequestMessage request)
     {

@@ -27,6 +27,7 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
     }
 
     private readonly Uri _googlePhotosLibraryApiUri = new("https://photoslibrary.googleapis.com/v1/");
+    private const int _maxItemsPerCall = 50;
 
     #region Private helper methods
     private static StringContent SerializeToStringContent<T>(T obj)
@@ -44,7 +45,7 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
     }
 
     private async Task<Result<TResponse>> SendWithBearerTokenAsync<TResponse>(
-        string endPoint,
+        string endpoint,
         HttpMethod httpMethod,
         HttpContent? requestContent = null,
         Dictionary<string, string>? additionalHeaders = null)
@@ -56,8 +57,8 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
             return Result<TResponse>.Failure("Failed to get access token.");
         }
 
-        var requestUri = new Uri(_googlePhotosLibraryApiUri, endPoint);
-        var request = new HttpRequestMessage(httpMethod, requestUri)
+        // var requestUri = new Uri(_googlePhotosLibraryApiUri, endPoint);
+        var request = new HttpRequestMessage(httpMethod, endpoint)
         {
             Content = requestContent,
         };
@@ -103,21 +104,56 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
             content, additionalHeaders);
     }
 
-    public Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
+    public async Task<Result> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> mediaIds)
     {
+        if (mediaIds.Count() > _maxItemsPerCall)
+        {
+            return Result.Failure($"Cannot add more than {_maxItemsPerCall} media items in a single call.");
+        }
+
+        var batchAddRequest = new BatchAddMediaItemsRequest
+        {
+            MediaItemIds = [.. mediaIds]
+        };
+        var content = SerializeToStringContent(batchAddRequest);
+        return await SendWithBearerTokenAsync<string>($"albums/{albumId}:batchAddMediaItems",
+            HttpMethod.Post, content);
+    }
+
+    public Task<Result> BatchAddMediaItemsAsync(string albumId, BatchCreateMediaItemsResponse createMediaItemsResponse)
+    {
+        var mediaItemIds = createMediaItemsResponse.NewMediaItemResults?
+           .Where(r => r.MediaItem?.Id is not null)
+           .Select(r => r.MediaItem!.Id!)
+           .ToList() ?? []; // TODO: Refactor to avoid nullability issues
+
+        return BatchAddMediaItemsAsync(albumId, mediaItemIds);
+    }
+
+    public async Task<Result<BatchCreateMediaItemsResponse>> BatchCreateMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
+    {
+        if (uploadTokens.Count() > _maxItemsPerCall)
+        {
+            return Result<BatchCreateMediaItemsResponse>.Failure($"Cannot add more than {_maxItemsPerCall} media items in a single call.");
+        }
+
         var batchCreateRequest = new BatchCreateMediaItemsRequest
         {
             AlbumId = albumId,
             NewMediaItems = [.. uploadTokens.Select(token => new NewMediaItem
             {
                 SimpleMediaItem = new SimpleMediaItem { UploadToken = token }
-            })]
+            })],
+            AlbumPosition = new AlbumPosition()
+            {
+                Position = PositionType.POSITION_TYPE_UNSPECIFIED
+            }
         };
 
         var content = SerializeToStringContent(batchCreateRequest);
 
-        return SendWithBearerTokenAsync<BatchCreateMediaItemsResponse>(
-            $"albums/{albumId}:batchAddMediaItems",
+        return await SendWithBearerTokenAsync<BatchCreateMediaItemsResponse>(
+            "./mediaItems:batchCreate",
             HttpMethod.Post, content);
     }
 

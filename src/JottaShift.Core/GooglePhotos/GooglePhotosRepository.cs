@@ -60,7 +60,7 @@ public class GooglePhotosRepository(
             return AlbumUploadResult.Failure(albumName, "Failed to upload any photos", photoUploadResults);
         }
 
-        var batchCreateResult = await _googlePhotosClient.BatchAddMediaItemsAsync(
+        var batchCreateResult = await _googlePhotosClient.BatchCreateMediaItemsAsync(
             albumResult.Value.Id, uploadTokens);
         if (!batchCreateResult.Succeeded || batchCreateResult.Value?.NewMediaItemResults is null)
         {
