@@ -92,8 +92,6 @@ public class GooglePhotosHttpClient(
         return result;
     }
 
-
-
     public async Task<Result<BatchCreateMediaItemsResponse>> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
     {
         var batchCreateRequest = new BatchCreateMediaItemsRequest
@@ -116,9 +114,6 @@ public class GooglePhotosHttpClient(
         return batchCreateResponse;
     }
 
-    /// <remarks>
-    /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/create">Method: albums.create</see>
-    /// </remarks>
     public async Task<Result<Album>> CreateAlbumAsync(string albumTitle)
     {
         var albumRequest = new CreateAlbumRequest()
@@ -139,10 +134,7 @@ public class GooglePhotosHttpClient(
 
         return createAlbumResponse;
     }
-
-    /// <remarks>
-    /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/get">Method: albums.get</see>
-    /// </remarks>
+ 
     public async Task<Result<Album>> GetAlbumAsync(string albumId)
     {
         string requestUri = $"https://photoslibrary.googleapis.com/v1/albums/{albumId}";
