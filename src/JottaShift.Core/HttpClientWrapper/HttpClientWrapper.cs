@@ -67,11 +67,6 @@ public class HttpClientWrapper(HttpClient _http, ILogger<HttpClientWrapper> _log
         HttpResponseMessage response;
         T? data;
 
-        if (BaseAddress != null)
-        {
-            requestUri = new Uri(BaseAddress, requestUri).ToString();
-        }
-
         try
         {
             response = await _http.GetAsync(requestUri);
