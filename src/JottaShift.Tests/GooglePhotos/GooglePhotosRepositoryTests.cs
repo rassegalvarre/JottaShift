@@ -127,7 +127,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
         mockGooglePhotosHttpClient.Setup(f => f.GetAlbumFromTitleAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<Album>.Success(existingAlbum));
 
-        mockGooglePhotosHttpClient.Setup(f => f.BatchAddMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
+        mockGooglePhotosHttpClient.Setup(f => f.BatchCreateMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(Result<BatchCreateMediaItemsResponse>.Failure("Cant add to album"));
 
         mockGooglePhotosHttpClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
@@ -185,7 +185,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
         mockGooglePhotosHttpClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<string>.Success(Guid.NewGuid().ToString()));
 
-        mockGooglePhotosHttpClient.Setup(f => f.BatchAddMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
+        mockGooglePhotosHttpClient.Setup(f => f.BatchCreateMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(Result<BatchCreateMediaItemsResponse>.Success(batchCreateResponse));
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(
@@ -233,7 +233,7 @@ public class GooglePhotosRepositoryTests(GooglePhotosFixture _fixture) : IClassF
         mockGooglePhotosHttpClient.Setup(f => f.UploadMediaAsync(It.IsAny<string>()))
             .ReturnsAsync(Result<string>.Success(uploadToken));
 
-        mockGooglePhotosHttpClient.Setup(f => f.BatchAddMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
+        mockGooglePhotosHttpClient.Setup(f => f.BatchCreateMediaItemsAsync(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(Result<BatchCreateMediaItemsResponse>.Success(batchCreateResponse));
 
         var googlePhotosRepository = _fixture.CreateGooglePhotosRepository(
