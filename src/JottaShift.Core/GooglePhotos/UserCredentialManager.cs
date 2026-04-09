@@ -37,21 +37,29 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
         return Result.Failure("Missing environment variable for Google API");
     }
 
+    private static async Task<Result> RefreshTokenAsync(UserCredential userCredential)
+    {
+        if (userCredential.Token.IsStale)
+        {
+            var refreshed = await userCredential.RefreshTokenAsync(CancellationToken.None);
+            if (!refreshed)
+            {
+                return Result.Failure("Could not refresh user credentials");
+            }
+        }
+
+        return Result.Success();
+    }
+
     public async Task<Result<UserCredential>> GetUserCredentialAsync()
     {
+        // Return instance-credentials if available
         if (_userCredential != null)
-        {
-            if (_userCredential.Token.IsStale)
-            {
-                var refreshed = await _userCredential.RefreshTokenAsync(CancellationToken.None);
-                if (!refreshed)
-                {
-                    return Result<UserCredential>.Failure("Could not refresh user credentials");
-                }
-            }
+        {            
             return Result<UserCredential>.Success(_userCredential);
         }
 
+        // Create new credentials
         var credentialsResult = PopulateCredentials(_apiCredentials);
         if (!credentialsResult.Succeeded)
         {
@@ -66,12 +74,13 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
         UserCredential newCredentials;
         try
         {
-            // Prompt the user to authorize the app
+            // AuthorizeAsync will either locate existing credentials in 'AppData\Roaming\Google.Apis.Auth' if it exists.
+            // If not, the user will be prompted to authorize the app. Credentials will then be stored locally for future use.
             newCredentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 secretsResult.Secrets,
                 _scopes,
                 "user",
-                CancellationToken.None);
+                CancellationToken.None);            
         }
         catch (Exception ex)
         {
@@ -88,6 +97,12 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
         if (!credentialResult.Succeeded || credentialResult.Value is null)
         {
             return Result<string>.Failure(credentialResult.ErrorMessage ?? "Failed to obtain user credentials");
+        }
+
+        var refreshResult = await RefreshTokenAsync(credentialResult.Value);
+        if (!refreshResult.Succeeded)
+        {
+            return refreshResult.ForwardFailure<string>();
         }
 
         return Result<string>.Success(credentialResult.Value.Token.AccessToken);
