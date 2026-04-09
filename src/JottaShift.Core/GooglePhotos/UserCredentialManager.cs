@@ -74,8 +74,8 @@ public class UserCredentialManager(GooglePhotosLibraryApiCredentials _apiCredent
         UserCredential newCredentials;
         try
         {
-            // AuthorizeAsync will either localte existing credentials in AppData/Roaming if it exists.
-            // If not, the user will be prompted to authorize the app. Credentials will then be stored in AppData/Roaming for future use.
+            // AuthorizeAsync will either locate existing credentials in 'AppData\Roaming\Google.Apis.Auth' if it exists.
+            // If not, the user will be prompted to authorize the app. Credentials will then be stored locally for future use.
             newCredentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 secretsResult.Secrets,
                 _scopes,
