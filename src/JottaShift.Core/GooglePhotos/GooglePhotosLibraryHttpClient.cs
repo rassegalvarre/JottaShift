@@ -27,7 +27,6 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
     }
 
     private readonly Uri _googlePhotosLibraryApiUri = new("https://photoslibrary.googleapis.com/v1/");
-    private const int _maxItemsPerCall = 50;
 
     #region Private helper methods
     private static StringContent SerializeToStringContent<T>(T obj)
@@ -107,9 +106,9 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
 
     public async Task<Result> BatchAddMediaItemsAsync(string albumId, IEnumerable<string> mediaIds)
     {
-        if (mediaIds.Count() > _maxItemsPerCall)
+        if (mediaIds.Count() > IGooglePhotosLibraryHttpClient.MaxItemsPerCall)
         {
-            return Result.Failure($"Cannot add more than {_maxItemsPerCall} media items in a single call.");
+            return Result.Failure($"Cannot add more than {IGooglePhotosLibraryHttpClient.MaxItemsPerCall} media items in a single call.");
         }
 
         var batchAddRequest = new BatchAddMediaItemsRequest
@@ -138,9 +137,9 @@ public class GooglePhotosLibraryHttpClient : IGooglePhotosLibraryHttpClient
 
     public async Task<Result<BatchCreateMediaItemsResponse>> BatchCreateMediaItemsAsync(string albumId, IEnumerable<string> uploadTokens)
     {
-        if (uploadTokens.Count() > _maxItemsPerCall)
+        if (uploadTokens.Count() > IGooglePhotosLibraryHttpClient.MaxItemsPerCall)
         {
-            return Result<BatchCreateMediaItemsResponse>.Failure($"Cannot add more than {_maxItemsPerCall} media items in a single call.");
+            return Result<BatchCreateMediaItemsResponse>.Failure($"Cannot add more than {IGooglePhotosLibraryHttpClient.MaxItemsPerCall} media items in a single call.");
         }
 
         var batchCreateRequest = new BatchCreateMediaItemsRequest

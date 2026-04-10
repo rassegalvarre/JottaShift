@@ -20,10 +20,28 @@ public record PhotoUploadResult(string FilePath)
 
 public static class PhotoUploadResultExtensions
 {
-    public static IEnumerable<string> ExtractValidUploadTokens(this IEnumerable<PhotoUploadResult> results)
+    /// <summary>
+    /// Extracts valid <see cref="PhotoUploadResult.UploadToken"/> in chunks of max allowed items per call to Google Photos API,
+    /// as defined by <see cref="IGooglePhotosLibraryHttpClient.MaxItemsPerCall"/>."/>
+    /// </summary>
+    public static IEnumerable<string[]> ExtractValidUploadTokensInChunks(this IEnumerable<PhotoUploadResult> results)
     {
-        return results
+        var uploadTokens = results
             .Where(r => r.UploadToken != null)
             .Select(r => r.UploadToken!);
+
+        if (!uploadTokens.Any())
+        {
+            return [];
+        }
+
+        if (uploadTokens.Count() > IGooglePhotosLibraryHttpClient.MaxItemsPerCall)
+        {
+            return uploadTokens.Chunk((int)IGooglePhotosLibraryHttpClient.MaxItemsPerCall);
+        }
+        else
+        {
+            return [[.. uploadTokens]];
+        }
     }
 }

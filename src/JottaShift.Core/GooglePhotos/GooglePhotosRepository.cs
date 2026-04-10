@@ -53,28 +53,29 @@ public class GooglePhotosRepository(
             photoUploadResults.Add(result);
         }
 
-        var uploadTokens = photoUploadResults.ExtractValidUploadTokens();
+        var uploadTokens = photoUploadResults.ExtractValidUploadTokensInChunks();
 
         if (!uploadTokens.Any())
         {
             return AlbumUploadResult.Failure(albumName, "Failed to upload any photos", photoUploadResults);
         }
 
-        // TODO: Split uploadTokens in batches of 50 if more than 50, as per Google Photos API limits
-
-        var batchCreateResult = await _googlePhotosClient.BatchCreateMediaItemsAsync(
-            albumResult.Value.Id, uploadTokens);
-        if (!batchCreateResult.Succeeded || batchCreateResult.Value?.NewMediaItemResults is null)
+        foreach (var tokenChunk in uploadTokens)
         {
-            _logger.LogError("Failed to add images to album {AlbumName}. Error: {ErrorMessage}", albumName, batchCreateResult.ErrorMessage);
-            return AlbumUploadResult.FromFailedResult(batchCreateResult, albumName, photoUploadResults);
-        }
-        else
-        {
-            foreach (var item in batchCreateResult.Value.NewMediaItemResults)
+            var batchCreateResult = await _googlePhotosClient.BatchCreateMediaItemsAsync(
+                albumResult.Value.Id, tokenChunk);
+            if (!batchCreateResult.Succeeded || batchCreateResult.Value?.NewMediaItemResults is null)
             {
-                var result = photoUploadResults.First(r => r.UploadToken == item.UploadToken);
-                result.FromNewMediaItemResult(item);
+                _logger.LogError("Failed to add images to album {AlbumName}. Error: {ErrorMessage}", albumName, batchCreateResult.ErrorMessage);
+                return AlbumUploadResult.FromFailedResult(batchCreateResult, albumName, photoUploadResults);
+            }
+            else
+            {
+                foreach (var item in batchCreateResult.Value.NewMediaItemResults)
+                {
+                    var result = photoUploadResults.First(r => r.UploadToken == item.UploadToken);
+                    result.FromNewMediaItemResult(item);
+                }
             }
         }
 

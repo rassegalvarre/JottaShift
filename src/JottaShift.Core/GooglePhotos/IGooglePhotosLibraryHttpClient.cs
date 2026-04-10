@@ -9,6 +9,8 @@ namespace JottaShift.Core.GooglePhotos;
 /// </summary>
 public interface IGooglePhotosLibraryHttpClient
 {
+    static uint MaxItemsPerCall => 50;
+
     /// <summary>
     /// Adds a collection of media items to an album using their upload tokens.
     /// <see href="https://developers.google.com/photos/library/reference/rest/v1/albums/batchAddMediaItems">
